@@ -1,10 +1,10 @@
 {
-  "name": "bond-ledger-os",
+  "name": "ali-nawaz-accounting",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Bond Ledger OS — Premium Prize Bond / Bond Trading Accounting Software",
-  "author": "USAMA RAZA",
+  "description": "Ali Nawaz Accounting Software — cheques, party ledgers, receivables and payments",
+  "author": "Ali Nawaz",
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
@@ -46,8 +46,8 @@
     "sharp": "^0.35.3"
   },
   "build": {
-    "appId": "com.usamaraza.bondledger",
-    "productName": "USAMA RAZA Bond Ledger",
+    "appId": "com.alinawaz.accounting",
+    "productName": "Ali Nawaz Accounting",
     "directories": {
       "output": "release"
     },
@@ -65,14 +65,14 @@
           ]
         }
       ],
-      "artifactName": "USAMA-RAZA-Bond-Ledger-Setup-${version}.${ext}"
+      "artifactName": "Ali-Nawaz-Accounting-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Bond Ledger",
+      "shortcutName": "Ali Nawaz Accounting",
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico"
     },

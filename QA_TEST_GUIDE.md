@@ -4,7 +4,7 @@ A complete manual test plan. Each test has **Steps → Expected Result**.
 Mark each **Pass / Fail**. Run top-to-bottom; later tests assume earlier data exists.
 
 - **Env:** `npm run dev` → open the printed URL.
-- **Data mode:** Real Firebase (`osama-accounting`) if `.env` has keys and `VITE_USE_MOCK=false`; otherwise local demo mode.
+- **Data mode:** Real Firebase (your configured project) if `.env` has keys and `VITE_USE_MOCK=false`; otherwise local demo mode.
 - **Reset for a clean run:** Demo mode → clear browser storage (DevTools → Application → Local Storage → clear). Firebase mode → delete docs under `users/bond-workspace/…` in the console.
 
 ---

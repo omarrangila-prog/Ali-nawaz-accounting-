@@ -13,7 +13,7 @@ function createWindow() {
     minWidth: 360,
     minHeight: 600,
     backgroundColor: '#eef1f7',
-    title: 'USAMA RAZA — Bond Ledger',
+    title: 'Ali Nawaz Accounting Software',
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
     autoHideMenuBar: true,
     webPreferences: {

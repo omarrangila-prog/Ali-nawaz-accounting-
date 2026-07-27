@@ -172,3 +172,100 @@ html, body, #root { max-width: 100%; overflow-x: hidden; }
   .masters-layout .row,
   .entry-layout .row { flex-wrap: wrap; }
 }
+
+/* ==========================================================================
+   Ali Nawaz Cash Book / Reports — responsive layer
+   The PDC screens carry dense, wide tables and multi-group toolbars, so they
+   need their own rules below the shared ones above.
+   ========================================================================== */
+
+/* ---- Summary card groups: 3 columns -> 2 -> 1 ---- */
+@media (max-width: 1180px) {
+  .pdc-card-groups { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 780px) {
+  .pdc-card-groups { grid-template-columns: 1fr; gap: 12px; }
+  .pdc-cards { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
+  /* The hero card stops spanning once the grid is narrow. */
+  .pdc-card.hero { grid-column: 1 / -1; }
+}
+@media (max-width: 420px) {
+  .pdc-cards { grid-template-columns: 1fr 1fr; }
+  .pdc-card { padding: 10px 11px; }
+  .pdc-card-value { font-size: 14.5px; }
+  .pdc-card.hero .pdc-card-value { font-size: 18px; }
+}
+
+/* ---- Entry buttons: wrap into full-width groups on phones ---- */
+@media (max-width: 900px) {
+  .pdc-entry-row { flex-direction: column; align-items: stretch; }
+  .pdc-entry-party { flex: 1 1 auto; width: 100%; }
+  .pdc-entry-groups { gap: 14px; }
+}
+@media (max-width: 560px) {
+  .pdc-btn-group { width: 100%; }
+  .pdc-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .pdc-btn { width: 100%; justify-content: center; height: 42px; }
+  /* Shortcut hints are meaningless without a physical keyboard. */
+  .pdc-btn kbd { display: none; }
+}
+@media (max-width: 380px) {
+  .pdc-btn-row { grid-template-columns: 1fr; }
+}
+
+/* ---- Search + filter bar ---- */
+@media (max-width: 720px) {
+  .pdc-search-row { flex-wrap: wrap; gap: 8px; }
+  .pdc-search-box { flex: 1 1 100%; }
+  .pdc-filter-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 460px) {
+  .pdc-filter-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- Transaction register ----
+   The register has 15 columns; on phones it becomes stacked cards via
+   .stack-sm, so the keyboard hint and sticky header are dropped. */
+@media (max-width: 900px) {
+  .pdc-table-wrap { max-height: none; }
+  .pdc-keyhint { display: none; }
+}
+@media (max-width: 560px) {
+  .pdc-grid { white-space: normal; }
+  .pdc-grid thead th { position: static; }
+  .pdc-register-head { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+/* ---- Details drawer becomes a full-height sheet ---- */
+@media (max-width: 640px) {
+  .pdc-drawer { width: 100vw; border-left: none; }
+  .pdc-drawer-body { padding: 14px; }
+  .pdc-detail-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 400px) {
+  .pdc-detail-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- Reports page ---- */
+@media (max-width: 640px) {
+  .rp-grid { grid-template-columns: 1fr; }
+  .rp-filters-head { flex-wrap: wrap; }
+  .rp-clear { margin-left: 0; }
+}
+
+/* ---- Ledger summary strip ---- */
+@media (max-width: 560px) {
+  .pdc-ledger-summary { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pdc-ledger-summary .val { font-size: 14.5px; }
+}
+
+/* ---- Alerts wrap rather than overflow ---- */
+@media (max-width: 560px) {
+  .pdc-alert { font-size: 11.5px; padding: 6px 10px; }
+}
+
+/* ---- Entry forms inside modals ---- */
+@media (max-width: 560px) {
+  .pdc-form-grid .grid-2 { grid-template-columns: 1fr; }
+  .pdc-form-hint { font-size: 10.5px; }
+}

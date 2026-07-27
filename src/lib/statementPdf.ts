@@ -54,7 +54,7 @@ export function buildStatementPdf(opts: StatementOpts): jsPDF {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(...SOFT);
-  doc.text((settings.businessName || 'USAMA RAZA').toUpperCase(), M, y - 20);
+  doc.text((settings.businessName || 'Ali Nawaz').toUpperCase(), M, y - 20);
 
   // ---- Title ----
   doc.setFontSize(15);
@@ -141,7 +141,7 @@ export function buildStatementPdf(opts: StatementOpts): jsPDF {
     doc.setFontSize(8);
     doc.setTextColor(170, 176, 186);
     doc.text(
-      `${settings.businessName || 'USAMA RAZA'} · Generated ${new Date().toLocaleDateString()}`,
+      `${settings.businessName || 'Ali Nawaz'} · Generated ${new Date().toLocaleDateString()}`,
       M,
       doc.internal.pageSize.getHeight() - 22
     );

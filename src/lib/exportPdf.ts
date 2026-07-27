@@ -50,7 +50,7 @@ export function buildReportPdf(opts: {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...SOFT);
-  doc.text((opts.settings.businessName || 'USAMA RAZA').toUpperCase(), M, y);
+  doc.text((opts.settings.businessName || 'Ali Nawaz').toUpperCase(), M, y);
 
   doc.setFontSize(14);
   doc.setTextColor(...DARK);
@@ -207,7 +207,7 @@ export function buildReportPdf(opts: {
     doc.setFontSize(8);
     doc.setTextColor(160, 168, 180);
     doc.text(
-      `${opts.settings.businessName || 'USAMA RAZA'} · Generated ${new Date().toLocaleString()}`,
+      `${opts.settings.businessName || 'Ali Nawaz'} · Generated ${new Date().toLocaleString()}`,
       M,
       doc.internal.pageSize.getHeight() - 22
     );

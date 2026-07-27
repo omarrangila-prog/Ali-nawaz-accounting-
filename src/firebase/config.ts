@@ -10,33 +10,29 @@ import {
 const env = import.meta.env;
 
 /**
- * Firebase WEB config for the "osama-accounting" project.
+ * Firebase WEB config — supplied entirely through environment variables.
  *
- * These values are intentionally hard-coded as a fallback so the desktop .exe
- * and any deploy are ALWAYS connected to Firebase without needing env vars set.
- *
- * This is safe: Firebase web config is NOT secret — it ships in every browser
- * bundle by design. Your data is protected by Firestore Security Rules
- * (firestore.rules), not by hiding these keys. Env vars still override these
- * (so a different environment can point at its own project).
+ * There is deliberately NO hard-coded fallback project: copy `.env.example` to
+ * `.env` and fill in the values from your own Firebase Console
+ * (Project Settings → General → Your apps → Web app → SDK setup and
+ * configuration). Without them the app falls back to local mock data.
  */
-const DEFAULT_FIREBASE = {
-  apiKey: 'AIzaSyBDsR-tJotkYb_RCVL7KLQD9STHS4S7X7Q',
-  authDomain: 'osama-accounting.firebaseapp.com',
-  projectId: 'osama-accounting',
-  storageBucket: 'osama-accounting.firebasestorage.app',
-  messagingSenderId: '13784767386',
-  appId: '1:13784767386:web:d365278f0669bd86e9f823',
+const firebaseConfig = {
+  apiKey: env.VITE_FIREBASE_API_KEY,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: env.VITE_FIREBASE_APP_ID,
 };
 
-const firebaseConfig = {
-  apiKey: env.VITE_FIREBASE_API_KEY || DEFAULT_FIREBASE.apiKey,
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || DEFAULT_FIREBASE.authDomain,
-  projectId: env.VITE_FIREBASE_PROJECT_ID || DEFAULT_FIREBASE.projectId,
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || DEFAULT_FIREBASE.storageBucket,
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || DEFAULT_FIREBASE.messagingSenderId,
-  appId: env.VITE_FIREBASE_APP_ID || DEFAULT_FIREBASE.appId,
-};
+/** True only when every required Firebase env var is present. */
+const HAS_FIREBASE_CONFIG = Boolean(
+  firebaseConfig.apiKey &&
+    firebaseConfig.authDomain &&
+    firebaseConfig.projectId &&
+    firebaseConfig.appId,
+);
 
 // Allow forcing local mock mode via ?mock=1 (used for isolated QA runs so tests
 // never touch real Firestore). Only honored in dev builds.
@@ -45,12 +41,13 @@ const forceMock =
   typeof window !== 'undefined' &&
   new URLSearchParams(window.location.search).get('mock') === '1';
 
-// Real Firebase is always available now (config has a baked-in fallback), so
-// USE_MOCK is only true when explicitly requested.
-export const USE_MOCK = forceMock || env.VITE_USE_MOCK === 'true';
+// Mock mode when explicitly requested, or whenever no Firebase project has been
+// configured yet — so a fresh checkout still runs instead of crashing on boot.
+export const USE_MOCK = forceMock || env.VITE_USE_MOCK === 'true' || !HAS_FIREBASE_CONFIG;
 
-// Config is always present now, so this never trips — kept for API stability.
-export const MISCONFIGURED_PROD = false;
+// A production build that asked for real Firebase but has no config to use.
+export const MISCONFIGURED_PROD =
+  !import.meta.env.DEV && env.VITE_USE_MOCK !== 'true' && !HAS_FIREBASE_CONFIG;
 
 let app: FirebaseApp | undefined;
 let auth: Auth | undefined;

@@ -15,13 +15,18 @@ import { Balances } from '@/pages/Balances';
 import { TrialBalance } from '@/pages/TrialBalance';
 import { Reports } from '@/pages/Reports';
 import { Masters } from '@/pages/Masters';
+import { PdcCashbook } from '@/pages/PdcCashbook';
+import { PdcParties } from '@/pages/PdcParties';
+import { PdcLedger } from '@/pages/PdcLedger';
+import { PdcReports } from '@/pages/PdcReports';
+import { usePdc } from '@/store/pdcStore';
 
 function Splash() {
   return (
     <div style={{ display: 'grid', placeItems: 'center', height: '100vh' }}>
       <div className="col" style={{ alignItems: 'center', gap: 12 }}>
-        <div className="brand-mark" style={{ width: 52, height: 52, fontSize: 24 }}>B</div>
-        <div className="muted">Loading Bond Ledger OS…</div>
+        <div className="brand-mark" style={{ width: 52, height: 52, fontSize: 24 }}>A</div>
+        <div className="muted">Loading Ali Nawaz Accounting…</div>
       </div>
     </div>
   );
@@ -32,6 +37,8 @@ export default function App() {
   const bind = useData((s) => s.bind);
   const unbind = useData((s) => s.unbind);
   const ready = useData((s) => s.ready);
+  const bindPdc = usePdc((s) => s.bind);
+  const unbindPdc = usePdc((s) => s.unbind);
   const [unlocked, setUnlocked] = useState(isUnlocked);
 
   useEffect(() => init(), [init]);
@@ -44,6 +51,13 @@ export default function App() {
     if (user) bind(user.uid);
     return () => unbind();
   }, [user, bind, unbind]);
+
+  // The Ali Nawaz PDC module binds to the same workspace but its OWN
+  // collections (pdc*), so cheque/ledger data and bond data never mix.
+  useEffect(() => {
+    if (user) bindPdc(user.uid);
+    return () => unbindPdc();
+  }, [user, bindPdc, unbindPdc]);
 
   if (!user) return <Splash />;
   // PIN gate — the entered PIN selects the client workspace, then unlocks.
@@ -62,18 +76,31 @@ export default function App() {
       <Toasts />
       <Routes>
         <Route element={<AppShell />}>
-          {/* Cash Book is the single working screen; Reports is the only other. */}
-          <Route path="/" element={<CashBook />} />
-          <Route path="/cashbook" element={<CashBook />} />
-          <Route path="/reports" element={<Reports />} />
-          {/* Kept reachable by URL (used by entry forms / deep-links), not in sidebar. */}
-          <Route path="/purchase" element={<Purchase />} />
-          <Route path="/sale" element={<Sale />} />
-          <Route path="/stock" element={<Stock />} />
-          <Route path="/receivable" element={<Balances kind="receivable" />} />
-          <Route path="/payable" element={<Balances kind="payable" />} />
-          <Route path="/trial-balance" element={<TrialBalance />} />
-          <Route path="/masters" element={<Masters />} />
+          {/* ONE Cash Book — sales, purchases, cheques, payments and ledgers all
+              post through the same double-entry engine, so every figure and
+              report agrees. */}
+          <Route path="/" element={<PdcCashbook />} />
+          <Route path="/cashbook" element={<PdcCashbook />} />
+          <Route path="/parties" element={<PdcParties />} />
+          <Route path="/ledger" element={<PdcLedger />} />
+          <Route path="/reports" element={<PdcReports />} />
+          {/* Old paths keep working so bookmarks don't break. */}
+          <Route path="/pdc" element={<Navigate to="/" replace />} />
+          <Route path="/pdc/parties" element={<Navigate to="/parties" replace />} />
+          <Route path="/pdc/ledger" element={<Navigate to="/ledger" replace />} />
+          <Route path="/pdc/reports" element={<Navigate to="/reports" replace />} />
+          {/* Legacy bond-trading screens, reachable by URL only (not in the
+              sidebar). They read the OLD collections and are kept so historic
+              data stays viewable. */}
+          <Route path="/legacy/cashbook" element={<CashBook />} />
+          <Route path="/legacy/reports" element={<Reports />} />
+          <Route path="/legacy/purchase" element={<Purchase />} />
+          <Route path="/legacy/sale" element={<Sale />} />
+          <Route path="/legacy/stock" element={<Stock />} />
+          <Route path="/legacy/receivable" element={<Balances kind="receivable" />} />
+          <Route path="/legacy/payable" element={<Balances kind="payable" />} />
+          <Route path="/legacy/trial-balance" element={<TrialBalance />} />
+          <Route path="/legacy/masters" element={<Masters />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

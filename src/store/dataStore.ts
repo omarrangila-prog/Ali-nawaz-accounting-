@@ -37,8 +37,8 @@ import { uid, now, periodOf, todayISO, round2, monthName, normalizeDenomination,
 import { toast } from './toast';
 
 const DEFAULT_SETTINGS: Settings = {
-  businessName: 'USAMA RAZA',
-  ownerName: 'Usama Raza',
+  businessName: 'Ali Nawaz',
+  ownerName: 'Ali Nawaz',
   currency: 'Rs',
   smartEntryEnabled: true,
   settlementMode: 'pending', // default: balances stay pending until settled

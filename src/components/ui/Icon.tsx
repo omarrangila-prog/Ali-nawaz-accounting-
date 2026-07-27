@@ -7,7 +7,12 @@ export type IconName =
   | 'pdf' | 'excel' | 'save' | 'refresh' | 'user' | 'plus' | 'trash'
   | 'close' | 'check' | 'lock' | 'chevron' | 'wifi-off' | 'sparkles'
   | 'arrow-up' | 'arrow-down' | 'logout' | 'calendar' | 'wallet' | 'scale'
-  | 'menu' | 'info' | 'warning' | 'more';
+  | 'menu' | 'info' | 'warning' | 'more'
+  // --- Cash Book / cheque & finance set ---
+  | 'cheque' | 'cheque-in' | 'cheque-out' | 'transfer' | 'bank' | 'coins'
+  | 'trend-up' | 'trend-down' | 'clock' | 'alert-circle'
+  | 'check-circle' | 'x-circle' | 'eye' | 'undo' | 'filter'
+  | 'building' | 'receipt' | 'list' | 'book' | 'shield' | 'clipboard';
 
 const paths: Record<IconName, string> = {
   dashboard: 'M4 13h6V4H4v9zm0 7h6v-5H4v5zm10 0h6V11h-6v9zm0-16v5h6V4h-6z',
@@ -45,6 +50,37 @@ const paths: Record<IconName, string> = {
   info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.01',
   warning: 'M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01',
   more: 'M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+
+  // --- Cash Book / cheque & finance set ---
+  /** A cheque leaf with a signature line. */
+  cheque: 'M2 6h20v12H2zM2 10h20M6 14h5M16 14h2',
+  /** Cheque with an arrow coming in. */
+  'cheque-in': 'M21 7H3v10h18V11M3 10h10M6 14h4M17 3v6M17 9l-2.5-2.5M17 9l2.5-2.5',
+  /** Cheque with an arrow going out. */
+  'cheque-out': 'M21 7H3v10h18V11M3 10h10M6 14h4M17 9V3M17 3l-2.5 2.5M17 3l2.5 2.5',
+  /** Two arrows swapping — transfer between accounts/parties. */
+  transfer: 'M4 8h13l-3-3M20 16H7l3 3',
+  /** Bank building with columns. */
+  bank: 'M3 21h18M4 10h16M5 10V21M9 10V21M15 10V21M19 10V21M12 3 2 8h20L12 3z',
+  /** Stacked coins — cash. */
+  coins: 'M9 12a7 3 0 1 0 0-6 7 3 0 0 0 0 6zM2 9v4c0 1.7 3.1 3 7 3s7-1.3 7-3V9M16 15.5c2.9-.3 5-1.4 5-2.8V8.5M9 16v4c0 1.7 3.1 3 7 3s7-1.3 7-3v-4',
+  /** Upward trend — income / profit. */
+  'trend-up': 'M22 7 13.5 15.5l-5-5L2 17M16 7h6v6',
+  /** Downward trend — cost / loss. */
+  'trend-down': 'M22 17 13.5 8.5l-5 5L2 7M16 17h6v-6',
+  clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2',
+  'alert-circle': 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 8v4M12 16h.01',
+  'check-circle': 'M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4 12 14l-3-3',
+  'x-circle': 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM15 9l-6 6M9 9l6 6',
+  eye: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+  undo: 'M3 7v6h6M3.5 13a9 9 0 1 0 2.1-5.6L3 10',
+  filter: 'M22 3H2l8 9.5V19l4 2v-8.5L22 3z',
+  building: 'M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2',
+  receipt: 'M4 2v20l2-1.5L8 22l2-1.5L12 22l2-1.5L16 22l2-1.5L20 22V2l-2 1.5L16 2l-2 1.5L12 2l-2 1.5L8 2 6 3.5 4 2zM8 8h8M8 12h8M8 16h5',
+  list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+  book: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2zM9 7h7M9 11h7',
+  shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4',
+  clipboard: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM9 13h6M9 17h4',
 };
 
 interface Props {

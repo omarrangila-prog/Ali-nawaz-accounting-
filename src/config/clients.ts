@@ -26,12 +26,16 @@ export interface ClientConfig {
 /**
  * The client roster. Order doesn't matter; PINs must be unique.
  *
- * PIN 4444 → Client A → workspace 'bond-workspace' (the EXISTING live data)
- * PIN 5555 → Client B → workspace 'client-b'      (new, empty)
- * PIN 6666 → Client C → workspace 'client-c'      (new, empty)
+ * PIN 4444 → Ali Nawaz → workspace 'bond-workspace' (the main live workspace)
+ * PIN 5555 → Client B  → workspace 'client-b'       (spare, empty)
+ * PIN 6666 → Client C  → workspace 'client-c'       (spare, empty)
+ *
+ * ⚠️  The workspace id 'bond-workspace' is deliberately unchanged — renaming it
+ *     would orphan every record already stored under that path. The name shown
+ *     in the UI comes from Settings → business name, not from this id.
  */
 export const CLIENTS: ClientConfig[] = [
-  { pin: '4444', workspace: 'bond-workspace', name: 'Client A' },
+  { pin: '4444', workspace: 'bond-workspace', name: 'Ali Nawaz' },
   { pin: '5555', workspace: 'client-b', name: 'Client B' },
   { pin: '6666', workspace: 'client-c', name: 'Client C' },
 ];

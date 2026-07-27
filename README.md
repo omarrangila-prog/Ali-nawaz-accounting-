@@ -1,211 +1,100 @@
-# Bond Ledger OS
+# Ali Nawaz Accounting Software
 
-**A premium, single-page Prize Bond / Bond Trading accounting application.**
-Built for a non-technical bond business owner who wants to run everything inside
-one beautiful app — no Excel after setup.
+**Cheques, party ledgers, receivables, payables and payment management — in one
+keyboard-first screen.**
 
-React + TypeScript + Firebase (Auth · Firestore · Hosting), offline-first with
-automatic sync, macOS-inspired glass UI.
-
----
-
-## ✨ Features
-
-- **Purchase Entry** — Date, Party, Bond Type, Qty, Rate, Cash/Credit. Amount auto-calculates; stock, ledger, payable/cash and dashboard update instantly.
-- **Sale Entry** — Same fields with Cash/Credit receipt. **Sales are blocked when stock is insufficient.** Profit/loss (weighted-average cost) computed automatically.
-- **Cash Entry** — Received / Paid against any party; ledger and balances update live.
-- **Reports** — Pick month/year and generate: Balance Check, Stock, Purchase, Sale, Cash Receivable, Cash Payable, Trial Balance, Ledger, Monthly Summary. Professional PDF + Excel export.
-- **Monthly Closing** — One click locks the month, carries stock & party balances forward, and stores a monthly summary.
-- **Smart Entry Mode** — Type plain sentences:
-  - `Bought 100 bond 10 qty at 17500 from Ali cash`
-  - `Sold 100 bond 5 qty at 17800 to Khan credit`
-  - `Received 50000 from Ali`
-  - `Paid 30000 to Khan`
-- **Offline-first** — Firestore IndexedDB persistence; changes queue offline and sync when the internet returns.
-- **Excel migration** — One-time old-data import lives **only in Settings** (never on the dashboard).
-- **Keyboard-friendly** — F2 Purchase, F3 Sale, F4 Cash Received, F5 Cash Paid, F6 Ledger, F7 Reports, ⌘/Ctrl+K Search, ⌘/Ctrl+S Save, ⌘/Ctrl+P Print.
+React + TypeScript + Firebase (Firestore), offline-first, with a proper
+double-entry engine underneath so every figure and report agrees.
 
 ---
 
-## 🚀 Quick start (Demo mode — no Firebase needed)
+## The Cash Book
+
+Everything happens on one page. Summary cards group into **Money**, **Business**
+and **Cheques**; each card filters the register below it.
+
+| Key | Action |
+|-----|--------|
+| `F1` | Sale |
+| `F2` | Purchase |
+| `F3` | Cash Received |
+| `F4` | Cash Paid |
+| `F5` | Cheque In (PDC received) |
+| `F6` | Cheque Out (PDC issued) |
+| `F7` | Cheque Transfer (endorse to another party) |
+| `F8` | Ledger |
+| `F9` | Search |
+| `F10` | Reports |
+
+Inside the register: `↑`/`↓` move, `PgUp`/`PgDn` page, `Enter` opens details,
+`Delete` reverses, `Esc` closes. In a form, `Enter` advances a field,
+`Shift+Enter` goes back, and `Enter` on the last field saves.
+
+## Accounting model
+
+Every action posts **balanced double-entry lines** sharing one transaction id.
+Balances are always replayed from the ledger — never stored as a mutable total —
+so the Cash Book and the reports cannot disagree.
+
+- A **credit sale** makes the party owe you and counts revenue, without moving cash.
+- A **cash sale** moves money and counts the same revenue once.
+- Collecting that debt later **does not** change profit — it only settles the balance.
+- One physical cheque is **one record for life**. Endorsing it to another party
+  updates the holder and appends a movement; it is never duplicated.
+- Bouncing a cheque **restores the original debt** rather than flipping a status.
+- Posted entries are **reversed**, not deleted, and both stay in history.
+
+`src/lib/pdcEngine.test.ts` locks these rules down with 40 tests.
+
+## Reports
+
+29 reports across five groups — Financial, Trading, Cheques, Ledgers, Activity —
+each rendering a designed PDF with a branded header, KPI cards, native vector
+charts (donut, comparison, trend), status pills and page numbers.
+
+Headline reports: **Complete Cash Book**, **Profit & Loss**, **Balance Sheet**.
+
+## Running it
 
 ```bash
 npm install
-npm run dev
+npm run dev        # http://localhost:5173
+npm run build      # production build
+npm test           # 144 tests
 ```
 
-Open the printed URL. Because no Firebase keys are set, the app runs in **local
-demo mode** (data persisted to your browser's `localStorage`). On the login
-screen just click **Sign In** — credentials are pre-filled.
+Login PIN: **4444**
 
-Then go to **Settings → Load Sample Data** to populate parties, bonds and
-transactions for the current month.
+### Firebase
 
----
+Copy `.env.example` to `.env` and fill in your own Firebase web config:
 
-## 🔥 Connect real Firebase (production)
+```
+VITE_FIREBASE_API_KEY=…
+VITE_FIREBASE_AUTH_DOMAIN=…
+VITE_FIREBASE_PROJECT_ID=…
+VITE_FIREBASE_STORAGE_BUCKET=…
+VITE_FIREBASE_MESSAGING_SENDER_ID=…
+VITE_FIREBASE_APP_ID=…
+```
 
-1. Create a project at <https://console.firebase.google.com>.
-2. **Authentication → Sign-in method → Email/Password → Enable.**
-3. **Firestore Database → Create database** (Production mode).
-4. **Project Settings → General → Your apps → Web app** → copy the config.
-5. Copy `.env.example` to `.env` and fill in the values:
+**With the keys blank the app runs on local mock data** — nothing is written to
+a real database. Deploy `firestore.rules` before using live Firestore, or every
+write will fail on permissions.
 
-   ```bash
-   cp .env.example .env
-   ```
+> ⚠️ **Security note.** There is currently no user authentication: the PIN only
+> selects a workspace and lives in the client bundle, and `firestore.rules`
+> allows open read/write. Do not put real accounting data behind a public URL
+> until Firebase Auth and scoped rules are added.
 
-   ```env
-   VITE_FIREBASE_API_KEY=...
-   VITE_FIREBASE_AUTH_DOMAIN=...
-   VITE_FIREBASE_PROJECT_ID=...
-   VITE_FIREBASE_STORAGE_BUCKET=...
-   VITE_FIREBASE_MESSAGING_SENDER_ID=...
-   VITE_FIREBASE_APP_ID=...
-   VITE_USE_MOCK=false
-   ```
-
-6. Restart `npm run dev`. The app now uses real Firestore with offline persistence.
-
-> To force demo mode even with keys present, set `VITE_USE_MOCK=true`.
-
-### 🔑 Environment variables (for GitHub / hosting)
-
-`.env` is **gitignored** — never commit it. Set the same `VITE_*` variables in
-whichever place builds the site:
-
-- **Local machine:** the `.env` file (above).
-- **Vercel / Netlify / Cloudflare Pages:** add each `VITE_*` key in the
-  project's *Environment Variables* settings, then deploy. The build reads them
-  automatically.
-- **GitHub Actions:** store them as *Repository → Settings → Secrets and
-  variables → Actions*, and expose them to the `npm run build` step, e.g.
-  `env: { VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}, ... }`.
-
-> These are Firebase **web** config values — they are compiled into the browser
-> bundle and are **not secret**. Your data is protected by **Firestore Security
-> Rules** (`firestore.rules`), not by hiding these keys. Keeping them in env vars
-> just keeps the repo clean and lets each environment target its own project.
-
-### Deploy security rules & indexes
+### Desktop build
 
 ```bash
-npm i -g firebase-tools
-firebase login
-firebase use --add            # select your project
-firebase deploy --only firestore:rules,firestore:indexes
+npm run electron:dev      # dev
+npm run electron:build    # Windows installer
 ```
 
-Rules (`firestore.rules`) scope every business record under
-`users/{uid}/…`, so one Firebase project can safely serve many independent
-bond businesses.
+## Tech
 
----
-
-## 🌐 Deploy to Firebase Hosting
-
-```bash
-npm run build
-firebase deploy --only hosting
-```
-
-`firebase.json` is preconfigured to serve `dist/` as an SPA.
-
----
-
-## 🗂️ Data model (Firestore)
-
-All under `users/{uid}/`:
-
-| Collection        | Purpose                                   |
-|-------------------|-------------------------------------------|
-| `parties`         | Customers / suppliers + opening balance   |
-| `bondTypes`       | Bond denominations (100, 750, 1500, …)    |
-| `purchases`       | Purchase entries                          |
-| `sales`           | Sale entries (with COGS + profit)         |
-| `cashTransactions`| Cash received / paid                      |
-| `monthlyClosings` | Locked month snapshots (carry-forward)    |
-| `settings`        | Business profile & preferences            |
-
-Ledger entries, receivables, payables, stock and trial balance are **derived**
-from these on the fly by the pure accounting engine (`src/lib/accounting.ts`),
-so they always stay consistent. Every record stores `date`, `month`, `year`,
-`createdAt`, `updatedAt`; changing the month/year selector re-scopes the whole
-app, and previous months stay saved.
-
----
-
-## 📥 One-time Excel migration format
-
-**Settings → Import Old Excel Data.** Download the template there, or use a
-workbook with these sheets (extra columns are ignored, headers are
-case-insensitive):
-
-- **Parties**: `name`, `phone`, `openingBalance`
-- **BondTypes**: `name`, `faceValue`
-- **Purchases**: `date`, `party`, `bondType`, `quantity`, `rate`, `payment` (`cash`/`credit`)
-- **Sales**: `date`, `party`, `bondType`, `quantity`, `rate`, `receipt` (`cash`/`credit`)
-- **Cash**: `date`, `party`, `direction` (`received`/`paid`), `amount`
-
-Parties and bond types referenced in transactions are auto-created if missing.
-
----
-
-## ⌨️ Keyboard shortcuts
-
-| Key         | Action           |
-|-------------|------------------|
-| `F2`        | New Purchase     |
-| `F3`        | New Sale         |
-| `F4`        | Cash Received    |
-| `F5`        | Cash Paid        |
-| `F6`        | Ledger           |
-| `F7`        | Reports          |
-| `⌘/Ctrl+K`  | Search palette   |
-| `⌘/Ctrl+S`  | Save entry       |
-| `⌘/Ctrl+P`  | Print            |
-
----
-
-## 🧱 Project structure
-
-```
-src/
-  components/
-    layout/     Sidebar, Topbar, AppShell
-    ui/         Icon, Modal, StatCard, Combo, Toasts, PageHeader
-    SmartEntry.tsx, CommandPalette.tsx
-  firebase/     config, dataAccess, authService, mock (offline demo)
-  hooks/        useShortcuts
-  lib/          accounting (engine), smartEntry (NLP), reportBuilder,
-                exportPdf, exportExcel, importMigration, seed, utils
-  pages/        Dashboard, Purchase, Sale, Stock, Balances, Ledger,
-                TrialBalance, Reports, Settings, Login
-  store/        authStore, dataStore, toast (Zustand)
-  styles/       global.css (macOS glass theme)
-```
-
----
-
-## 🛠️ Scripts
-
-| Command           | Description                             |
-|-------------------|-----------------------------------------|
-| `npm run dev`     | Start dev server                        |
-| `npm run build`   | Type-check + production build           |
-| `npm run preview` | Preview the production build            |
-| `npm run seed`    | Seed a real Firebase project (Admin SDK)|
-
----
-
-## 📝 Notes on accounting
-
-- **Costing:** weighted-average per bond type. Sale profit = revenue − avg-cost COGS.
-- **Party balance sign:** positive = receivable (they owe you); negative = payable (you owe them).
-- **Trial balance:** assets (cash, receivables, closing stock) as debits; payables + profit as credits. Shows *Balanced ✓* when debits = credits.
-- **Monthly closing** carries each bond's closing qty & avg cost and each party's
-  balance into the next month's opening.
-
----
-
-Built with ❤️ for bond traders. No Excel required.
+React 18 · TypeScript (strict) · Vite · Zustand · Firebase Firestore ·
+jsPDF + autotable · vitest

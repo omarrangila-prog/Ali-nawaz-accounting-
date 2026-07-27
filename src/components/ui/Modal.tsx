@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Icon } from './Icon';
 import './modal.css';
@@ -51,7 +52,7 @@ interface ConfirmProps {
   title: string;
   message: string;
   confirmLabel?: string;
-  danger?: boolean;
+   danger?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }

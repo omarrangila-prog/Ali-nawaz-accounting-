@@ -1,0 +1,556 @@
+/* ---------------------------------------------------------------------------
+   Ali Nawaz PDC — Cashbook, drawer, timeline and ledger styles.
+   Uses the shared design tokens from styles/global.css so the PDC module looks
+   native to the rest of the app. Sized for 11"–16" laptops (spec §29).
+   --------------------------------------------------------------------------- */
+
+.pdc-page { padding-bottom: 40px; }
+
+/* --- Alerts (spec §24) --- */
+.pdc-alerts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.pdc-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: var(--surface-solid);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-soft);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+.pdc-alert.info { border-color: rgba(59, 130, 246, 0.3); background: var(--blue-soft); color: #1e40af; }
+.pdc-alert.warn { border-color: rgba(245, 158, 11, 0.35); background: var(--orange-soft); color: #92400e; }
+.pdc-alert.danger { border-color: rgba(239, 68, 68, 0.35); background: var(--red-soft); color: #991b1b; }
+
+/* --- Summary cards, grouped: Money · Business · Cheques --- */
+.pdc-card-groups {
+  display: grid;
+  grid-template-columns: 1.6fr 1.3fr 1.6fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.pdc-card-group { min-width: 0; }
+.pdc-group-title {
+  margin: 0 0 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.pdc-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 8px;
+}
+.pdc-card-hint {
+  font-size: 10px;
+  color: var(--text-faint);
+  line-height: 1.25;
+}
+/* The headline "Total Money" card. */
+.pdc-card.hero {
+  grid-column: span 2;
+  background: linear-gradient(180deg, #4f8ffb, #3b74e8);
+  border-color: transparent;
+}
+.pdc-card.hero .pdc-card-label,
+.pdc-card.hero .pdc-card-hint { color: rgba(255, 255, 255, 0.78); }
+.pdc-card.hero .pdc-card-value { color: #fff; font-size: 21px; }
+
+@media (max-width: 1400px) {
+  .pdc-card-groups { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 900px) {
+  .pdc-card-groups { grid-template-columns: 1fr; }
+}
+.pdc-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--stroke);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.1s, border-color 0.15s;
+}
+.pdc-card:hover { box-shadow: var(--shadow); }
+.pdc-card:active { transform: translateY(1px); }
+.pdc-card:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.pdc-card.active {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-soft), var(--shadow-sm);
+}
+.pdc-card-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.pdc-card-value { font-size: 17px; font-weight: 700; color: var(--text); }
+.pdc-card.pos .pdc-card-value { color: var(--green); }
+.pdc-card.neg .pdc-card-value { color: var(--red); }
+.pdc-card.warn .pdc-card-value { color: var(--orange); }
+
+/* --- Quick entry --- */
+.pdc-entry { margin-bottom: 12px; }
+.pdc-entry-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+.pdc-entry-party { min-width: 240px; flex: 0 0 260px; }
+.pdc-entry-buttons { display: flex; flex-wrap: wrap; gap: 7px; flex: 1; }
+.pdc-entry-buttons .btn { gap: 6px; }
+.pdc-entry-buttons kbd {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--text-faint);
+}
+.btn-green kbd, .btn-danger kbd, .btn-primary kbd {
+  background: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* --- Search & filters --- */
+.pdc-search-card { margin-bottom: 12px; }
+.pdc-search-row { display: flex; gap: 10px; align-items: center; }
+.pdc-search-box {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pdc-search-box > svg { position: absolute; left: 12px; color: var(--text-faint); pointer-events: none; }
+.pdc-search-box .input { padding-left: 36px; }
+.pdc-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--stroke);
+}
+
+/* --- Register --- */
+.pdc-register-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.pdc-keyhint { font-size: 12px; }
+.pdc-table-wrap { max-height: calc(100vh - 430px); min-height: 220px; overflow: auto; }
+.pdc-grid { font-size: 12.5px; white-space: nowrap; }
+.pdc-grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface-solid);
+  box-shadow: inset 0 -1px 0 var(--stroke);
+}
+.pdc-grid tbody tr { cursor: pointer; }
+.pdc-grid tbody tr:hover { background: rgba(59, 130, 246, 0.045); }
+.pdc-grid tbody tr.row-selected {
+  background: var(--blue-soft);
+  box-shadow: inset 3px 0 0 var(--blue);
+}
+.pdc-grid tbody tr.row-reversed td { opacity: 0.55; text-decoration: line-through; }
+.pdc-grid td, .pdc-grid th { padding: 7px 10px; }
+.pdc-type { font-weight: 600; font-size: 12px; }
+
+/* --- Status pills (spec §17) --- */
+.pdc-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  border: 1px solid transparent;
+}
+.st-pending { background: var(--orange-soft); color: #92400e; }
+.st-transferred { background: var(--purple-soft); color: #5b21b6; }
+.st-deposited, .st-presented { background: var(--blue-soft); color: #1e40af; }
+.st-cleared { background: var(--green-soft); color: #065f46; }
+.st-bounced { background: var(--red-soft); color: #991b1b; }
+.st-returned { background: var(--red-soft); color: #991b1b; }
+.st-cancelled { background: rgba(15, 23, 42, 0.07); color: var(--text-faint); }
+.st-replaced { background: rgba(15, 23, 42, 0.07); color: var(--text-soft); }
+
+/* --- Entry forms --- */
+.pdc-form-grid { display: flex; flex-direction: column; gap: 12px; }
+.pdc-form-context {
+  padding: 9px 12px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--blue-soft);
+  color: #1e40af;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.pdc-form-hint { font-size: 11.5px; margin-top: 12px; text-align: center; }
+.field-error { font-size: 11.5px; color: var(--red); font-weight: 600; }
+.pdc-warn {
+  margin-top: 12px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--orange-soft);
+  color: #92400e;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* --- Details drawer (spec §22) --- */
+.pdc-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.28);
+  backdrop-filter: blur(2px);
+  z-index: 60;
+}
+.pdc-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(520px, 94vw);
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-solid);
+  border-left: 1px solid var(--stroke);
+  box-shadow: var(--shadow-lg);
+  animation: pdc-slide-in 0.16s ease-out;
+}
+@keyframes pdc-slide-in {
+  from { transform: translateX(24px); opacity: 0.6; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.pdc-drawer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--stroke);
+}
+.pdc-drawer-head h3 { margin: 2px 0 0; font-size: 17px; }
+.pdc-drawer-ref { font-size: 11.5px; color: var(--text-faint); font-weight: 700; }
+.pdc-drawer-body { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 20px; }
+.pdc-drawer-foot {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 18px;
+  border-top: 1px solid var(--stroke);
+}
+.pdc-drawer-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.pdc-section-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+.pdc-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px 16px;
+}
+.pdc-detail-grid > div { display: flex; flex-direction: column; gap: 2px; }
+.pdc-detail-grid > div.wide { grid-column: 1 / -1; }
+.pdc-detail-grid .faint { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; }
+.pdc-mini-grid { width: 100%; font-size: 12.5px; }
+.pdc-total-row td { font-weight: 700; border-top: 2px solid var(--stroke-strong); }
+
+/* --- Cheque movement timeline (spec §18) --- */
+.pdc-timeline { list-style: none; margin: 0; padding: 0 0 0 6px; }
+.pdc-timeline li { position: relative; padding: 0 0 16px 20px; border-left: 2px solid var(--stroke); }
+.pdc-timeline li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.pdc-tl-dot {
+  position: absolute;
+  left: -6px;
+  top: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-soft);
+}
+.pdc-tl-action { font-weight: 600; font-size: 13px; }
+.pdc-tl-meta { font-size: 11.5px; margin-top: 1px; }
+.pdc-tl-desc { font-size: 12px; color: var(--text-soft); margin-top: 3px; }
+
+/* --- Ledger / party pages --- */
+.pdc-ledger-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 14px 0;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--stroke);
+}
+.pdc-ledger-summary > div { display: flex; flex-direction: column; gap: 3px; }
+.pdc-ledger-summary .lbl {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+}
+.pdc-ledger-summary .val { font-size: 16px; font-weight: 700; }
+
+/* --- Responsive (spec §29) --- */
+@media (max-width: 1280px) {
+  .pdc-cards { grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); }
+  .pdc-card-value { font-size: 15.5px; }
+  .pdc-grid { font-size: 12px; }
+  .pdc-table-wrap { max-height: calc(100vh - 400px); }
+}
+@media (max-width: 1024px) {
+  .pdc-entry-party { flex: 1 1 100%; }
+  .pdc-table-wrap { max-height: none; }
+}
+@media (max-width: 720px) {
+  .pdc-cards { grid-template-columns: repeat(2, 1fr); }
+  .pdc-search-row { flex-wrap: wrap; }
+  .pdc-drawer { width: 100vw; }
+}
+
+/* ===========================================================================
+   Reports page — grouped, colour-coded cards
+   =========================================================================== */
+
+.rp-filters-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--stroke);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+.rp-filters-head .faint { font-weight: 500; font-size: 12px; }
+.rp-clear { margin-left: auto; }
+
+.rp-section { margin-bottom: 22px; }
+.rp-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.rp-section-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  font-size: 11px;
+  letter-spacing: 0;
+  color: var(--text-soft);
+}
+
+.rp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 10px;
+}
+
+.rp-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  text-align: left;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+.rp-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: var(--tone, var(--blue));
+}
+.rp-card:active { transform: translateY(0); }
+.rp-card:focus-visible { outline: 2px solid var(--tone, var(--blue)); outline-offset: 2px; }
+
+/* Coloured icon tile — the main visual cue for what a report covers. */
+.rp-card-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--tone, var(--blue));
+  box-shadow: 0 3px 8px var(--tone-glow, rgba(59, 130, 246, 0.32));
+}
+
+.rp-card-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.rp-card-title {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--text);
+  line-height: 1.25;
+}
+.rp-card-desc {
+  font-size: 11.5px;
+  color: var(--text-soft);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rp-card-need {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--orange);
+  margin-top: 2px;
+}
+.rp-card-go {
+  flex-shrink: 0;
+  color: var(--text-faint);
+  transform: rotate(-90deg);
+  transition: transform 0.16s ease, color 0.16s ease;
+}
+.rp-card:hover .rp-card-go { color: var(--tone, var(--blue)); transform: rotate(-90deg) translateY(3px); }
+
+/* Headline reports get a tinted background. */
+.rp-card.featured { background: linear-gradient(180deg, var(--tone-soft, #eff6ff), var(--surface-solid)); }
+/* A report waiting on a party/account selection. */
+.rp-card.blocked { opacity: 0.62; }
+.rp-card.blocked .rp-card-icon { filter: grayscale(0.45); }
+
+/* Tone palette */
+.rp-card.tone-blue   { --tone: #3b82f6; --tone-soft: #eff6ff; --tone-glow: rgba(59,130,246,0.32); }
+.rp-card.tone-green  { --tone: #10b981; --tone-soft: #ecfdf5; --tone-glow: rgba(16,185,129,0.32); }
+.rp-card.tone-red    { --tone: #ef4444; --tone-soft: #fef2f2; --tone-glow: rgba(239,68,68,0.30); }
+.rp-card.tone-orange { --tone: #f59e0b; --tone-soft: #fffbeb; --tone-glow: rgba(245,158,11,0.32); }
+.rp-card.tone-purple { --tone: #8b5cf6; --tone-soft: #f5f3ff; --tone-glow: rgba(139,92,246,0.32); }
+.rp-card.tone-slate  { --tone: #64748b; --tone-soft: #f8fafc; --tone-glow: rgba(100,116,139,0.28); }
+
+@media (max-width: 720px) {
+  .rp-grid { grid-template-columns: 1fr; }
+}
+
+/* ===========================================================================
+   Cash Book entry buttons — grouped, labelled, colour-coded
+   =========================================================================== */
+
+.pdc-entry-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  flex: 1;
+}
+.pdc-btn-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pdc-btn-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.pdc-btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* The entry buttons themselves — bigger tap target, icon + label + key. */
+.pdc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 13px;
+  border-radius: 11px;
+  border: 1px solid var(--stroke);
+  background: var(--surface-solid);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.1s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+.pdc-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.pdc-btn:active { transform: translateY(0); }
+.pdc-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.pdc-btn svg { flex-shrink: 0; opacity: 0.9; }
+.pdc-btn kbd {
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: rgba(15, 23, 42, 0.07);
+  color: var(--text-faint);
+}
+
+/* Solid, high-contrast variants for money in / money out. */
+.pdc-btn.in {
+  background: linear-gradient(180deg, #12c58c, #0ea472);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
+}
+.pdc-btn.out {
+  background: linear-gradient(180deg, #f4635b, #e0453c);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.28);
+}
+.pdc-btn.in kbd, .pdc-btn.out kbd {
+  background: rgba(255, 255, 255, 0.24);
+  color: rgba(255, 255, 255, 0.95);
+}
+.pdc-btn.in:hover { background: linear-gradient(180deg, #17d197, #10b981); }
+.pdc-btn.out:hover { background: linear-gradient(180deg, #fa7069, #ef4444); }
+
+/* Neutral variant keeps a coloured left edge so groups stay scannable. */
+.pdc-btn.accent-purple { border-left: 3px solid #8b5cf6; }
+.pdc-btn.accent-blue { border-left: 3px solid #3b82f6; }
+.pdc-btn.accent-orange { border-left: 3px solid #f59e0b; }
+.pdc-btn.accent-slate { border-left: 3px solid #94a3b8; }
+
+@media (max-width: 900px) {
+  .pdc-entry-groups { gap: 12px; }
+  .pdc-btn { height: 38px; font-size: 12.5px; padding: 0 11px; }
+}
+
+/* --- Print --- */
+@media print {
+  .pdc-cards, .pdc-entry, .pdc-search-card, .pdc-alerts { display: none !important; }
+  .pdc-table-wrap { max-height: none; overflow: visible; }
+  .pdc-grid { font-size: 10px; }
+}

@@ -29,7 +29,19 @@ export type CollectionName =
   | 'expenses'
   | 'stockAdjustments'
   | 'partyAdjustments'
-  | 'openingBalances';
+  | 'openingBalances'
+  // --- Ali Nawaz PDC module. Deliberately separate collections so the cheque /
+  // double-entry ledger data never mixes with the bond-trading records above.
+  | 'pdcParties'
+  | 'pdcBanks'
+  | 'pdcBankAccounts'
+  | 'pdcCheques'
+  | 'pdcTransactions'
+  | 'pdcLedger'
+  | 'pdcMovements'
+  | 'pdcAllocations'
+  | 'pdcAudit'
+  | 'pdcSettings';
 
 function path(uid: string, name: CollectionName) {
   return collection(db!, 'users', uid, name);

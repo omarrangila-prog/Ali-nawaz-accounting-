@@ -74,3 +74,15 @@
   }
   .sidebar.open { transform: translateX(0); }
 }
+
+/* --- Nav groups (bond section + Ali Nawaz PDC section) --- */
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+.nav-group + .nav-group { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--stroke); }
+.nav-group-label {
+  padding: 0 12px 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
