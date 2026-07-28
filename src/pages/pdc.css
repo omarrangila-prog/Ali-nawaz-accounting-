@@ -554,3 +554,24 @@
   .pdc-table-wrap { max-height: none; overflow: visible; }
   .pdc-grid { font-size: 10px; }
 }
+
+/* --- Main summary bar: exactly four cards, evenly sized ------------------- */
+.pdc-cards-main {
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 14px;
+  gap: 10px;
+}
+/* The hero card no longer spans — all four are equal width. */
+.pdc-cards-main .pdc-card.hero { grid-column: auto; }
+.pdc-cards-main .pdc-card { padding: 14px 16px; }
+.pdc-cards-main .pdc-card-value { font-size: 19px; }
+.pdc-cards-main .pdc-card.hero .pdc-card-value { font-size: 20px; }
+
+@media (max-width: 900px) {
+  .pdc-cards-main { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 420px) {
+  .pdc-cards-main { grid-template-columns: 1fr 1fr; }
+  .pdc-cards-main .pdc-card { padding: 10px 11px; }
+  .pdc-cards-main .pdc-card-value { font-size: 15px; }
+}

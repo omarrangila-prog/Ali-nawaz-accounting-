@@ -15,8 +15,11 @@ service cloud.firestore {
     //     single-tenant trust model, now extended to every client workspace. If
     //     you later need real access control, re-introduce Firebase Auth and
     //     scope each workspace to its owner's request.auth.uid.
+    // Only the workspace ids this app actually uses are writable. That stops a
+    // stranger creating unlimited junk paths in the project, but it does NOT
+    // protect the data itself — see the warning above.
     match /users/{workspace}/{collection}/{docId} {
-      allow read, write: if true;
+      allow read, write: if workspace in ['bond-workspace', 'client-b', 'client-c'];
     }
   }
 }

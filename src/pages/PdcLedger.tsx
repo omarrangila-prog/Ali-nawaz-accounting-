@@ -38,7 +38,7 @@ export function PdcLedger() {
     setParams(next, { replace: true });
   }, [partyId, accountId]);
 
-  const partyOptions = data.parties.map((p) => ({ id: p.id, label: p.name, sub: p.phone }));
+  const partyOptions = data.parties.map((p) => ({ id: p.id, label: p.name }));
   const accountOptions = data.bankAccounts.map((a) => ({
     id: a.id,
     label: bankAccountLabel(data.banks, data.bankAccounts, a.id),

@@ -39,7 +39,7 @@ export function PdcParties() {
   const parties = useMemo(() => {
     const q = search.trim().toLowerCase();
     return data.parties
-      .filter((p) => !q || p.name.toLowerCase().includes(q) || (p.phone ?? '').includes(q))
+      .filter((p) => !q || p.name.toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [data.parties, search]);
 
@@ -92,7 +92,7 @@ export function PdcParties() {
               <table className="grid stack-sm">
                 <thead>
                   <tr>
-                    <th>Party</th><th>Phone</th><th>CNIC / Reg#</th>
+                    <th>Party</th>
                     <th className="num">Opening</th><th className="num">Balance</th>
                     <th>Status</th><th className="no-print"></th>
                   </tr>
@@ -108,8 +108,6 @@ export function PdcParties() {
                             {p.name}
                           </button>
                         </td>
-                        <td data-label="Phone">{p.phone || '—'}</td>
-                        <td data-label="CNIC / Reg#">{p.cnic || '—'}</td>
                         <td data-label="Opening" className="num mono">{formatMoney(p.openingBalance, cur)}</td>
                         <td data-label="Balance" className={cx('num mono', bal > 0 ? 'pos' : bal < 0 ? 'neg' : '')}>
                           {formatMoney(Math.abs(bal), cur)}
@@ -225,12 +223,7 @@ function PartyModal({ party, onClose }: { party: PdcParty | 'new' | null; onClos
   const store = usePdc();
   const editing = party && party !== 'new' ? party : null;
   const [name, setName] = useState(editing?.name ?? '');
-  const [phone, setPhone] = useState(editing?.phone ?? '');
-  const [address, setAddress] = useState(editing?.address ?? '');
-  const [cnic, setCnic] = useState(editing?.cnic ?? '');
   const [opening, setOpening] = useState(String(editing?.openingBalance ?? 0));
-  const [creditLimit, setCreditLimit] = useState(String(editing?.creditLimit ?? ''));
-  const [terms, setTerms] = useState(editing?.paymentTerms ?? '');
   const [notes, setNotes] = useState(editing?.notes ?? '');
   const [active, setActive] = useState(editing?.active ?? true);
 
@@ -240,12 +233,7 @@ function PartyModal({ party, onClose }: { party: PdcParty | 'new' | null; onClos
   if (key !== lastKey) {
     setLastKey(key);
     setName(editing?.name ?? '');
-    setPhone(editing?.phone ?? '');
-    setAddress(editing?.address ?? '');
-    setCnic(editing?.cnic ?? '');
     setOpening(String(editing?.openingBalance ?? 0));
-    setCreditLimit(String(editing?.creditLimit ?? ''));
-    setTerms(editing?.paymentTerms ?? '');
     setNotes(editing?.notes ?? '');
     setActive(editing?.active ?? true);
   }
@@ -256,12 +244,13 @@ function PartyModal({ party, onClose }: { party: PdcParty | 'new' | null; onClos
     const rec = await store.saveParty({
       id: editing?.id,
       name,
-      phone: phone || undefined,
-      address: address || undefined,
-      cnic: cnic || undefined,
+      // Preserve any legacy contact details already saved against the party.
+      phone: editing?.phone,
+      address: editing?.address,
+      cnic: editing?.cnic,
       openingBalance: Number(opening) || 0,
-      creditLimit: creditLimit ? Number(creditLimit) : undefined,
-      paymentTerms: terms || undefined,
+      creditLimit: editing?.creditLimit,
+      paymentTerms: editing?.paymentTerms,
       notes: notes || undefined,
       active,
     });
@@ -284,6 +273,8 @@ function PartyModal({ party, onClose }: { party: PdcParty | 'new' | null; onClos
         </>
       }
     >
+      {/* Deliberately minimal: name, opening balance, status and notes. Phone,
+          CNIC and address were removed as they slowed down daily entry. */}
       <div className="pdc-form-grid">
         <div className="field">
           <label>Party Name</label>
@@ -292,32 +283,8 @@ function PartyModal({ party, onClose }: { party: PdcParty | 'new' | null; onClos
         </div>
         <div className="grid-2">
           <div className="field">
-            <label>Phone</label>
-            <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </div>
-          <div className="field">
-            <label>CNIC / Registration #</label>
-            <input className="input" value={cnic} onChange={(e) => setCnic(e.target.value)} />
-          </div>
-        </div>
-        <div className="field">
-          <label>Address</label>
-          <input className="input" value={address} onChange={(e) => setAddress(e.target.value)} />
-        </div>
-        <div className="grid-2">
-          <div className="field">
             <label>Opening Balance <span className="faint">(+receivable / −payable)</span></label>
             <input className="input" type="number" value={opening} onChange={(e) => setOpening(e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Credit Limit <span className="faint">(optional)</span></label>
-            <input className="input" type="number" value={creditLimit} onChange={(e) => setCreditLimit(e.target.value)} />
-          </div>
-        </div>
-        <div className="grid-2">
-          <div className="field">
-            <label>Payment Terms</label>
-            <input className="input" placeholder="e.g. 30 days" value={terms} onChange={(e) => setTerms(e.target.value)} />
           </div>
           <div className="field">
             <label>Status</label>
@@ -329,8 +296,9 @@ function PartyModal({ party, onClose }: { party: PdcParty | 'new' | null; onClos
           </div>
         </div>
         <div className="field">
-          <label>Notes</label>
-          <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <label>Notes <span className="faint">(optional)</span></label>
+          <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && save()} />
         </div>
       </div>
     </Modal>

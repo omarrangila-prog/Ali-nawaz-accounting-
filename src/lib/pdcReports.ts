@@ -679,10 +679,10 @@ export function buildPdcReport(
         title: 'Receivable by Party',
         subtitle: 'Largest balances first',
         emptyText: 'Nobody owes you anything right now.',
-        head: ['Party', 'Phone', 'Terms', 'Amount Receivable'],
-        numericCols: [3],
-        rows: rows.map((x) => [x.p.name, x.p.phone ?? '—', x.p.paymentTerms ?? '—', m(x.bal)]),
-        foot: ['', '', 'Total', m(total)],
+        head: ['Party', 'Amount Receivable'],
+        numericCols: [1],
+        rows: rows.map((x) => [x.p.name, m(x.bal)]),
+        foot: ['Total', m(total)],
       });
       break;
     }
@@ -714,10 +714,10 @@ export function buildPdcReport(
         title: 'Payable by Party',
         subtitle: 'Largest balances first',
         emptyText: 'You do not owe anybody right now.',
-        head: ['Party', 'Phone', 'Terms', 'Amount Payable'],
-        numericCols: [3],
-        rows: rows.map((x) => [x.p.name, x.p.phone ?? '—', x.p.paymentTerms ?? '—', m(-x.bal)]),
-        foot: ['', '', 'Total', m(total)],
+        head: ['Party', 'Amount Payable'],
+        numericCols: [1],
+        rows: rows.map((x) => [x.p.name, m(-x.bal)]),
+        foot: ['Total', m(total)],
       });
       break;
     }

@@ -216,7 +216,7 @@ export function PdcCashbook() {
     setSelected((s) => (s >= shown.length ? shown.length - 1 : s));
   }, [shown.length]);
 
-  const partyOptions = data.parties.filter((p) => p.active).map((p) => ({ id: p.id, label: p.name, sub: p.phone }));
+  const partyOptions = data.parties.filter((p) => p.active).map((p) => ({ id: p.id, label: p.name }));
   const accountOptions = data.bankAccounts
     .filter((a) => a.active)
     .map((a) => ({ id: a.id, label: bankAccountLabel(data.banks, data.bankAccounts, a.id) }));
@@ -225,48 +225,22 @@ export function PdcCashbook() {
     setFilters((f) => ({ ...f, card: f.card === card ? 'all' : card }));
 
   /**
-   * Summary cards in three plain-language groups: the money you have, what the
-   * business earned, and where the cheques stand. Every card filters the
-   * register below when clicked.
+   * The four numbers that matter day to day. Everything else (cheque ageing,
+   * sales/purchase/expense splits) lives in Reports rather than cluttering the
+   * working screen. Clicking a card filters the register below.
    */
-  const cardGroups: Array<{
-    title: string;
-    cards: Array<{ key: SummaryFilter; label: string; value: number; tone?: string; hint?: string }>;
+  const cards: Array<{
+    key: SummaryFilter; label: string; value: number; tone?: string; hint?: string;
   }> = [
+    { key: 'all', label: 'Total Money', value: summary.totalFunds, tone: 'hero', hint: 'cash + all banks' },
+    { key: 'receivable', label: 'Receivable', value: summary.totalReceivable, tone: 'pos', hint: 'owed to you' },
+    { key: 'payable', label: 'Payable', value: summary.totalPayable, tone: 'neg', hint: 'you owe' },
     {
-      title: 'Money',
-      cards: [
-        { key: 'all', label: 'Total Money', value: summary.totalFunds, tone: 'hero', hint: 'cash + all banks' },
-        { key: 'cash', label: 'Cash in Hand', value: summary.cashBalance },
-        { key: 'bank', label: 'In Bank', value: summary.bankBalance },
-        { key: 'receivable', label: 'Receivable', value: summary.totalReceivable, tone: 'pos', hint: 'owed to you' },
-        { key: 'payable', label: 'Payable', value: summary.totalPayable, tone: 'neg', hint: 'you owe' },
-      ],
-    },
-    {
-      title: 'Business',
-      cards: [
-        { key: 'sales', label: 'Sales', value: summary.totalSales, tone: 'pos' },
-        { key: 'purchases', label: 'Purchases', value: summary.totalPurchases, tone: 'neg' },
-        { key: 'expenses', label: 'Expenses', value: summary.totalExpenses, tone: 'neg' },
-        {
-          key: 'all',
-          label: summary.netProfit >= 0 ? 'Profit' : 'Loss',
-          value: Math.abs(summary.netProfit),
-          tone: summary.netProfit >= 0 ? 'pos' : 'neg',
-          hint: '(sales + income) − (purchases + expenses)',
-        },
-      ],
-    },
-    {
-      title: 'Cheques',
-      cards: [
-        { key: 'pending-received', label: 'To Receive', value: summary.pendingReceivedCheques },
-        { key: 'pending-issued', label: 'To Pay', value: summary.pendingIssuedCheques },
-        { key: 'due-today', label: 'Due Today', value: summary.dueToday, tone: summary.dueToday > 0 ? 'warn' : undefined },
-        { key: 'overdue', label: 'Overdue', value: summary.overdue, tone: summary.overdue > 0 ? 'neg' : undefined },
-        { key: 'bounced', label: 'Bounced', value: summary.bounced, tone: summary.bounced > 0 ? 'neg' : undefined },
-      ],
+      key: 'all',
+      label: summary.netProfit >= 0 ? 'Net Profit' : 'Net Loss',
+      value: Math.abs(summary.netProfit),
+      tone: summary.netProfit >= 0 ? 'pos' : 'neg',
+      hint: '(sales + income) − (purchases + expenses)',
     },
   ];
 
@@ -325,26 +299,19 @@ export function PdcCashbook() {
         </div>
       )}
 
-      {/* --- Summary bar: Money · Business · Cheques --- */}
-      <div className="pdc-card-groups">
-        {cardGroups.map((g) => (
-          <section key={g.title} className="pdc-card-group">
-            <h3 className="pdc-group-title">{g.title}</h3>
-            <div className="pdc-cards">
-              {g.cards.map((c, ci) => (
-                <button
-                  key={`${g.title}-${c.label}-${ci}`}
-                  className={cx('pdc-card', c.tone, c.key !== 'all' && filters.card === c.key && 'active')}
-                  onClick={() => c.key !== 'all' && setCard(c.key)}
-                  title={c.hint}
-                >
-                  <span className="pdc-card-label">{c.label}</span>
-                  <span className="pdc-card-value mono">{formatMoney(c.value, cur)}</span>
-                  {c.hint && <span className="pdc-card-hint">{c.hint}</span>}
-                </button>
-              ))}
-            </div>
-          </section>
+      {/* --- Summary bar: the four day-to-day numbers --- */}
+      <div className="pdc-cards pdc-cards-main">
+        {cards.map((c, ci) => (
+          <button
+            key={`${c.label}-${ci}`}
+            className={cx('pdc-card', c.tone, c.key !== 'all' && filters.card === c.key && 'active')}
+            onClick={() => c.key !== 'all' && setCard(c.key)}
+            title={c.hint}
+          >
+            <span className="pdc-card-label">{c.label}</span>
+            <span className="pdc-card-value mono">{formatMoney(c.value, cur)}</span>
+            {c.hint && <span className="pdc-card-hint">{c.hint}</span>}
+          </button>
         ))}
       </div>
 

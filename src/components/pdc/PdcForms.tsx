@@ -183,7 +183,7 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
 
   // --- options -------------------------------------------------------------
   const partyOptions = useMemo(
-    () => data.parties.filter((p) => p.active).map((p) => ({ id: p.id, label: p.name, sub: p.phone })),
+    () => data.parties.filter((p) => p.active).map((p) => ({ id: p.id, label: p.name })),
     [data.parties]
   );
   const bankOptions = useMemo(
