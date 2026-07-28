@@ -82,7 +82,10 @@ export function buildRegister(data: PdcDataSet): RegisterRow[] {
   );
   const chequeById = new Map(data.cheques.map((c) => [c.id, c]));
 
-  let running = 0;
+  // Start from the money that already existed before any transaction — the
+  // bank accounts' opening balances. Starting at zero would make the Balance
+  // column disagree with the "Total Money" card by exactly that amount.
+  let running = data.bankAccounts.reduce((sum, a) => sum + a.openingBalance, 0);
   const rows: RegisterRow[] = chrono.map((txn) => {
     running += fundsDelta(data, txn);
     const { debit, credit } = txnTotals(data, txn.id);

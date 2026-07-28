@@ -29,7 +29,7 @@ import {
   partyName,
   balanceLabel,
 } from './pdcEngine';
-import { buildBankLedger, buildPartyLedger, buildRegister } from './pdcRegister';
+import { buildBankLedger, buildPartyLedger, buildRegister, fundsDelta } from './pdcRegister';
 import { formatDate, todayISO } from './utils';
 
 /** Every report the module can produce (spec §23). */
@@ -267,19 +267,18 @@ function txnSection(
   };
 }
 
-/** Net cash+bank movement per day, for the trend line. */
+/**
+ * Net cash+bank movement per day, for the trend line.
+ *
+ * Delegates to `fundsDelta` — the SAME function the Cashbook register uses for
+ * its running balance — so the chart and the register can never disagree about
+ * what counts as money.
+ */
 function dailyTrend(data: PdcDataSet, f: PdcReportFilters): Array<{ label: string; value: number }> {
   const by = new Map<string, number>();
   for (const t of data.transactions) {
-    if (!inRange(t.date, f) || t.reversed) continue;
-    let delta = 0;
-    for (const l of data.ledger) {
-      if (l.txnId !== t.id) continue;
-      const funds =
-        (l.account.kind === 'cash' && l.account.id === 'CASH') || l.account.kind === 'bank';
-      if (funds) delta += l.debit - l.credit;
-    }
-    by.set(t.date, (by.get(t.date) ?? 0) + delta);
+    if (!inRange(t.date, f)) continue;
+    by.set(t.date, (by.get(t.date) ?? 0) + fundsDelta(data, t));
   }
   return [...by.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))
