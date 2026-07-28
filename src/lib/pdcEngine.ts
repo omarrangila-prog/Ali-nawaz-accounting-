@@ -20,6 +20,7 @@ import type {
   ChequeDirection,
   ChequeHolder,
   ChequeMovement,
+  LedgerView,
   MainLedger,
   PdcDataSet,
   PdcLedgerEntry,
@@ -77,6 +78,8 @@ export function nextReference(data: PdcDataSet, type: PdcTxnType): string {
 // ---------------------------------------------------------------------------
 
 export const partyAcc = (id: string): AccountRef => ({ kind: 'party', id });
+/** An entry posted directly to a named ledger (Najeeb), not to one of its parties. */
+export const ledgerAcc = (id: string): AccountRef => ({ kind: 'ledger', id });
 export const bankAcc = (id: string): AccountRef => ({ kind: 'bank', id });
 export const cashAcc = (): AccountRef => ({ kind: 'cash', id: CASH_ACCOUNT_ID });
 
@@ -120,6 +123,9 @@ function mainLedgerFor(account: AccountRef): MainLedger {
     case 'party': return 'Parties';
     case 'bank': return 'Banks';
     case 'cash': return 'Cash';
+    // A named ledger (Najeeb) rolls up under Parties for report grouping —
+    // it behaves like a party account: positive = receivable.
+    case 'ledger': return 'Parties';
   }
 }
 
@@ -211,6 +217,8 @@ export function accountBalance(data: PdcDataSet, account: AccountRef): number {
     bal = data.parties.find((p) => p.id === account.id)?.openingBalance ?? 0;
   } else if (account.kind === 'bank') {
     bal = data.bankAccounts.find((a) => a.id === account.id)?.openingBalance ?? 0;
+  } else if (account.kind === 'ledger') {
+    bal = data.ledgers.find((l) => l.id === account.id)?.openingBalance ?? 0;
   }
   for (const e of data.ledger) {
     if (sameAccount(e.account, account)) bal += e.debit - e.credit;
@@ -228,6 +236,85 @@ export function partyBalances(data: PdcDataSet): Map<string, number> {
   }
   for (const [k, v] of out) out.set(k, round2(v));
   return out;
+}
+
+/** Balance of every named ledger's OWN account (excluding its parties). */
+export function ledgerOwnBalances(data: PdcDataSet): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const l of data.ledgers) out.set(l.id, l.openingBalance);
+  for (const e of data.ledger) {
+    if (e.account.kind !== 'ledger') continue;
+    out.set(e.account.id, (out.get(e.account.id) ?? 0) + e.debit - e.credit);
+  }
+  for (const [k, v] of out) out.set(k, round2(v));
+  return out;
+}
+
+/**
+ * Roll a named ledger up: its own entries plus every party assigned to it.
+ *
+ * A party may belong to several ledgers, so the same balance can appear in more
+ * than one ledger's total. Rather than hide that, each party row is marked
+ * `shared` and names the other ledgers involved.
+ */
+export function buildLedgerView(data: PdcDataSet, ledgerId: string): LedgerView | null {
+  const ledger = data.ledgers.find((l) => l.id === ledgerId);
+  if (!ledger) return null;
+
+  const balances = partyBalances(data);
+  const ownBalance = accountBalance(data, ledgerAcc(ledgerId));
+
+  const members = data.parties
+    .filter((p) => (p.ledgerIds ?? []).includes(ledgerId))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const parties = members.map((party) => {
+    const others = (party.ledgerIds ?? []).filter((id) => id !== ledgerId);
+    return {
+      party,
+      balance: balances.get(party.id) ?? 0,
+      shared: others.length > 0,
+      sharedWith: others
+        .map((id) => data.ledgers.find((l) => l.id === id)?.name)
+        .filter((n): n is string => !!n),
+    };
+  });
+
+  const partiesTotal = round2(parties.reduce((s, r) => s + r.balance, 0));
+
+  // Receivable / payable count the ledger's own balance as well as its parties'.
+  let receivable = 0;
+  let payable = 0;
+  for (const v of [...parties.map((r) => r.balance), ownBalance]) {
+    if (v > 0) receivable += v;
+    else if (v < 0) payable += -v;
+  }
+
+  return {
+    ledger,
+    ownBalance,
+    parties,
+    partiesTotal,
+    total: round2(ownBalance + partiesTotal),
+    receivable: round2(receivable),
+    payable: round2(payable),
+    sharedPartyIds: parties.filter((r) => r.shared).map((r) => r.party.id),
+  };
+}
+
+/** Every ledger rolled up, name-sorted. */
+export function buildAllLedgerViews(data: PdcDataSet): LedgerView[] {
+  return data.ledgers
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((l) => buildLedgerView(data, l.id))
+    .filter((v): v is LedgerView => v !== null);
+}
+
+/** Display name for a named ledger. */
+export function ledgerName(data: PdcDataSet, id?: string): string {
+  if (!id) return '';
+  return data.ledgers.find((l) => l.id === id)?.name ?? '—';
 }
 
 /** Every bank account's balance in one pass. */
@@ -345,6 +432,11 @@ export function computeSummary(data: PdcDataSet, today: ISODate): PdcSummary {
     cashBalance: cash,
     bankBalance: round2(bank),
     totalFunds: round2(cash + bank),
+    // Every cheque still in play, whichever direction it flows.
+    totalCheques: round2(pendingReceivedCheques + pendingIssuedCheques),
+    totalChequeCount: data.cheques.filter(
+      (c) => c.status === 'pending' || c.status === 'deposited' || c.status === 'presented'
+    ).length,
     totalSales: pl.sales,
     totalPurchases: pl.purchases,
     totalExpenses: pl.expenses,

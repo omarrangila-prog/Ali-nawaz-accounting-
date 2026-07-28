@@ -16,6 +16,7 @@ import { ConfirmDialog } from '@/components/ui/Modal';
 import { PdcForm, type PdcFormKind } from '@/components/pdc/PdcForms';
 import { ChequeActionDialog, type ChequeAction } from '@/components/pdc/ChequeActions';
 import { DetailsDrawer } from '@/components/pdc/DetailsDrawer';
+import { ChequePanel } from '@/components/pdc/ChequePanel';
 import { usePdc } from '@/store/pdcStore';
 import { computeSummary, bankAccountLabel } from '@/lib/pdcEngine';
 import {
@@ -232,15 +233,20 @@ export function PdcCashbook() {
   const cards: Array<{
     key: SummaryFilter; label: string; value: number; tone?: string; hint?: string;
   }> = [
-    { key: 'all', label: 'Total Money', value: summary.totalFunds, tone: 'hero', hint: 'cash + all banks' },
-    { key: 'receivable', label: 'Receivable', value: summary.totalReceivable, tone: 'pos', hint: 'owed to you' },
-    { key: 'payable', label: 'Payable', value: summary.totalPayable, tone: 'neg', hint: 'you owe' },
     {
       key: 'all',
-      label: summary.netProfit >= 0 ? 'Net Profit' : 'Net Loss',
+      label: 'Total Cheques',
+      value: summary.totalCheques,
+      tone: 'hero',
+      hint: `${summary.totalChequeCount} outstanding`,
+    },
+    { key: 'expenses', label: 'Expenses', value: summary.totalExpenses, tone: 'neg' },
+    { key: 'receivable', label: 'Receivable', value: summary.totalReceivable, tone: 'pos' },
+    {
+      key: 'all',
+      label: summary.netProfit >= 0 ? 'Profit' : 'Loss',
       value: Math.abs(summary.netProfit),
       tone: summary.netProfit >= 0 ? 'pos' : 'neg',
-      hint: '(sales + income) − (purchases + expenses)',
     },
   ];
 
@@ -438,6 +444,17 @@ export function PdcCashbook() {
           </div>
         )}
       </div>
+
+      {/* --- Every cheque, in and out, visible without leaving this screen --- */}
+      <ChequePanel
+        today={today}
+        onOpen={(chequeId) => {
+          // Jump to the row that created this cheque so the drawer shows its
+          // full accounting effect and movement timeline.
+          const row = register.find((r) => r.cheque?.id === chequeId);
+          if (row) setDetail(row);
+        }}
+      />
 
       {/* --- Transaction register (spec §3) --- */}
       <div className="card pdc-register-card">

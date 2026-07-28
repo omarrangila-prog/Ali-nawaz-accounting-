@@ -18,6 +18,7 @@ import { Masters } from '@/pages/Masters';
 import { PdcCashbook } from '@/pages/PdcCashbook';
 import { PdcParties } from '@/pages/PdcParties';
 import { PdcLedger } from '@/pages/PdcLedger';
+import { PdcLedgers } from '@/pages/PdcLedgers';
 import { PdcReports } from '@/pages/PdcReports';
 import { usePdc } from '@/store/pdcStore';
 
@@ -82,6 +83,7 @@ export default function App() {
           <Route path="/" element={<PdcCashbook />} />
           <Route path="/cashbook" element={<PdcCashbook />} />
           <Route path="/parties" element={<PdcParties />} />
+          <Route path="/ledgers" element={<PdcLedgers />} />
           <Route path="/ledger" element={<PdcLedger />} />
           <Route path="/reports" element={<PdcReports />} />
           {/* Old paths keep working so bookmarks don't break. */}

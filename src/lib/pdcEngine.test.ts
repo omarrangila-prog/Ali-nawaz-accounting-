@@ -47,12 +47,13 @@ import {
 // --- helpers ----------------------------------------------------------------
 
 function emptyData(overrides: Partial<PdcDataSet> = {}): PdcDataSet {
-  return {
+  const base: PdcDataSet = {
     parties: [
       { id: 'A', name: 'Ahmed Traders', openingBalance: 0, active: true, createdAt: 1, updatedAt: 1 },
       { id: 'B', name: 'Ali Enterprises', openingBalance: 0, active: true, createdAt: 1, updatedAt: 1 },
       { id: 'C', name: 'Nawaz Brothers', openingBalance: 0, active: true, createdAt: 1, updatedAt: 1 },
     ],
+    ledgers: [],
     banks: [{ id: 'HBL', name: 'HBL', active: true, createdAt: 1, updatedAt: 1 }],
     bankAccounts: [
       { id: 'ACC1', bankId: 'HBL', title: 'Main', openingBalance: 0, active: true, createdAt: 1, updatedAt: 1 },
@@ -65,8 +66,8 @@ function emptyData(overrides: Partial<PdcDataSet> = {}): PdcDataSet {
     allocations: [],
     audit: [],
     settings: { ...DEFAULT_PDC_SETTINGS, updatedAt: 1 },
-    ...overrides,
   };
+  return { ...base, ...overrides };
 }
 
 /** Apply a posting to a dataset, as the store would. */

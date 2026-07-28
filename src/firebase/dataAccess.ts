@@ -33,6 +33,7 @@ export type CollectionName =
   // --- Ali Nawaz PDC module. Deliberately separate collections so the cheque /
   // double-entry ledger data never mixes with the bond-trading records above.
   | 'pdcParties'
+  | 'pdcLedgers'
   | 'pdcBanks'
   | 'pdcBankAccounts'
   | 'pdcCheques'

@@ -43,7 +43,7 @@ export type MainLedger =
  * `id` names the sub-ledger (party id / bank account id). Cash is a singleton,
  * so its id is the constant CASH_ACCOUNT_ID.
  */
-export type AccountKind = 'party' | 'bank' | 'cash';
+export type AccountKind = 'party' | 'bank' | 'cash' | 'ledger';
 
 export interface AccountRef {
   kind: AccountKind;
@@ -58,9 +58,42 @@ export const CASH_ACCOUNT_ID = 'CASH';
 // Parties (spec §20)
 // ---------------------------------------------------------------------------
 
+/**
+ * A named ledger — typically a salesman or a book of business (Najeeb,
+ * Kamran…). Two things roll into its balance:
+ *
+ *   1. entries posted DIRECTLY to the ledger (e.g. cash the salesman took)
+ *   2. the balances of every party assigned to it (his customers)
+ *
+ * A party may be assigned to several ledgers, so ledger totals can legitimately
+ * overlap — `sharedPartyIds` on the computed view makes that visible rather
+ * than letting it quietly mislead.
+ */
+export interface NamedLedger {
+  id: string;
+  name: string;
+  /** Optional label, e.g. "Salesman — North zone". */
+  description?: string;
+  /**
+   * Opening balance for the ledger's OWN account (not its parties').
+   * Positive => receivable, negative => payable.
+   */
+  openingBalance: number;
+  active: boolean;
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface PdcParty {
   id: string;
   name: string;
+  /**
+   * Main ledgers this party belongs to. A party may sit under several
+   * (e.g. a customer served by two salesmen); an empty list means the party
+   * is unassigned and appears only in the global party list.
+   */
+  ledgerIds?: string[];
   phone?: string;
   address?: string;
   /** CNIC or business registration number. */
@@ -413,6 +446,8 @@ export const DEFAULT_PDC_SETTINGS: Omit<PdcSettings, 'updatedAt'> = {
 /** Everything the PDC engine reads from. Passed to every pure compute fn. */
 export interface PdcDataSet {
   parties: PdcParty[];
+  /** Named ledgers (Najeeb, Kamran…). */
+  ledgers: NamedLedger[];
   banks: Bank[];
   bankAccounts: BankAccount[];
   cheques: Cheque[];
@@ -422,6 +457,38 @@ export interface PdcDataSet {
   allocations: ChequeAllocation[];
   audit: PdcAuditLog[];
   settings: PdcSettings;
+}
+
+/**
+ * A ledger with everything rolled up: its own balance, each assigned party's
+ * balance, and the combined total.
+ */
+export interface LedgerView {
+  ledger: NamedLedger;
+  /** Balance of entries posted directly to the ledger itself. */
+  ownBalance: number;
+  /** One row per assigned party, with that party's balance. */
+  parties: Array<{
+    party: PdcParty;
+    balance: number;
+    /** True when this party also belongs to another ledger. */
+    shared: boolean;
+    /** Names of the other ledgers sharing this party. */
+    sharedWith: string[];
+  }>;
+  /** Sum of every assigned party's balance. */
+  partiesTotal: number;
+  /** ownBalance + partiesTotal — the headline figure. */
+  total: number;
+  /** Positive portion of `total` across parties (money owed to you). */
+  receivable: number;
+  /** Negative portion (money you owe). */
+  payable: number;
+  /**
+   * Ids of parties that also sit under another ledger. Their balances appear
+   * in more than one ledger total, so those totals legitimately overlap.
+   */
+  sharedPartyIds: string[];
 }
 
 /** A row in the main transaction register (spec §3). */
@@ -454,6 +521,13 @@ export interface PdcSummary {
   bankBalance: number;
   /** cash + all banks — the one "money we actually have" figure. */
   totalFunds: number;
+  /**
+   * Value of every cheque still outstanding, in or out — the headline
+   * "Total Cheques" figure on the Cash Book.
+   */
+  totalCheques: number;
+  /** Count of those outstanding cheques. */
+  totalChequeCount: number;
   totalSales: number;
   totalPurchases: number;
   totalExpenses: number;

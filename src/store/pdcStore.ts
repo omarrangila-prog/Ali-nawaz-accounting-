@@ -20,6 +20,7 @@ import type {
   PdcDataSet,
   PdcLedgerEntry,
   PdcParty,
+  NamedLedger,
   PdcSettings,
   PdcTransaction,
   ChequeAllocation,
@@ -44,6 +45,7 @@ interface PdcStore {
   saving: boolean;
 
   parties: PdcParty[];
+  ledgers: NamedLedger[];
   banks: Bank[];
   bankAccounts: BankAccount[];
   cheques: Cheque[];
@@ -65,6 +67,9 @@ interface PdcStore {
 
   // masters
   saveParty: (p: Partial<PdcParty> & { name: string; id?: string }) => Promise<PdcParty | null>;
+  saveLedger: (l: Partial<NamedLedger> & { name: string; id?: string }) => Promise<NamedLedger | null>;
+  deleteLedger: (id: string) => Promise<boolean>;
+  setPartyLedgers: (partyId: string, ledgerIds: string[]) => Promise<void>;
   deleteParty: (id: string) => Promise<boolean>;
   saveBank: (b: Partial<Bank> & { name: string; id?: string }) => Promise<Bank | null>;
   saveBankAccount: (a: Partial<BankAccount> & { bankId: string; title: string; id?: string }) => Promise<BankAccount | null>;
@@ -75,6 +80,7 @@ interface PdcStore {
 
 const COLLECTIONS: Record<string, CollectionName> = {
   parties: 'pdcParties',
+  ledgers: 'pdcLedgers',
   banks: 'pdcBanks',
   bankAccounts: 'pdcBankAccounts',
   cheques: 'pdcCheques',
@@ -93,6 +99,7 @@ export const usePdc = create<PdcStore>((set, get) => ({
   saving: false,
 
   parties: [],
+  ledgers: [],
   banks: [],
   bankAccounts: [],
   cheques: [],
@@ -133,6 +140,7 @@ export const usePdc = create<PdcStore>((set, get) => ({
     const s = get();
     return {
       parties: s.parties,
+      ledgers: s.ledgers,
       banks: s.banks,
       bankAccounts: s.bankAccounts,
       cheques: s.cheques,
@@ -246,6 +254,8 @@ export const usePdc = create<PdcStore>((set, get) => ({
     const rec: PdcParty = {
       id: p.id ?? uid(),
       name,
+      // Keep existing ledger assignments unless explicitly changed.
+      ledgerIds: p.ledgerIds ?? existing?.ledgerIds ?? [],
       phone: p.phone,
       address: p.address,
       cnic: p.cnic,
@@ -288,6 +298,90 @@ export const usePdc = create<PdcStore>((set, get) => ({
     }
     await removeDoc(workspace, 'pdcParties', id);
     return true;
+  },
+
+  async saveLedger(l) {
+    const workspace = get().uidRef;
+    if (!workspace) return null;
+    const name = l.name.trim();
+    if (!name) {
+      toast.error('Ledger name is required.');
+      return null;
+    }
+    const existing = l.id ? get().ledgers.find((x) => x.id === l.id) : undefined;
+    const clash = get().ledgers.find(
+      (x) => x.id !== l.id && x.name.trim().toLowerCase() === name.toLowerCase()
+    );
+    if (clash) {
+      toast.error(`A ledger named "${name}" already exists.`);
+      return null;
+    }
+    const rec: NamedLedger = {
+      id: l.id ?? uid(),
+      name,
+      description: l.description,
+      openingBalance: l.openingBalance ?? existing?.openingBalance ?? 0,
+      active: l.active ?? existing?.active ?? true,
+      notes: l.notes,
+      createdAt: existing?.createdAt ?? now(),
+      updatedAt: now(),
+    };
+    await upsertDoc(workspace, 'pdcLedgers', rec);
+    if (existing && existing.name !== rec.name) {
+      await get().logAudit({
+        action: 'edit',
+        entity: 'ledger',
+        entityId: rec.id,
+        before: { name: existing.name },
+        after: { name: rec.name },
+        description: `Renamed ledger ${existing.name} → ${rec.name}`,
+      });
+    }
+    return rec;
+  },
+
+  async deleteLedger(id) {
+    const workspace = get().uidRef;
+    if (!workspace) return false;
+    // A ledger carrying its own entries must never vanish — deactivate it so
+    // the history behind those entries stays readable.
+    const used = get().ledger.some((e) => e.account.kind === 'ledger' && e.account.id === id);
+    if (used) {
+      const l = get().ledgers.find((x) => x.id === id);
+      if (l) {
+        await upsertDoc(workspace, 'pdcLedgers', { ...l, active: false, updatedAt: now() });
+        toast.info('Ledger has transactions — marked inactive instead of deleted.');
+      }
+      return false;
+    }
+    // Detach it from every party first, so no party points at a missing ledger.
+    for (const p of get().parties) {
+      if ((p.ledgerIds ?? []).includes(id)) {
+        await upsertDoc(workspace, 'pdcParties', {
+          ...p,
+          ledgerIds: (p.ledgerIds ?? []).filter((x) => x !== id),
+          updatedAt: now(),
+        });
+      }
+    }
+    await removeDoc(workspace, 'pdcLedgers', id);
+    return true;
+  },
+
+  async setPartyLedgers(partyId, ledgerIds) {
+    const workspace = get().uidRef;
+    if (!workspace) return;
+    const party = get().parties.find((p) => p.id === partyId);
+    if (!party) return;
+    await upsertDoc(workspace, 'pdcParties', { ...party, ledgerIds, updatedAt: now() });
+    await get().logAudit({
+      action: 'edit',
+      entity: 'party',
+      entityId: partyId,
+      before: { ledgerIds: party.ledgerIds ?? [] },
+      after: { ledgerIds },
+      description: `Ledger assignment changed for ${party.name}`,
+    });
   },
 
   async saveBank(b) {

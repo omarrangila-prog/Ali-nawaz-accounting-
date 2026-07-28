@@ -30,6 +30,7 @@ function seed(): PdcDataSet {
       { id: 'ACC1', bankId: 'HBL', title: 'Main', openingBalance: 100000, active: true, createdAt: 1, updatedAt: 1 },
       { id: 'ACC2', bankId: 'HBL', title: 'Second', openingBalance: 50000, active: true, createdAt: 1, updatedAt: 1 },
     ],
+    ledgers: [],
     cheques: [], transactions: [], ledger: [], movements: [], allocations: [], audit: [],
     settings: { ...DEFAULT_PDC_SETTINGS, updatedAt: 1 },
   };

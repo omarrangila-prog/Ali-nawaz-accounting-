@@ -14,7 +14,8 @@ const groups: NavGroup[] = [
     items: [
       { to: '/', tkey: 'Cash Book', icon: 'wallet' },
       { to: '/parties', tkey: 'Parties & Banks', icon: 'user' },
-      { to: '/ledger', tkey: 'Ledger', icon: 'ledger', shortcut: 'F8' },
+      { to: '/ledgers', tkey: 'Ledgers', icon: 'book' },
+      { to: '/ledger', tkey: 'Party Ledger', icon: 'ledger', shortcut: 'F8' },
       { to: '/reports', tkey: 'Reports', icon: 'reports', shortcut: 'F10' },
     ],
   },
