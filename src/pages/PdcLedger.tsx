@@ -175,9 +175,11 @@ export function PdcLedger() {
               <table className="grid pdc-grid stack-sm">
                 <thead>
                   <tr>
-                    <th>Date</th><th>Reference</th><th>Type</th><th>Method</th>
+                    {/* WHEN → WHAT → WHO → DETAILS → MONEY → STATUS. */}
+                    <th>Date</th><th>Reference</th><th>Type</th>
+                    <th>Related</th><th>Method</th>
                     <th>Cheque #</th><th>Cheque Date</th>
-                    <th>Description</th><th>Related</th>
+                    <th>Description</th>
                     <th className="num">Debit</th><th className="num">Credit</th>
                     <th className="num">Balance</th><th>Status</th>
                   </tr>
@@ -188,11 +190,11 @@ export function PdcLedger() {
                       <td data-label="Date">{formatDate(entry.date)}</td>
                       <td data-label="Reference" className="mono">{txn?.reference ?? '—'}</td>
                       <td data-label="Type">{entry.type}</td>
+                      <td data-label="Related">{relatedName || bankLabel || '—'}</td>
                       <td data-label="Method">{cheque ? 'Cheque' : bankLabel ? 'Bank' : 'Cash'}</td>
                       <td data-label="Cheque #" className="mono">{cheque?.chequeNumber ?? '—'}</td>
                       <td data-label="Cheque Date">{cheque ? formatDate(cheque.chequeDate) : '—'}</td>
                       <td data-label="Description">{entry.description}</td>
-                      <td data-label="Related">{relatedName || bankLabel || '—'}</td>
                       <td data-label="Debit" className="num mono pos">{entry.debit ? formatMoney(entry.debit, cur) : '—'}</td>
                       <td data-label="Credit" className="num mono neg">{entry.credit ? formatMoney(entry.credit, cur) : '—'}</td>
                       <td data-label="Balance" className={cx('num mono stmt-bal', running > 0 ? 'pos' : running < 0 ? 'neg' : '')}>

@@ -92,9 +92,12 @@ export function ChequePanel({ today, onOpen }: Props) {
           <table className="grid pdc-grid stack-sm">
             <thead>
               <tr>
-                <th>Direction</th><th>Cheque #</th><th>Party</th><th>Bank</th>
-                <th>Due Date</th><th>Status</th><th>Held By</th>
-                <th className="num">Amount</th><th className="no-print"></th>
+                {/* WHEN → WHAT → WHO → MONEY → STATUS, same order as the
+                    register so the two tables read the same way. */}
+                <th>Due Date</th><th>Cheque #</th><th>In / Out</th>
+                <th>Party</th><th>Bank</th>
+                <th className="num">Amount</th>
+                <th>Status</th><th>Held By</th><th className="no-print"></th>
               </tr>
             </thead>
             <tbody>
@@ -103,30 +106,30 @@ export function ChequePanel({ today, onOpen }: Props) {
                 const dueToday = isLive(c) && c.chequeDate === today;
                 return (
                   <tr key={c.id} onClick={() => onOpen(c.id)} style={{ cursor: 'pointer' }}>
-                    <td data-label="Direction">
-                      <span className={cx('cheque-dir', c.direction)}>
-                        <Icon name={c.direction === 'received' ? 'cheque-in' : 'cheque-out'} size={13} />
-                        {c.direction === 'received' ? 'In' : 'Out'}
-                      </span>
-                    </td>
-                    <td data-label="Cheque #" className="mono">{c.chequeNumber}</td>
-                    <td data-label="Party">{partyName(data, c.partyId)}</td>
-                    <td data-label="Bank">{data.banks.find((b) => b.id === c.bankId)?.name ?? '—'}</td>
                     <td data-label="Due Date" className={cx(overdue && 'neg', dueToday && 'due-today-cell')}>
                       {formatDate(c.chequeDate)}
                       {overdue && <span className="due-flag">overdue</span>}
                       {dueToday && <span className="due-flag today">today</span>}
                     </td>
-                    <td data-label="Status">
-                      <span className={cx('pdc-status', `st-${c.status}`)}>{c.status}</span>
+                    <td data-label="Cheque #" className="mono">{c.chequeNumber}</td>
+                    <td data-label="In / Out">
+                      <span className={cx('cheque-dir', c.direction)}>
+                        <Icon name={c.direction === 'received' ? 'cheque-in' : 'cheque-out'} size={13} />
+                        {c.direction === 'received' ? 'In' : 'Out'}
+                      </span>
                     </td>
-                    <td data-label="Held By">{holderLabel(data, c.holder)}</td>
+                    <td data-label="Party">{partyName(data, c.partyId)}</td>
+                    <td data-label="Bank">{data.banks.find((b) => b.id === c.bankId)?.name ?? '—'}</td>
                     <td
                       data-label="Amount"
                       className={cx('num mono', c.direction === 'received' ? 'pos' : 'neg')}
                     >
                       {formatMoney(c.amount, cur)}
                     </td>
+                    <td data-label="Status">
+                      <span className={cx('pdc-status', `st-${c.status}`)}>{c.status}</span>
+                    </td>
+                    <td data-label="Held By">{holderLabel(data, c.holder)}</td>
                     <td className="no-print actions-cell">
                       <button
                         className="btn btn-ghost btn-icon btn-sm"
@@ -142,8 +145,10 @@ export function ChequePanel({ today, onOpen }: Props) {
             </tbody>
             <tfoot>
               <tr className="pdc-total-row">
-                <td colSpan={7}>Total · {rows.length} cheque{rows.length === 1 ? '' : 's'}</td>
+                {/* Five label columns, then Amount, then Status / Held By. */}
+                <td colSpan={5}>Total · {rows.length} cheque{rows.length === 1 ? '' : 's'}</td>
                 <td className="num mono">{formatMoney(total, cur)}</td>
+                <td colSpan={2}></td>
                 <td className="no-print"></td>
               </tr>
             </tfoot>

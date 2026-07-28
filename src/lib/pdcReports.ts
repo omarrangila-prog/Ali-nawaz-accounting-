@@ -175,21 +175,22 @@ function chequeSection(
   return {
     title,
     subtitle: `${cheques.length} cheque${cheques.length === 1 ? '' : 's'}`,
-    head: ['Date', 'Cheque #', 'Party', 'Bank', 'Due Date', 'Status', 'Holder', 'Amount'],
-    numericCols: [7],
-    statusCol: 5,
+    // WHEN → WHAT → WHO → MONEY → STATUS, matching the on-screen tables.
+    head: ['Date', 'Due Date', 'Cheque #', 'Party', 'Bank', 'Amount', 'Status', 'Holder'],
+    numericCols: [5],
+    statusCol: 6,
     emptyText: 'No cheques match this selection.',
     rows: cheques.map((c) => [
       formatDate(c.date),
+      formatDate(c.chequeDate),
       c.chequeNumber,
       partyName(data, c.partyId),
       data.banks.find((b) => b.id === c.bankId)?.name ?? '—',
-      formatDate(c.chequeDate),
+      m(c.amount),
       c.status,
       holderLabel(data, c.holder),
-      m(c.amount),
     ]),
-    foot: ['', '', '', '', '', '', 'Total', m(cheques.reduce((s, c) => s + c.amount, 0))],
+    foot: ['', '', '', '', 'Total', m(cheques.reduce((s, c) => s + c.amount, 0)), '', ''],
   };
 }
 
@@ -776,20 +777,20 @@ export function buildPdcReport(
       const bounced = data.cheques.filter((c) => c.status === 'bounced' || c.bouncedOn);
       sections.push({
         title: 'Bounced Cheques',
-        head: ['Cheque #', 'Party', 'Cheque Date', 'Bounced On', 'Reason', 'Replaced By', 'Amount'],
-        numericCols: [6],
+        head: ['Bounced On', 'Cheque Date', 'Cheque #', 'Party', 'Amount', 'Reason', 'Replaced By'],
+        numericCols: [4],
         rows: bounced.map((c) => [
+          c.bouncedOn ? formatDate(c.bouncedOn) : '—',
+          formatDate(c.chequeDate),
           c.chequeNumber,
           partyName(data, c.partyId),
-          formatDate(c.chequeDate),
-          c.bouncedOn ? formatDate(c.bouncedOn) : '—',
+          m(c.amount),
           c.bounceReason ?? '—',
           c.replacedByChequeId
             ? data.cheques.find((x) => x.id === c.replacedByChequeId)?.chequeNumber ?? '—'
             : '—',
-          m(c.amount),
         ]),
-        foot: ['', '', '', '', '', 'Total', m(bounced.reduce((s, c) => s + c.amount, 0))],
+        foot: ['', '', '', 'Total', m(bounced.reduce((s, c) => s + c.amount, 0)), '', ''],
       });
       break;
     }

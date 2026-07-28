@@ -210,8 +210,8 @@ export function exportExcel(data: PdcDataSet): string {
   sheets.push({
     name: 'Cash Book',
     rows: [
-      ['Date', 'Reference', 'Type', 'Party', 'To Party', 'Cheque #', 'Description',
-        'Debit', 'Credit', 'Balance', 'Status', 'Reversed'],
+      ['Date', 'Reference', 'Type', 'From Party', 'To Party', 'Cheque #',
+        'Description', 'Debit', 'Credit', 'Balance', 'Status', 'Reversed'],
       ...reg.map((r) => [
         r.txn.date, r.txn.reference, r.txn.type, r.partyName, r.toPartyName,
         r.cheque?.chequeNumber ?? '', r.txn.description ?? '',
@@ -225,17 +225,19 @@ export function exportExcel(data: PdcDataSet): string {
   sheets.push({
     name: 'Cheques',
     rows: [
-      ['Direction', 'Cheque #', 'Party', 'Bank', 'Entry Date', 'Cheque Date',
-        'Amount', 'Status', 'Held By', 'Allocated', 'Bounce Reason'],
+      // Same sequence as the app: WHEN → WHAT → WHO → MONEY → STATUS.
+      ['Entry Date', 'Cheque Date', 'Cheque #', 'In / Out', 'Party', 'Bank',
+        'Amount', 'Allocated', 'Status', 'Held By', 'Bounce Reason'],
       ...data.cheques
         .slice()
         .sort((a, b) => a.chequeDate.localeCompare(b.chequeDate))
         .map((c) => [
-          c.direction, c.chequeNumber, partyName(data, c.partyId),
+          c.date, c.chequeDate, c.chequeNumber,
+          c.direction === 'received' ? 'In' : 'Out',
+          partyName(data, c.partyId),
           data.banks.find((b) => b.id === c.bankId)?.name ?? '',
-          c.date, c.chequeDate, money(c.amount), c.status,
-          holderLabel(data, c.holder), money(c.allocatedAmount || 0),
-          c.bounceReason ?? '',
+          money(c.amount), money(c.allocatedAmount || 0), c.status,
+          holderLabel(data, c.holder), c.bounceReason ?? '',
         ]),
     ],
   });
