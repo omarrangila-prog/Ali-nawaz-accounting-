@@ -21,7 +21,7 @@ import type { Cheque } from '@/types/pdc';
 import { todayISO, formatMoney } from '@/lib/utils';
 import { toast } from '@/store/toast';
 
-export type ChequeAction = 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | null;
+export type ChequeAction = 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | 'edit' | null;
 
 interface Props {
   action: ChequeAction;
@@ -38,6 +38,13 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
   const [reason, setReason] = useState('');
   const [date, setDate] = useState(todayISO());
   const [replacementId, setReplacementId] = useState('');
+  // --- edit form ---
+  const [editNumber, setEditNumber] = useState('');
+  const [editChequeDate, setEditChequeDate] = useState('');
+  const [editAmount, setEditAmount] = useState('');
+  const [editDrawer, setEditDrawer] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editReason, setEditReason] = useState('');
 
   useEffect(() => {
     if (!action) return;
@@ -45,6 +52,12 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
     setReason('');
     setDate(todayISO());
     setReplacementId('');
+    setEditNumber(cheque?.chequeNumber ?? '');
+    setEditChequeDate(cheque?.chequeDate ?? '');
+    setEditAmount(String(cheque?.amount ?? ''));
+    setEditDrawer(cheque?.drawerName ?? '');
+    setEditDesc(cheque?.description ?? '');
+    setEditReason('');
   }, [action, cheque]);
 
   if (!action || !cheque) return null;
@@ -109,6 +122,28 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
       return;
     }
 
+    if (action === 'edit') {
+      const num = editNumber.trim();
+      if (!num) { toast.error('Cheque number is required.'); return; }
+      if (!editChequeDate) { toast.error('Cheque date is required.'); return; }
+      const amt = Number(editAmount);
+      if (!Number.isFinite(amt) || amt <= 0) { toast.error('Enter a valid amount.'); return; }
+
+      const ok = await store.updateChequeDetails(
+        cheque!.id,
+        {
+          chequeNumber: num,
+          chequeDate: editChequeDate,
+          amount: amt,
+          drawerName: editDrawer || undefined,
+          description: editDesc || undefined,
+        },
+        editReason || undefined
+      );
+      if (ok) onClose();
+      return;
+    }
+
     if (action === 'replace') {
       if (!replacementId) { toast.error('Select the replacement cheque.'); return; }
       const res = linkReplacement(data, {
@@ -132,6 +167,7 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
     bounce: 'Mark Cheque Bounced',
     cancel: 'Cancel Cheque',
     replace: 'Link Replacement Cheque',
+    edit: 'Edit Cheque Details',
   };
 
   return (
@@ -177,6 +213,47 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
               onChange={(e) => setReason(e.target.value)}
             />
           </div>
+        )}
+        {action === 'edit' && (
+          <>
+            <div className="grid-2">
+              <div className="field">
+                <label>Cheque Number</label>
+                <input className="input" autoFocus value={editNumber}
+                  onChange={(e) => setEditNumber(e.target.value)} />
+              </div>
+              <div className="field">
+                <label>Cheque Date</label>
+                <input className="input" type="date" value={editChequeDate}
+                  onChange={(e) => setEditChequeDate(e.target.value)} />
+              </div>
+            </div>
+            <div className="field">
+              <label>Amount</label>
+              <input className="input" type="number" value={editAmount}
+                onChange={(e) => setEditAmount(e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Drawer Name <span className="faint">(optional)</span></label>
+              <input className="input" value={editDrawer}
+                onChange={(e) => setEditDrawer(e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Description <span className="faint">(optional)</span></label>
+              <input className="input" value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Reason for the change <span className="faint">(kept in the audit trail)</span></label>
+              <input className="input" value={editReason} placeholder="e.g. typed the wrong amount"
+                onChange={(e) => setEditReason(e.target.value)} />
+            </div>
+            <div className="pdc-warn" style={{ marginTop: 0 }}>
+              This corrects the cheque's own details. It does not re-post the
+              accounting entry — if the amount already moved money, reverse that
+              entry from the register instead.
+            </div>
+          </>
         )}
         {action === 'replace' && (
           <div className="field">

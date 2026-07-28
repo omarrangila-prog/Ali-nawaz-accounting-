@@ -17,6 +17,7 @@ const groups: NavGroup[] = [
       { to: '/ledgers', tkey: 'Ledgers', icon: 'book' },
       { to: '/ledger', tkey: 'Party Ledger', icon: 'ledger', shortcut: 'F8' },
       { to: '/reports', tkey: 'Reports', icon: 'reports', shortcut: 'F10' },
+      { to: '/backup', tkey: 'Backup & Export', icon: 'save' },
     ],
   },
 ];

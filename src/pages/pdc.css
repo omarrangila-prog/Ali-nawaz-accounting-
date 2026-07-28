@@ -657,3 +657,23 @@
 .assign-row.on { background: var(--blue-soft); }
 .assign-row input { width: 16px; height: 16px; cursor: pointer; }
 .assign-name { flex: 1; font-size: 13px; font-weight: 500; }
+
+/* --- Backup & Export page ------------------------------------------------- */
+.backup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+.backup-card { display: flex; flex-direction: column; gap: 10px; }
+.backup-card h3 { margin: 0; font-size: 15px; }
+.backup-card p { margin: 0; font-size: 12.5px; line-height: 1.5; }
+.backup-card .btn { margin-top: auto; align-self: flex-start; }
+.backup-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: grid; place-items: center;
+  color: #fff;
+}
+.backup-icon.tone-green { background: var(--green); }
+.backup-icon.tone-blue { background: var(--blue); }
+.backup-icon.tone-red { background: var(--red); }

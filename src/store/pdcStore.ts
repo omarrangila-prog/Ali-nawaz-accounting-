@@ -34,6 +34,7 @@ import {
   type CollectionName,
 } from '@/firebase/dataAccess';
 import { assertBalanced, type Posting } from '@/lib/pdcEngine';
+import type { PdcBackup } from '@/lib/pdcBackup';
 import { buildReversal } from '@/lib/chequeWorkflow';
 import { uid, now, todayISO } from '@/lib/utils';
 import { toast } from './toast';
@@ -76,6 +77,17 @@ interface PdcStore {
   saveCheque: (c: Cheque) => Promise<void>;
   updateSettings: (patch: Partial<PdcSettings>) => Promise<void>;
   logAudit: (entry: Omit<PdcAuditLog, 'id' | 'at' | 'date' | 'user'>) => Promise<void>;
+
+  /**
+   * Correct a posted transaction: reverse the original, then post the
+   * corrected version. Both stay in history and the audit trail records the
+   * change, so books are never silently rewritten.
+   */
+  editTransaction: (txnId: string, corrected: Posting, reason?: string) => Promise<boolean>;
+  /** Edit a cheque's own details (number, dates, drawer…) with an audit entry. */
+  updateChequeDetails: (chequeId: string, patch: Partial<Cheque>, reason?: string) => Promise<boolean>;
+  /** Replace every record from a backup file. Destructive — asks nothing. */
+  restoreBackup: (backup: PdcBackup) => Promise<{ ok: boolean; written: number }>;
 }
 
 const COLLECTIONS: Record<string, CollectionName> = {
@@ -436,6 +448,123 @@ export const usePdc = create<PdcStore>((set, get) => ({
     const next: PdcSettings = { ...get().settings, ...patch, id: 'pdcSettings', updatedAt: now() };
     await upsertDoc(workspace, 'pdcSettings', next);
     set({ settings: next });
+  },
+
+  async editTransaction(txnId, corrected, reason) {
+    const s = get();
+    if (!s.uidRef || s.saving) return false;
+    const original = s.transactions.find((t) => t.id === txnId);
+    if (!original) {
+      toast.error('Transaction not found.');
+      return false;
+    }
+    if (original.reversed) {
+      toast.error('That entry was already reversed — edit the correcting entry instead.');
+      return false;
+    }
+
+    // Reverse first. If this fails nothing else is written, so the books are
+    // never left holding both the wrong figure and the corrected one.
+    const undone = await get().reverse(txnId, reason || `Edited: ${original.reference}`);
+    if (!undone) return false;
+
+    const posted = await get().commit(corrected, {
+      action: 'edit',
+      reason: reason || `Correction of ${original.reference}`,
+    });
+    if (!posted) {
+      toast.error('Reversal saved but the correction failed — re-enter it to finish.');
+      return false;
+    }
+
+    await get().logAudit({
+      action: 'edit',
+      entity: 'transaction',
+      entityId: txnId,
+      txnId: corrected.txn.id,
+      before: { reference: original.reference, type: original.type, amount: original.amount },
+      after: { reference: corrected.txn.reference, type: corrected.txn.type, amount: corrected.txn.amount },
+      reason,
+      description: `${original.reference} corrected → ${corrected.txn.reference}`,
+    });
+    toast.success(`Corrected ${original.reference}`);
+    return true;
+  },
+
+  async updateChequeDetails(chequeId, patch, reason) {
+    const workspace = get().uidRef;
+    if (!workspace) return false;
+    const cheque = get().cheques.find((c) => c.id === chequeId);
+    if (!cheque) {
+      toast.error('Cheque not found.');
+      return false;
+    }
+    // Changing the amount of a cleared cheque would break the posting that
+    // already moved the money — that needs a reversal, not an edit.
+    if (patch.amount !== undefined && patch.amount !== cheque.amount && cheque.status === 'cleared') {
+      toast.error('This cheque has cleared. Reverse the clearing entry before changing its amount.');
+      return false;
+    }
+    const next: Cheque = { ...cheque, ...patch, id: cheque.id, updatedAt: now() };
+    await upsertDoc(workspace, 'pdcCheques', next);
+    await get().logAudit({
+      action: 'edit',
+      entity: 'cheque',
+      entityId: chequeId,
+      before: { chequeNumber: cheque.chequeNumber, amount: cheque.amount, chequeDate: cheque.chequeDate },
+      after: { chequeNumber: next.chequeNumber, amount: next.amount, chequeDate: next.chequeDate },
+      reason,
+      description: `Cheque ${cheque.chequeNumber} details edited`,
+    });
+    toast.success('Cheque updated');
+    return true;
+  },
+
+  async restoreBackup(backup) {
+    const workspace = get().uidRef;
+    if (!workspace) return { ok: false, written: 0 };
+
+    const d = backup.data;
+    const plan: Array<[CollectionName, any[]]> = [
+      ['pdcParties', d.parties ?? []],
+      ['pdcLedgers', d.ledgers ?? []],
+      ['pdcBanks', d.banks ?? []],
+      ['pdcBankAccounts', d.bankAccounts ?? []],
+      ['pdcCheques', d.cheques ?? []],
+      ['pdcLedger', d.ledger ?? []],
+      ['pdcMovements', d.movements ?? []],
+      ['pdcAllocations', d.allocations ?? []],
+      ['pdcAudit', d.audit ?? []],
+      // Transactions last: a header is only visible once its ledger lines exist.
+      ['pdcTransactions', d.transactions ?? []],
+    ];
+
+    set({ saving: true });
+    let written = 0;
+    try {
+      for (const [coll, rows] of plan) {
+        for (const row of rows) {
+          if (!row?.id) continue;
+          await upsertDoc(workspace, coll, row);
+          written++;
+        }
+      }
+      if (d.settings) {
+        await upsertDoc(workspace, 'pdcSettings', { ...d.settings, id: 'pdcSettings' });
+      }
+      await get().logAudit({
+        action: 'edit',
+        entity: 'backup',
+        entityId: 'restore',
+        description: `Restored backup taken ${backup.takenAt} (${written} records)`,
+      });
+      return { ok: true, written };
+    } catch (e) {
+      toast.error(`Restore failed after ${written} records: ${(e as Error).message}`);
+      return { ok: false, written };
+    } finally {
+      set({ saving: false });
+    }
   },
 
   async logAudit(entry) {

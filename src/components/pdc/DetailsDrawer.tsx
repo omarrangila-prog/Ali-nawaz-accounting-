@@ -18,7 +18,7 @@ interface Props {
   onClose: () => void;
   onReverse: (txnId: string) => void;
   onPrint: (row: RegisterRow) => void;
-  onChequeAction: (chequeId: string, action: 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace') => void;
+  onChequeAction: (chequeId: string, action: 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | 'edit') => void;
 }
 
 export function DetailsDrawer({ row, onClose, onReverse, onPrint, onChequeAction }: Props) {
@@ -48,9 +48,16 @@ export function DetailsDrawer({ row, onClose, onReverse, onPrint, onChequeAction
     switch (l.account.kind) {
       case 'party': return partyName(data, l.account.id);
       case 'bank': return bankAccountLabel(data.banks, data.bankAccounts, l.account.id);
+      case 'ledger':
+        return data.ledgers.find((x) => x.id === l.account.id)?.name ?? l.account.id;
       case 'cash':
         if (l.account.id === 'CASH') return 'Cash in Hand';
         if (l.account.id === 'ADJ') return 'Adjustments';
+        // Nominal (profit & loss) accounts.
+        if (l.account.id.startsWith('NOM:')) {
+          const n = l.account.id.slice(4);
+          return n.charAt(0) + n.slice(1).toLowerCase();
+        }
         if (l.account.id.startsWith('PDC:')) return 'PDC Received (cheque in hand)';
         if (l.account.id.startsWith('PDCI:')) return 'PDC Issued (outstanding)';
         return l.account.id;
@@ -107,6 +114,7 @@ export function DetailsDrawer({ row, onClose, onReverse, onPrint, onChequeAction
               </div>
 
               <div className="pdc-drawer-actions">
+                <button className="btn btn-sm" onClick={() => onChequeAction(cheque.id, 'edit')}>Edit Details</button>
                 {cheque.direction === 'received' && cheque.status === 'pending' && (
                   <button className="btn btn-sm" onClick={() => onChequeAction(cheque.id, 'deposit')}>Deposit</button>
                 )}
