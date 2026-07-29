@@ -604,11 +604,36 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     return (
       <div className="field" key="format">
         <label>{label}</label>
-        <div className="format-picker" ref={chain.set(idx) as any} tabIndex={-1}>
+        {/* Keyboard-reachable: ←/→ pick a format, Enter moves on, so the whole
+            form can still be completed without touching the mouse. */}
+        <div
+          className="format-picker"
+          ref={chain.set(idx) as any}
+          tabIndex={0}
+          role="radiogroup"
+          aria-label={label}
+          onKeyDown={(e) => {
+            const at = opts.findIndex((o) => o.id === format);
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              setFormat(opts[(at + 1) % opts.length].id);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              setFormat(opts[(at - 1 + opts.length) % opts.length].id);
+            } else if (e.key === 'Enter') {
+              e.preventDefault();
+              if (e.shiftKey) chain.focusAt(idx - 1);
+              else chain.focusAt(idx + 1);
+            }
+          }}
+        >
           {opts.map((o) => (
             <button
               key={o.id}
               type="button"
+              tabIndex={-1}
+              role="radio"
+              aria-checked={format === o.id}
               className={cx('format-btn', format === o.id && 'on')}
               onClick={() => setFormat(o.id)}
               title={o.hint}

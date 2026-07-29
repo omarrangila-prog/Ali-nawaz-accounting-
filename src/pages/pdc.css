@@ -685,6 +685,13 @@
   gap: 6px;
 }
 .format-picker:focus { outline: none; }
+/* Ring the whole group when it has keyboard focus, so the user can see that
+   arrow keys will now change the selection. */
+.format-picker:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
 .format-btn {
   display: flex;
   flex-direction: column;
