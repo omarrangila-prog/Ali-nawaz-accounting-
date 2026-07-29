@@ -677,3 +677,36 @@
 .backup-icon.tone-green { background: var(--green); }
 .backup-icon.tone-blue { background: var(--blue); }
 .backup-icon.tone-red { background: var(--red); }
+
+/* --- Format picker: Cash / Bank / Credit / Debit -------------------------- */
+.format-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 6px;
+}
+.format-picker:focus { outline: none; }
+.format-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1.5px solid var(--stroke);
+  background: var(--surface-solid);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.14s, background 0.14s, box-shadow 0.14s;
+}
+.format-btn:hover { border-color: var(--stroke-strong); }
+.format-btn.on {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.14);
+}
+.format-btn-label { font-size: 13px; font-weight: 700; color: var(--text); }
+.format-btn.on .format-btn-label { color: #1e40af; }
+.format-btn-hint { font-size: 10px; color: var(--text-faint); line-height: 1.25; }
+
+@media (max-width: 480px) {
+  .format-picker { grid-template-columns: 1fr 1fr; }
+}

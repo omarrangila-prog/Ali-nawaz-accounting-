@@ -30,7 +30,7 @@ import {
   bankAccountLabel,
 } from '@/lib/pdcEngine';
 import { buildChequeTransfer, isDuplicateCheque, unallocated } from '@/lib/chequeWorkflow';
-import { todayISO, formatMoney } from '@/lib/utils';
+import { todayISO, formatMoney, round2, cx } from '@/lib/utils';
 import { toast } from '@/store/toast';
 
 /** Which form is open. */
@@ -160,6 +160,15 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
   const [description, setDescription] = useState('');
   const [settlement, setSettlement] = useState<'cash' | 'credit'>('credit');
   const [category, setCategory] = useState('');
+  /**
+   * How the entry settles. 'bank' and 'cash' both move money now — they only
+   * differ in WHERE it lands, so choosing 'bank' reveals the account picker.
+   * 'credit' and 'debit' leave it on the party's account instead.
+   */
+  const [format, setFormat] = useState<'bank' | 'cash' | 'credit' | 'debit'>('cash');
+  /** Optional quantity × rate; when both are set they drive the amount. */
+  const [qty, setQty] = useState('');
+  const [rate, setRate] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Reset whenever the form opens so a previous entry never leaks in.
@@ -178,8 +187,28 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     setDescription('');
     setSettlement('credit');
     setCategory('');
+    setFormat('cash');
+    setQty('');
+    setRate('');
     setErrors({});
   }, [kind, defaultParty, defaultCheque]);
+
+  // Quantity × rate drives the amount, so the user never multiplies by hand.
+  useEffect(() => {
+    const q = Number(qty);
+    const r = Number(rate);
+    if (qty.trim() && rate.trim() && Number.isFinite(q) && Number.isFinite(r)) {
+      setAmount(String(round2(q * r)));
+    }
+  }, [qty, rate]);
+
+  // The format selector IS the settlement choice — keep them in step so the
+  // engine still receives a plain 'cash' | 'credit'.
+  useEffect(() => {
+    setSettlement(format === 'bank' || format === 'cash' ? 'cash' : 'credit');
+    // Only a bank settlement needs an account; the others clear it.
+    if (format !== 'bank') setBankAccountId('');
+  }, [format]);
 
   // --- options -------------------------------------------------------------
   const partyOptions = useMemo(
@@ -305,6 +334,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
           buildSale(data, {
             partyId, amount: amt, date, settlement, description,
             bankAccountId: settlement === 'cash' ? bankAccountId || undefined : undefined,
+            quantity: qty.trim() ? Number(qty) : undefined,
+            rate: rate.trim() ? Number(rate) : undefined,
           })
         );
         break;
@@ -313,6 +344,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
           buildPurchase(data, {
             partyId, amount: amt, date, settlement, description,
             bankAccountId: settlement === 'cash' ? bankAccountId || undefined : undefined,
+            quantity: qty.trim() ? Number(qty) : undefined,
+            rate: rate.trim() ? Number(rate) : undefined,
           })
         );
         break;
@@ -404,16 +437,17 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
   const fields: ReactNode[] = [];
   const fieldCount = (() => {
     switch (kind) {
-      // party, amount, cash/credit, account, date, desc
+      // party, qty, rate, amount, format, [account], date, desc
       case 'sale':
-      case 'purchase': return 6;
-      // category, amount, date, account, desc
+      case 'purchase': return 8;
+      // category, qty, rate, amount, format, [account], date, desc
       case 'expense':
-      case 'income': return 5;
+      case 'income': return 8;
       case 'pdc-received': return 7;   // party, bank, cheque#, cheque date, amount, date, desc
       case 'pdc-issued': return 7;     // party, account, cheque#, cheque date, amount, date, desc
+      // party, amount, format, [account], date, desc
       case 'cash-received':
-      case 'cash-paid': return 5;      // party, amount, date, account, desc
+      case 'cash-paid': return 6;
       case 'debit':
       case 'credit': return 4;         // party, amount, date, desc
       case 'party-transfer': return 5; // from, to, amount, date, desc
@@ -516,27 +550,112 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     );
   };
 
+  /**
+   * Quantity and Rate side by side. Filling both multiplies into Amount;
+   * leaving them blank lets the user type a lump sum instead.
+   */
+  const qtyRateField = () => {
+    const qi = i++;
+    const ri = i++;
+    return (
+      <div className="field" key="qtyrate">
+        <label>Quantity &amp; Rate <span className="faint">(optional — fills the amount)</span></label>
+        <div className="grid-2">
+          <input
+            ref={chain.set(qi) as any}
+            className="input"
+            type="number"
+            inputMode="decimal"
+            placeholder="Qty"
+            value={qty}
+            onChange={(e) => setQty(e.target.value)}
+            onKeyDown={chain.keyHandler(qi)}
+          />
+          <input
+            ref={chain.set(ri) as any}
+            className="input"
+            type="number"
+            inputMode="decimal"
+            placeholder="Rate"
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
+            onKeyDown={chain.keyHandler(ri)}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  /** Four buttons choosing how the entry settles. */
+  const formatButtons = (
+    opts: Array<{ id: 'bank' | 'cash' | 'credit' | 'debit'; label: string; hint: string }>,
+    label: string
+  ) => {
+    const idx = i++;
+    return (
+      <div className="field" key="format">
+        <label>{label}</label>
+        <div className="format-picker" ref={chain.set(idx) as any} tabIndex={-1}>
+          {opts.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              className={cx('format-btn', format === o.id && 'on')}
+              onClick={() => setFormat(o.id)}
+              title={o.hint}
+            >
+              <span className="format-btn-label">{o.label}</span>
+              <span className="format-btn-hint">{o.hint}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  /** Sale / Purchase: all four options are meaningful. */
+  const formatField = (isSale: boolean) =>
+    formatButtons(
+      [
+        { id: 'cash', label: 'Cash', hint: isSale ? 'cash received now' : 'cash paid now' },
+        { id: 'bank', label: 'Bank', hint: isSale ? 'into an account' : 'from an account' },
+        { id: 'credit', label: 'Credit', hint: isSale ? 'they pay later' : 'we pay later' },
+        { id: 'debit', label: 'Debit', hint: 'on account' },
+      ],
+      'Format'
+    );
+
+  /**
+   * Expense / Income / Cash entries always move money now, so only the
+   * destination matters — Cash or Bank.
+   */
+  const moneySourceField = (verb: string) =>
+    formatButtons(
+      [
+        { id: 'cash', label: 'Cash', hint: `${verb} cash in hand` },
+        { id: 'bank', label: 'Bank', hint: `${verb} a bank account` },
+      ],
+      'Format'
+    );
+
   switch (kind) {
     case 'sale':
     case 'purchase': {
       const isSale = kind === 'sale';
       fields.push(partyField(isSale ? 'Customer' : 'Supplier', partyId, setPartyId, 'partyId'));
-      fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00'));
-      fields.push(selectField(
-        'Payment', settlement,
-        [
-          { value: 'credit', label: isSale ? 'On credit — they will pay later' : 'On credit — we will pay later' },
-          { value: 'cash', label: isSale ? 'Cash / bank received now' : 'Cash / bank paid now' },
-        ],
-        (v) => setSettlement(v as 'cash' | 'credit'), 'settlement'
-      ));
-      // Only relevant when money actually moves now.
-      fields.push(comboField(
-        'Cash or Bank', bankAccountId,
-        [{ id: '', label: 'Cash in hand' }, ...accountOptions],
-        setBankAccountId, 'bankAccountId', 'Cash in hand',
-        settlement === 'cash' ? '(where the money went)' : '(not used for credit)'
-      ));
+      // Quantity × Rate fills the Amount automatically; leave them blank to
+      // type a lump-sum amount directly.
+      fields.push(qtyRateField());
+      fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00',
+        qty.trim() && rate.trim() ? '(qty × rate)' : '(or enter directly)'));
+      fields.push(formatField(isSale));
+      if (format === 'bank') {
+        fields.push(comboField(
+          'Bank Account', bankAccountId, accountOptions,
+          setBankAccountId, 'bankAccountId', 'Select account',
+          isSale ? '(money received into)' : '(money paid from)'
+        ));
+      }
       fields.push(textField('Date', date, setDate, 'date', 'date'));
       fields.push(textField('Description', description, setDescription, 'description', 'text', 'Optional'));
       break;
@@ -548,14 +667,17 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
         'Category', category, setCategory, 'category', 'text',
         kind === 'expense' ? 'e.g. Rent, Salary, Fuel' : 'e.g. Commission, Rebate'
       ));
-      fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00'));
+      fields.push(qtyRateField());
+      fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00',
+        qty.trim() && rate.trim() ? '(qty × rate)' : '(or enter directly)'));
+      fields.push(moneySourceField(kind === 'expense' ? 'paid from' : 'received into'));
+      if (format === 'bank') {
+        fields.push(comboField(
+          'Bank Account', bankAccountId, accountOptions,
+          setBankAccountId, 'bankAccountId', 'Select account'
+        ));
+      }
       fields.push(textField('Date', date, setDate, 'date', 'date'));
-      fields.push(comboField(
-        'Cash or Bank', bankAccountId,
-        [{ id: '', label: 'Cash in hand' }, ...accountOptions],
-        setBankAccountId, 'bankAccountId', 'Cash in hand',
-        kind === 'expense' ? '(paid from)' : '(received into)'
-      ));
       fields.push(textField('Description', description, setDescription, 'description', 'text', 'Optional'));
       break;
 
@@ -583,12 +705,14 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     case 'cash-paid':
       fields.push(partyField('Party', partyId, setPartyId, 'partyId'));
       fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00'));
+      fields.push(moneySourceField(kind === 'cash-received' ? 'received into' : 'paid from'));
+      if (format === 'bank') {
+        fields.push(comboField(
+          'Bank Account', bankAccountId, accountOptions,
+          setBankAccountId, 'bankAccountId', 'Select account'
+        ));
+      }
       fields.push(textField('Date', date, setDate, 'date', 'date'));
-      fields.push(comboField(
-        'Bank Account', bankAccountId,
-        [{ id: '', label: 'Cash in hand' }, ...accountOptions],
-        setBankAccountId, 'bankAccountId', 'Cash in hand', '(leave as cash for physical cash)'
-      ));
       fields.push(textField('Description', description, setDescription, 'description', 'text', 'Optional'));
       break;
 

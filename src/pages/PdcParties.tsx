@@ -14,6 +14,7 @@ import { Combo } from '@/components/ui/Combo';
 import { usePdc } from '@/store/pdcStore';
 import { bankAccountLabel, bankBalances, partyBalances, balanceLabel } from '@/lib/pdcEngine';
 import type { Bank, BankAccount, PdcParty } from '@/types/pdc';
+import { PAKISTAN_BANK_OPTIONS } from '@/config/pakistanBanks';
 import { formatMoney, cx } from '@/lib/utils';
 import { toast } from '@/store/toast';
 import './pdc.css';
@@ -329,8 +330,20 @@ function BankModal({ bank, onClose }: { bank: Bank | 'new' | null; onClose: () =
         <button className="btn btn-primary" onClick={save}>Save</button></>}>
       <div className="field">
         <label>Bank Name</label>
-        <input className="input" autoFocus value={name} onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && save()} placeholder="e.g. HBL, Meezan Bank" />
+        {/* Pick from the Pakistani banks, or type any other name — allowCreate
+            means the list is a shortcut, never a restriction. */}
+        <Combo
+          value={name}
+          options={PAKISTAN_BANK_OPTIONS}
+          placeholder="Search or type a bank name"
+          allowCreate
+          onChange={setName}
+          onCreate={async (typed) => { setName(typed); return typed; }}
+          onDone={save}
+        />
+        <div className="faint" style={{ fontSize: 11.5, marginTop: 4 }}>
+          {PAKISTAN_BANK_OPTIONS.length} Pakistani banks listed — or type your own.
+        </div>
       </div>
     </Modal>
   );

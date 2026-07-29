@@ -63,6 +63,13 @@ export function PdcLedgers() {
           <button className="btn btn-primary" onClick={() => setAssignFor(v.ledger.id)}>
             <Icon name="plus" size={15} /> Assign Parties
           </button>
+          <button
+            className="btn btn-danger"
+            style={{ marginLeft: 'auto' }}
+            onClick={() => setToDelete(v.ledger)}
+          >
+            <Icon name="trash" size={15} /> Delete Ledger
+          </button>
         </div>
 
         {/* Headline figures for this ledger. */}
@@ -172,6 +179,24 @@ export function PdcLedgers() {
 
         <LedgerModal ledger={modal} onClose={() => setModal(null)} />
         <AssignModal ledgerId={assignFor} onClose={() => setAssignFor(null)} />
+        {/* The detail view needs its own confirm dialog — the one further down
+            only renders in the list view. */}
+        <ConfirmDialog
+          open={!!toDelete}
+          title={`Delete ${toDelete?.name ?? 'this ledger'}?`}
+          message="Parties keep their own balances and history — only the grouping is removed. A ledger holding its own entries is marked inactive instead, so nothing is lost."
+          confirmLabel="Delete"
+          danger
+          onConfirm={async () => {
+            const l = toDelete;
+            setToDelete(null);
+            if (l && (await store.deleteLedger(l.id))) {
+              toast.success(`Deleted ${l.name}`);
+              open('');   // back to the list; this ledger no longer exists
+            }
+          }}
+          onCancel={() => setToDelete(null)}
+        />
       </div>
     );
   }
