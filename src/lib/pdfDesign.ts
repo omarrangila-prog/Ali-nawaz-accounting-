@@ -657,6 +657,15 @@ function drawSection(doc: jsPDF, s: DesignSection, y: number, accent: RGB): numb
     columnStyles: Object.fromEntries(
       s.head.map((_, i) => [i, { halign: numeric.has(i) ? 'right' : 'left' }])
     ) as any,
+    // headStyles applies to the whole header row and overrides the per-column
+    // halign above, which left money HEADINGS stranded to the left of their
+    // figures. Re-assert the alignment per header cell so each label sits
+    // directly over the column it names.
+    willDrawCell: (d) => {
+      if (d.section === 'head' && numeric.has(d.column.index)) {
+        d.cell.styles.halign = 'right';
+      }
+    },
     didParseCell: (d) => {
       // Totals row: bold, tinted, with a strong top rule.
       if (d.section === 'body' && d.row.index === footIdx) {
