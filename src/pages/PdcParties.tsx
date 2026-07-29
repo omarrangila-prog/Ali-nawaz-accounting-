@@ -14,7 +14,7 @@ import { Combo } from '@/components/ui/Combo';
 import { usePdc } from '@/store/pdcStore';
 import { bankAccountLabel, bankBalances, partyBalances, balanceLabel } from '@/lib/pdcEngine';
 import type { Bank, BankAccount, PdcParty } from '@/types/pdc';
-import { PAKISTAN_BANK_OPTIONS } from '@/config/pakistanBanks';
+import { PAKISTAN_BANK_OPTIONS, PAKISTAN_BANKS } from '@/config/pakistanBanks';
 import { formatMoney, cx } from '@/lib/utils';
 import { toast } from '@/store/toast';
 import './pdc.css';
@@ -36,6 +36,21 @@ export function PdcParties() {
 
   const balances = useMemo(() => partyBalances(data), [data]);
   const bankBals = useMemo(() => bankBalances(data), [data]);
+
+  /** Bulk-add every Pakistani bank, skipping any already present. */
+  const addAllBanks = async () => {
+    const have = new Set(data.banks.map((b) => b.name.trim().toLowerCase()));
+    const missing = PAKISTAN_BANKS.filter((b) => !have.has(b.name.trim().toLowerCase()));
+    if (missing.length === 0) {
+      toast.info('All Pakistani banks are already added.');
+      return;
+    }
+    let added = 0;
+    for (const b of missing) {
+      if (await store.saveBank({ name: b.name })) added++;
+    }
+    toast.success(`Added ${added} bank${added === 1 ? '' : 's'}`);
+  };
 
   const parties = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -73,8 +88,11 @@ export function PdcParties() {
             </button>
           ) : (
             <>
+              <button className="btn" onClick={addAllBanks} disabled={store.saving}>
+                <Icon name="bank" size={15} /> Add All Pakistani Banks
+              </button>
               <button className="btn" onClick={() => setBankModal('new')}>
-                <Icon name="bank" size={15} /> New Bank
+                <Icon name="plus" size={15} /> New Bank
               </button>
               <button className="btn btn-primary" onClick={() => setAccountModal('new')}>
                 <Icon name="plus" size={15} /> New Account

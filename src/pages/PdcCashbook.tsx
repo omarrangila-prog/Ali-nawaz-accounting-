@@ -111,6 +111,7 @@ export function PdcCashbook() {
   const [detail, setDetail] = useState<RegisterRow | null>(null);
   const [chequeAction, setChequeAction] = useState<{ id: string; action: ChequeAction }>({ id: '', action: null });
   const [toReverse, setToReverse] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -190,9 +191,15 @@ export function PdcCashbook() {
         case 'Enter':
           if (selected >= 0) { e.preventDefault(); setDetail(shown[selected]); }
           break;
+        // Delete removes the entry outright (for typos). Shift+Delete posts a
+        // reversing entry instead, keeping both sides in history.
         case 'Delete':
         case 'Backspace':
-          if (selected >= 0) { e.preventDefault(); setToReverse(shown[selected].txn.id); }
+          if (selected >= 0) {
+            e.preventDefault();
+            if (e.shiftKey) setToReverse(shown[selected].txn.id);
+            else setToDelete(shown[selected].txn.id);
+          }
           break;
       }
     };
@@ -261,6 +268,15 @@ export function PdcCashbook() {
     if (!id) return;
     await store.reverse(id);
     setDetail(null);
+  };
+
+  const doDelete = async () => {
+    const id = toDelete;
+    setToDelete(null);
+    if (!id) return;
+    // The Firestore subscription pushes the removal straight back, so the row
+    // disappears from the register as soon as the write lands.
+    if (await store.deleteTransaction(id)) setDetail(null);
   };
 
   const printRow = (row: RegisterRow) => {
@@ -464,7 +480,7 @@ export function PdcCashbook() {
             {shown.length !== register.length && <span className="faint"> of {formatNumber(register.length)}</span>}
           </div>
           <div className="faint pdc-keyhint no-print">
-            ↑↓ move · Enter details · Del reverse · PgUp/PgDn page
+            ↑↓ move · Enter details · Del delete · Shift+Del reverse
           </div>
         </div>
 
@@ -531,11 +547,15 @@ export function PdcCashbook() {
                             <Icon name="eye" size={14} />
                           </button>
                           {!txn.reversed && (
-                            <button className="btn btn-ghost btn-icon btn-sm del-btn" title="Reverse (Del)"
+                            <button className="btn btn-ghost btn-icon btn-sm" title="Reverse — keeps both entries (Shift+Del)"
                               onClick={(e) => { e.stopPropagation(); setToReverse(txn.id); }}>
                               <Icon name="undo" size={14} />
                             </button>
                           )}
+                          <button className="btn btn-ghost btn-icon btn-sm del-btn" title="Delete permanently (Del)"
+                            onClick={(e) => { e.stopPropagation(); setToDelete(txn.id); }}>
+                            <Icon name="trash" size={14} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -553,6 +573,7 @@ export function PdcCashbook() {
         row={detail}
         onClose={() => setDetail(null)}
         onReverse={(id) => setToReverse(id)}
+        onDelete={(id) => setToDelete(id)}
         onPrint={printRow}
         onChequeAction={(id, action) => setChequeAction({ id, action })}
       />
@@ -571,6 +592,16 @@ export function PdcCashbook() {
         danger
         onConfirm={doReverse}
         onCancel={() => setToReverse(null)}
+      />
+
+      <ConfirmDialog
+        open={!!toDelete}
+        title="Delete this entry permanently?"
+        message="The entry, its ledger effect and any cheque it created are removed completely — balances update immediately. Nothing is left in the register. The audit trail keeps a record of what was deleted. Use Reverse instead if the entry really happened and you only need to correct it."
+        confirmLabel="Delete"
+        danger
+        onConfirm={doDelete}
+        onCancel={() => setToDelete(null)}
       />
     </div>
   );

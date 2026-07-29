@@ -17,11 +17,12 @@ interface Props {
   row: RegisterRow | null;
   onClose: () => void;
   onReverse: (txnId: string) => void;
+  onDelete: (txnId: string) => void;
   onPrint: (row: RegisterRow) => void;
   onChequeAction: (chequeId: string, action: 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | 'edit') => void;
 }
 
-export function DetailsDrawer({ row, onClose, onReverse, onPrint, onChequeAction }: Props) {
+export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onChequeAction }: Props) {
   const store = usePdc();
   const data = store.dataset();
   const cur = data.settings.currency;
@@ -200,10 +201,13 @@ export function DetailsDrawer({ row, onClose, onReverse, onPrint, onChequeAction
             <Icon name="print" size={15} /> Print
           </button>
           {!txn.reversed && (
-            <button className="btn btn-sm btn-danger" onClick={() => onReverse(txn.id)}>
+            <button className="btn btn-sm" onClick={() => onReverse(txn.id)}>
               Reverse
             </button>
           )}
+          <button className="btn btn-sm btn-danger" onClick={() => onDelete(txn.id)}>
+            Delete
+          </button>
         </footer>
       </aside>
     </>

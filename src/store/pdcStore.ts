@@ -65,6 +65,13 @@ interface PdcStore {
   commit: (posting: Posting, opts?: { action?: AuditAction; reason?: string }) => Promise<boolean>;
   /** Reverse a posted transaction (spec §26). */
   reverse: (txnId: string, reason?: string) => Promise<boolean>;
+  /**
+   * Permanently remove a transaction and everything it created: its ledger
+   * lines, and — for a cheque entry — the cheque and its movement history.
+   * Unlike reverse(), nothing is left behind. Used for entries typed by
+   * mistake, where a correcting entry would just be noise.
+   */
+  deleteTransaction: (txnId: string, reason?: string) => Promise<boolean>;
 
   // masters
   saveParty: (p: Partial<PdcParty> & { name: string; id?: string }) => Promise<PdcParty | null>;
@@ -448,6 +455,107 @@ export const usePdc = create<PdcStore>((set, get) => ({
     const next: PdcSettings = { ...get().settings, ...patch, id: 'pdcSettings', updatedAt: now() };
     await upsertDoc(workspace, 'pdcSettings', next);
     set({ settings: next });
+  },
+
+  async deleteTransaction(txnId, reason) {
+    const s = get();
+    const workspace = s.uidRef;
+    if (!workspace) {
+      toast.error('Not connected — cannot delete.');
+      return false;
+    }
+    if (s.saving) return false;
+
+    const txn = s.transactions.find((t) => t.id === txnId);
+    if (!txn) {
+      toast.error('Transaction not found.');
+      return false;
+    }
+
+    // A cheque that has moved on — endorsed, cleared, bounced — has later
+    // entries depending on it. Deleting the entry that created it would leave
+    // those orphaned, so that case must be reversed instead.
+    const cheque = txn.chequeId ? s.cheques.find((c) => c.id === txn.chequeId) : undefined;
+    // Only entries that came AFTER this one depend on it. Deleting the most
+    // recent entry on a cheque is always safe; deleting an earlier one would
+    // orphan everything that followed.
+    const dependents = cheque
+      ? s.transactions.filter(
+          (t) =>
+            t.chequeId === cheque.id &&
+            t.id !== txnId &&
+            (t.date > txn.date || (t.date === txn.date && t.createdAt > txn.createdAt))
+        )
+      : [];
+    if (dependents.length > 0) {
+      toast.error(
+        `Cheque ${cheque!.chequeNumber} has ${dependents.length} later entr${dependents.length === 1 ? 'y' : 'ies'} against it. Delete the most recent one first, or reverse this entry instead.`
+      );
+      return false;
+    }
+    // Deleting the entry that CREATED the cheque removes the cheque itself.
+    // A later entry (endorsement, clearing) only removes that entry.
+    const isCreatingEntry =
+      !!cheque && (txn.type === 'PDC Received' || txn.type === 'PDC Issued');
+
+    set({ saving: true });
+    try {
+      // Record what is about to disappear BEFORE deleting, so the audit trail
+      // still explains it afterwards.
+      await get().logAudit({
+        action: 'delete',
+        entity: 'transaction',
+        entityId: txnId,
+        txnId,
+        before: {
+          reference: txn.reference,
+          type: txn.type,
+          amount: txn.amount,
+          date: txn.date,
+          chequeNumber: cheque?.chequeNumber,
+        },
+        reason,
+        description: `Deleted ${txn.type} ${txn.reference}`,
+      });
+
+      // Header first: the row vanishes from the register immediately, so a
+      // failure part-way through can never show an entry whose money effect
+      // has already gone.
+      await removeDoc(workspace, 'pdcTransactions', txnId);
+      for (const line of s.ledger.filter((l) => l.txnId === txnId)) {
+        await removeDoc(workspace, 'pdcLedger', line.id);
+      }
+      if (cheque && isCreatingEntry) {
+        // This entry brought the cheque into existence — remove it and its
+        // whole history.
+        for (const m of s.movements.filter((mv) => mv.chequeId === cheque.id)) {
+          await removeDoc(workspace, 'pdcMovements', m.id);
+        }
+        await removeDoc(workspace, 'pdcCheques', cheque.id);
+      } else if (cheque) {
+        // A later action on an existing cheque: drop just this action's
+        // movement rows, and roll the cheque back to how it was before.
+        for (const m of s.movements.filter((mv) => mv.txnId === txnId)) {
+          await removeDoc(workspace, 'pdcMovements', m.id);
+        }
+        const undone = s.movements.find((mv) => mv.txnId === txnId);
+        if (undone?.fromStatus) {
+          await upsertDoc(workspace, 'pdcCheques', {
+            ...cheque,
+            status: undone.fromStatus,
+            holder: undone.fromHolder ?? cheque.holder,
+            updatedAt: now(),
+          });
+        }
+      }
+      toast.success(`Deleted ${txn.reference}`);
+      return true;
+    } catch (e) {
+      toast.error(`Delete failed: ${(e as Error).message}`);
+      return false;
+    } finally {
+      set({ saving: false });
+    }
   },
 
   async editTransaction(txnId, corrected, reason) {
