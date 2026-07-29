@@ -478,6 +478,87 @@ export function buildChequeBounce(
 }
 
 // ---------------------------------------------------------------------------
+// Return (spec §17)
+// ---------------------------------------------------------------------------
+
+export interface ReturnInput {
+  chequeId: string;
+  date: ISODate;
+  reason?: string;
+  description?: string;
+}
+
+/**
+ * Hand a cheque back without presenting it — the party asks for it, the
+ * details are wrong, and so on.
+ *
+ * Accounting-wise this is the same restoration as a bounce: the debt the
+ * cheque had settled comes back. It is a separate status because the CAUSE
+ * differs, and reports and cheque history should say which happened.
+ */
+export function buildChequeReturn(
+  data: PdcDataSet,
+  input: ReturnInput
+): WorkflowResult | { error: string } {
+  const cheque = data.cheques.find((c) => c.id === input.chequeId);
+  if (!cheque) return { error: 'Cheque not found.' };
+  const err = validateStatusChange(cheque, 'returned');
+  if (err) return { error: err };
+
+  const amount = cheque.amount;
+  const txn = makeTxn(data, 'Cheque Returned', input.date, amount, {
+    partyId: cheque.partyId,
+    chequeId: cheque.id,
+    description: input.description || input.reason,
+  });
+  const desc = input.reason
+    ? `Cheque ${cheque.chequeNumber} returned — ${input.reason}`
+    : `Cheque ${cheque.chequeNumber} returned`;
+
+  // Whoever currently holds the cheque carries the exposure, exactly as with a
+  // bounce: if it was endorsed onward, the debt reverts to the endorsee.
+  const exposedParty =
+    cheque.direction === 'received' && cheque.holder.kind === 'party'
+      ? cheque.holder.partyId
+      : cheque.partyId;
+
+  const lines =
+    cheque.direction === 'received'
+      ? buildLines(txn, [
+          { account: partyAcc(exposedParty), debit: amount, description: desc, chequeId: cheque.id, mainLedger: 'Parties' },
+          { account: chequeAcc(cheque.id, 'received'), credit: amount, description: desc, chequeId: cheque.id, mainLedger: 'PDC Received' },
+        ])
+      : buildLines(txn, [
+          { account: chequeAcc(cheque.id, 'issued'), debit: amount, description: desc, chequeId: cheque.id, mainLedger: 'PDC Issued' },
+          { account: partyAcc(cheque.partyId), credit: amount, description: desc, chequeId: cheque.id, mainLedger: 'Parties' },
+        ]);
+
+  const updated: Cheque = {
+    ...cheque,
+    status: 'returned',
+    holder: { kind: 'business' },
+    updatedAt: now(),
+  };
+
+  return {
+    txn,
+    lines,
+    cheque: updated,
+    movements: [
+      movement(cheque.id, input.date, 'Returned', {
+        fromStatus: cheque.status,
+        toStatus: 'returned',
+        fromHolder: cheque.holder,
+        toHolder: updated.holder,
+        txnId: txn.id,
+        reference: txn.reference,
+        description: desc,
+      }),
+    ],
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Replacement cheque (spec §19)
 // ---------------------------------------------------------------------------
 

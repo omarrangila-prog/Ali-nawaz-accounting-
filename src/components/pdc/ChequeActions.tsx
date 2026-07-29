@@ -14,6 +14,7 @@ import {
   buildChequeBounce,
   buildChequeClear,
   buildChequeDeposit,
+  buildChequeReturn,
   linkReplacement,
 } from '@/lib/chequeWorkflow';
 import { bankAccountLabel } from '@/lib/pdcEngine';
@@ -21,7 +22,7 @@ import type { Cheque } from '@/types/pdc';
 import { todayISO, formatMoney } from '@/lib/utils';
 import { toast } from '@/store/toast';
 
-export type ChequeAction = 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | 'edit' | null;
+export type ChequeAction = 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | 'edit' | 'return' | null;
 
 interface Props {
   action: ChequeAction;
@@ -144,6 +145,16 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
       return;
     }
 
+    if (action === 'return') {
+      const res = buildChequeReturn(data, { chequeId: cheque!.id, date, reason: reason || undefined });
+      if ('error' in res) { toast.error(res.error); return; }
+      if (await store.commit(res, { action: 'status-change', reason })) {
+        toast.success('Cheque returned — balances restored');
+        onClose();
+      }
+      return;
+    }
+
     if (action === 'replace') {
       if (!replacementId) { toast.error('Select the replacement cheque.'); return; }
       const res = linkReplacement(data, {
@@ -168,6 +179,7 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
     cancel: 'Cancel Cheque',
     replace: 'Link Replacement Cheque',
     edit: 'Edit Cheque Details',
+    return: 'Return Cheque',
   };
 
   return (
@@ -181,7 +193,7 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
         <>
           <button className="btn" onClick={onClose}>Cancel</button>
           <button
-            className={action === 'bounce' || action === 'cancel' ? 'btn btn-danger' : 'btn btn-primary'}
+            className={action === 'bounce' || action === 'cancel' || action === 'return' ? 'btn btn-danger' : 'btn btn-primary'}
             onClick={run}
             disabled={store.saving}
           >
@@ -202,14 +214,14 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
             />
           </div>
         )}
-        {action === 'bounce' && (
+        {(action === 'bounce' || action === 'return') && (
           <div className="field">
-            <label>Bounce Reason</label>
+            <label>{action === 'bounce' ? 'Bounce Reason' : 'Reason (optional)'}</label>
             <input
               className="input"
               autoFocus
               value={reason}
-              placeholder="e.g. Insufficient funds"
+              placeholder={action === 'bounce' ? 'e.g. Insufficient funds' : 'e.g. party asked for it back'}
               onChange={(e) => setReason(e.target.value)}
             />
           </div>

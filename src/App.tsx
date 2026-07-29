@@ -21,6 +21,7 @@ import { PdcLedger } from '@/pages/PdcLedger';
 import { PdcLedgers } from '@/pages/PdcLedgers';
 import { PdcReports } from '@/pages/PdcReports';
 import { PdcBackupPage } from '@/pages/PdcBackup';
+import { PdcSettings } from '@/pages/PdcSettings';
 import { usePdc } from '@/store/pdcStore';
 
 function Splash() {
@@ -88,6 +89,7 @@ export default function App() {
           <Route path="/ledger" element={<PdcLedger />} />
           <Route path="/reports" element={<PdcReports />} />
           <Route path="/backup" element={<PdcBackupPage />} />
+          <Route path="/settings" element={<PdcSettings />} />
           {/* Old paths keep working so bookmarks don't break. */}
           <Route path="/pdc" element={<Navigate to="/" replace />} />
           <Route path="/pdc/parties" element={<Navigate to="/parties" replace />} />

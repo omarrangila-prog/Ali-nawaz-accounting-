@@ -17,6 +17,7 @@ import { PdcForm, type PdcFormKind } from '@/components/pdc/PdcForms';
 import { ChequeActionDialog, type ChequeAction } from '@/components/pdc/ChequeActions';
 import { DetailsDrawer } from '@/components/pdc/DetailsDrawer';
 import { ChequePanel } from '@/components/pdc/ChequePanel';
+import { SetupChecklist } from '@/components/pdc/SetupChecklist';
 import { usePdc } from '@/store/pdcStore';
 import { computeSummary, bankAccountLabel } from '@/lib/pdcEngine';
 import {
@@ -321,6 +322,8 @@ export function PdcCashbook() {
         </div>
       )}
 
+      <SetupChecklist />
+
       {/* --- Summary bar: the four day-to-day numbers --- */}
       <div className="pdc-cards pdc-cards-main">
         {cards.map((c, ci) => (
@@ -487,7 +490,7 @@ export function PdcCashbook() {
         {shown.length === 0 ? (
           <div className="empty">
             {register.length === 0
-              ? <>No transactions yet. Press <strong>F1</strong> to record a received cheque, or <strong>F3</strong> for a cash receipt.</>
+              ? <>No transactions yet. Press <strong>F1</strong> for a sale, <strong>F3</strong> for a cash receipt, or <strong>F5</strong> to record a cheque received.</>
               : <>No transactions match the current search or filters.</>}
           </div>
         ) : (

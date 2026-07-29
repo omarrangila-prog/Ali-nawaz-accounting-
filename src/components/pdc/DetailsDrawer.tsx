@@ -19,7 +19,7 @@ interface Props {
   onReverse: (txnId: string) => void;
   onDelete: (txnId: string) => void;
   onPrint: (row: RegisterRow) => void;
-  onChequeAction: (chequeId: string, action: 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | 'edit') => void;
+  onChequeAction: (chequeId: string, action: 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | 'edit' | 'return') => void;
 }
 
 export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onChequeAction }: Props) {
@@ -124,6 +124,10 @@ export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onCh
                 )}
                 {cheque.status !== 'cleared' && cheque.status !== 'cancelled' && cheque.status !== 'replaced' && (
                   <button className="btn btn-sm btn-danger" onClick={() => onChequeAction(cheque.id, 'bounce')}>Bounced</button>
+                )}
+                {cheque.status !== 'cleared' && cheque.status !== 'cancelled' &&
+                 cheque.status !== 'replaced' && cheque.status !== 'returned' && (
+                  <button className="btn btn-sm btn-danger" onClick={() => onChequeAction(cheque.id, 'return')}>Returned</button>
                 )}
                 {(cheque.status === 'bounced' || cheque.status === 'returned') && (
                   <button className="btn btn-sm" onClick={() => onChequeAction(cheque.id, 'replace')}>Link Replacement</button>
