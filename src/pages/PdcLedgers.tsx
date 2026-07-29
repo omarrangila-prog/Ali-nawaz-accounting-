@@ -17,7 +17,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Icon } from '@/components/ui/Icon';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { usePdc } from '@/store/pdcStore';
-import { buildAllLedgerViews, buildLedgerView, balanceLabel } from '@/lib/pdcEngine';
+import { buildAllLedgerViews, buildLedgerView, balanceLabel, ledgerDeleteImpact } from '@/lib/pdcEngine';
 import type { NamedLedger } from '@/types/pdc';
 import { formatMoney, cx } from '@/lib/utils';
 import { toast } from '@/store/toast';
@@ -184,7 +184,14 @@ export function PdcLedgers() {
         <ConfirmDialog
           open={!!toDelete}
           title={`Delete ${toDelete?.name ?? 'this ledger'}?`}
-          message="Parties keep their own balances and history — only the grouping is removed. A ledger holding its own entries is marked inactive instead, so nothing is lost."
+          message={(() => {
+            if (!toDelete) return '';
+            const i = ledgerDeleteImpact(data, toDelete.id);
+            const own = i.transactions
+              ? ` Its ${i.transactions} own entry(ies) are deleted too.`
+              : '';
+            return `Parties assigned to ${toDelete.name} are only unlinked — they keep their own balances and history.${own} This cannot be undone.`;
+          })()}
           confirmLabel="Delete"
           danger
           onConfirm={async () => {
@@ -249,7 +256,7 @@ export function PdcLedgers() {
       <ConfirmDialog
         open={!!toDelete}
         title="Delete this ledger?"
-        message="A ledger with its own transactions is marked inactive instead of deleted, so its history stays readable. Parties keep their own balances either way."
+        message="Parties assigned to this ledger are only unlinked — they keep their own balances and history. Any entries posted directly to the ledger are deleted."
         confirmLabel="Delete"
         danger
         onConfirm={async () => {

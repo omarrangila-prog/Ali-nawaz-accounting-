@@ -33,7 +33,13 @@ import {
   removeDoc,
   type CollectionName,
 } from '@/firebase/dataAccess';
-import { assertBalanced, type Posting } from '@/lib/pdcEngine';
+import {
+  assertBalanced,
+  partyDeleteImpact,
+  partyDeleteTxnIds,
+  ledgerDeleteImpact,
+  type Posting,
+} from '@/lib/pdcEngine';
 import type { PdcBackup } from '@/lib/pdcBackup';
 import { buildReversal } from '@/lib/chequeWorkflow';
 import { uid, now, todayISO } from '@/lib/utils';
@@ -301,22 +307,70 @@ export const usePdc = create<PdcStore>((set, get) => ({
     return rec;
   },
 
+  /**
+   * Delete a party and EVERYTHING attached to it: its transactions, their
+   * ledger lines, and any cheques it drew along with their history.
+   *
+   * This is a genuine erase, not a deactivation — the confirm dialog states
+   * the counts first so the scale of it is never a surprise.
+   */
   async deleteParty(id) {
-    const workspace = get().uidRef;
+    const s = get();
+    const workspace = s.uidRef;
     if (!workspace) return false;
-    // A party with any ledger history must never vanish — deactivate instead.
-    const used = get().ledger.some((l) => l.account.kind === 'party' && l.account.id === id)
-      || get().cheques.some((c) => c.partyId === id);
-    if (used) {
-      const p = get().parties.find((x) => x.id === id);
-      if (p) {
-        await upsertDoc(workspace, 'pdcParties', { ...p, active: false, updatedAt: now() });
-        toast.info('Party has transactions — marked inactive instead of deleted.');
+    if (s.saving) return false;
+
+    const party = s.parties.find((p) => p.id === id);
+    if (!party) return false;
+
+    const data = s.dataset();
+    const impact = partyDeleteImpact(data, id);
+    const txnIds = new Set(partyDeleteTxnIds(data, id));
+    const chequeIds = new Set(s.cheques.filter((c) => c.partyId === id).map((c) => c.id));
+
+    set({ saving: true });
+    try {
+      // Record what is about to go before it goes.
+      await get().logAudit({
+        action: 'delete',
+        entity: 'party',
+        entityId: id,
+        before: { name: party.name, ...impact },
+        description:
+          `Deleted party ${party.name} with ${impact.transactions} transaction(s), ` +
+          `${impact.cheques} cheque(s)`,
+      });
+
+      // Transactions first so nothing is briefly visible without its effect.
+      for (const txnId of txnIds) {
+        await removeDoc(workspace, 'pdcTransactions', txnId);
       }
+      for (const line of s.ledger.filter((l) => txnIds.has(l.txnId))) {
+        await removeDoc(workspace, 'pdcLedger', line.id);
+      }
+      for (const m of s.movements.filter((mv) => chequeIds.has(mv.chequeId))) {
+        await removeDoc(workspace, 'pdcMovements', m.id);
+      }
+      for (const cid of chequeIds) {
+        await removeDoc(workspace, 'pdcCheques', cid);
+      }
+      for (const a of s.allocations.filter((al) => chequeIds.has(al.chequeId) || al.partyId === id)) {
+        await removeDoc(workspace, 'pdcAllocations', a.id);
+      }
+      await removeDoc(workspace, 'pdcParties', id);
+
+      toast.success(
+        impact.clean
+          ? `Deleted ${party.name}`
+          : `Deleted ${party.name} and ${impact.transactions} transaction(s)`
+      );
+      return true;
+    } catch (e) {
+      toast.error(`Delete failed: ${(e as Error).message}`);
       return false;
+    } finally {
+      set({ saving: false });
     }
-    await removeDoc(workspace, 'pdcParties', id);
-    return true;
   },
 
   async saveLedger(l) {
@@ -359,32 +413,62 @@ export const usePdc = create<PdcStore>((set, get) => ({
     return rec;
   },
 
+  /**
+   * Delete a named ledger and any entries posted DIRECTLY to it.
+   *
+   * Its parties are only unlinked, never deleted — they are real trading
+   * relationships that exist independently of how you grouped them, and they
+   * may well belong to another ledger too.
+   */
   async deleteLedger(id) {
-    const workspace = get().uidRef;
+    const s = get();
+    const workspace = s.uidRef;
     if (!workspace) return false;
-    // A ledger carrying its own entries must never vanish — deactivate it so
-    // the history behind those entries stays readable.
-    const used = get().ledger.some((e) => e.account.kind === 'ledger' && e.account.id === id);
-    if (used) {
-      const l = get().ledgers.find((x) => x.id === id);
-      if (l) {
-        await upsertDoc(workspace, 'pdcLedgers', { ...l, active: false, updatedAt: now() });
-        toast.info('Ledger has transactions — marked inactive instead of deleted.');
+    if (s.saving) return false;
+
+    const ledger = s.ledgers.find((x) => x.id === id);
+    if (!ledger) return false;
+
+    const impact = ledgerDeleteImpact(s.dataset(), id);
+    const txnIds = new Set(
+      s.ledger.filter((e) => e.account.kind === 'ledger' && e.account.id === id).map((e) => e.txnId)
+    );
+
+    set({ saving: true });
+    try {
+      await get().logAudit({
+        action: 'delete',
+        entity: 'ledger',
+        entityId: id,
+        before: { name: ledger.name, ...impact },
+        description: `Deleted ledger ${ledger.name} with ${impact.transactions} own entry(ies)`,
+      });
+
+      for (const txnId of txnIds) {
+        await removeDoc(workspace, 'pdcTransactions', txnId);
       }
+      for (const line of s.ledger.filter((l) => txnIds.has(l.txnId))) {
+        await removeDoc(workspace, 'pdcLedger', line.id);
+      }
+      // Unlink the parties — they keep their own balances and history.
+      for (const p of s.parties) {
+        if ((p.ledgerIds ?? []).includes(id)) {
+          await upsertDoc(workspace, 'pdcParties', {
+            ...p,
+            ledgerIds: (p.ledgerIds ?? []).filter((x) => x !== id),
+            updatedAt: now(),
+          });
+        }
+      }
+      await removeDoc(workspace, 'pdcLedgers', id);
+      toast.success(`Deleted ${ledger.name}`);
+      return true;
+    } catch (e) {
+      toast.error(`Delete failed: ${(e as Error).message}`);
       return false;
+    } finally {
+      set({ saving: false });
     }
-    // Detach it from every party first, so no party points at a missing ledger.
-    for (const p of get().parties) {
-      if ((p.ledgerIds ?? []).includes(id)) {
-        await upsertDoc(workspace, 'pdcParties', {
-          ...p,
-          ledgerIds: (p.ledgerIds ?? []).filter((x) => x !== id),
-          updatedAt: now(),
-        });
-      }
-    }
-    await removeDoc(workspace, 'pdcLedgers', id);
-    return true;
   },
 
   async setPartyLedgers(partyId, ledgerIds) {

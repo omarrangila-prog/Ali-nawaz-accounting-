@@ -12,7 +12,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { Combo } from '@/components/ui/Combo';
 import { usePdc } from '@/store/pdcStore';
-import { bankAccountLabel, bankBalances, partyBalances, balanceLabel } from '@/lib/pdcEngine';
+import { bankAccountLabel, bankBalances, partyBalances, balanceLabel, partyDeleteImpact } from '@/lib/pdcEngine';
 import type { Bank, BankAccount, PdcParty } from '@/types/pdc';
 import { PAKISTAN_BANK_OPTIONS, PAKISTAN_BANKS } from '@/config/pakistanBanks';
 import { formatMoney, cx } from '@/lib/utils';
@@ -221,9 +221,22 @@ export function PdcParties() {
 
       <ConfirmDialog
         open={!!toDelete}
-        title="Delete this party?"
-        message="A party with any transaction history is marked inactive instead of deleted, so balances and ledgers stay intact."
-        confirmLabel="Delete"
+        title={`Delete ${toDelete?.name ?? 'this party'}?`}
+        // State the full impact first — this erases transactions, not just the
+        // party record.
+        message={(() => {
+          if (!toDelete) return '';
+          const i = partyDeleteImpact(data, toDelete.id);
+          if (i.clean) {
+            return `${toDelete.name} has no transactions and will be removed completely.`;
+          }
+          const bits = [
+            `${i.transactions} transaction${i.transactions === 1 ? '' : 's'}`,
+            i.cheques ? `${i.cheques} cheque${i.cheques === 1 ? '' : 's'}` : '',
+          ].filter(Boolean).join(' and ');
+          return `This permanently deletes ${toDelete.name} along with ${bits}. Balances and reports will change to match, and this cannot be undone — download a backup first if you are unsure.`;
+        })()}
+        confirmLabel="Delete Everything"
         danger
         onConfirm={async () => {
           const p = toDelete;

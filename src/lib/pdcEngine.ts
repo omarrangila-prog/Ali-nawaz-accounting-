@@ -311,6 +311,81 @@ export function buildAllLedgerViews(data: PdcDataSet): LedgerView[] {
     .filter((v): v is LedgerView => v !== null);
 }
 
+/** What deleting a party or ledger would take with it. */
+export interface DeleteImpact {
+  transactions: number;
+  ledgerLines: number;
+  cheques: number;
+  movements: number;
+  /** True when nothing else is affected — a plain, safe delete. */
+  clean: boolean;
+}
+
+/**
+ * Count everything that would be removed along with a party.
+ *
+ * A transaction is caught if the party is on either side of it, or if the
+ * party's account appears on any of its ledger lines — so a transfer between
+ * two parties is caught by both.
+ */
+export function partyDeleteImpact(data: PdcDataSet, partyId: string): DeleteImpact {
+  const txnIds = new Set<string>();
+  for (const t of data.transactions) {
+    if (t.partyId === partyId || t.toPartyId === partyId) txnIds.add(t.id);
+  }
+  for (const l of data.ledger) {
+    if (l.account.kind === 'party' && l.account.id === partyId) txnIds.add(l.txnId);
+  }
+  const cheques = data.cheques.filter((c) => c.partyId === partyId);
+  const chequeIds = new Set(cheques.map((c) => c.id));
+  // Any transaction acting on one of those cheques goes too.
+  for (const t of data.transactions) {
+    if (t.chequeId && chequeIds.has(t.chequeId)) txnIds.add(t.id);
+  }
+
+  const ledgerLines = data.ledger.filter((l) => txnIds.has(l.txnId)).length;
+  const movements = data.movements.filter((m) => chequeIds.has(m.chequeId)).length;
+
+  return {
+    transactions: txnIds.size,
+    ledgerLines,
+    cheques: cheques.length,
+    movements,
+    clean: txnIds.size === 0 && cheques.length === 0,
+  };
+}
+
+/** Transaction ids that would be removed with a party. */
+export function partyDeleteTxnIds(data: PdcDataSet, partyId: string): string[] {
+  const ids = new Set<string>();
+  for (const t of data.transactions) {
+    if (t.partyId === partyId || t.toPartyId === partyId) ids.add(t.id);
+  }
+  for (const l of data.ledger) {
+    if (l.account.kind === 'party' && l.account.id === partyId) ids.add(l.txnId);
+  }
+  const chequeIds = new Set(data.cheques.filter((c) => c.partyId === partyId).map((c) => c.id));
+  for (const t of data.transactions) {
+    if (t.chequeId && chequeIds.has(t.chequeId)) ids.add(t.id);
+  }
+  return [...ids];
+}
+
+/** What deleting a named ledger would take with it (its OWN entries only). */
+export function ledgerDeleteImpact(data: PdcDataSet, ledgerId: string): DeleteImpact {
+  const txnIds = new Set<string>();
+  for (const l of data.ledger) {
+    if (l.account.kind === 'ledger' && l.account.id === ledgerId) txnIds.add(l.txnId);
+  }
+  return {
+    transactions: txnIds.size,
+    ledgerLines: data.ledger.filter((l) => txnIds.has(l.txnId)).length,
+    cheques: 0,
+    movements: 0,
+    clean: txnIds.size === 0,
+  };
+}
+
 /** Display name for a named ledger. */
 export function ledgerName(data: PdcDataSet, id?: string): string {
   if (!id) return '';
