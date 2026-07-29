@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Icon } from '@/components/ui/Icon';
 import { Combo } from '@/components/ui/Combo';
@@ -22,6 +22,7 @@ import './statement.css';
 
 export function PdcLedger() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const store = usePdc();
   const data = store.dataset();
   const cur = data.settings.currency;
@@ -93,18 +94,40 @@ export function PdcLedger() {
             <Combo
               value={partyId}
               options={[{ id: '', label: 'Select a party…' }, ...partyOptions]}
-              placeholder="Select a party"
+              placeholder={partyOptions.length ? 'Select a party' : 'No parties yet'}
               onChange={(v) => { setPartyId(v); if (v) setAccountId(''); }}
             />
+            {/* An empty dropdown with no explanation looks broken — say why and
+                where to fix it. */}
+            {partyOptions.length === 0 && (
+              <div className="faint" style={{ fontSize: 11.5, marginTop: 4 }}>
+                No parties yet —{' '}
+                <button className="link-btn" onClick={() => navigate('/parties')}>
+                  add one
+                </button>
+                .
+              </div>
+            )}
           </div>
           <div className="field" style={{ flex: 1, minWidth: 200 }}>
             <label>Bank Ledger</label>
             <Combo
               value={accountId}
               options={[{ id: '', label: 'Select an account…' }, ...accountOptions]}
-              placeholder="Select an account"
+              placeholder={accountOptions.length ? 'Select an account' : 'No bank accounts yet'}
               onChange={(v) => { setAccountId(v); if (v) setPartyId(''); }}
             />
+            {accountOptions.length === 0 && (
+              <div className="faint" style={{ fontSize: 11.5, marginTop: 4 }}>
+                {data.banks.length > 0
+                  ? <>You have {data.banks.length} banks but no account under any of them. </>
+                  : <>No banks yet. </>}
+                <button className="link-btn" onClick={() => navigate('/parties?tab=banks')}>
+                  Add a bank account
+                </button>
+                .
+              </div>
+            )}
           </div>
           {partyId && (
             <div className="row" style={{ gap: 6, alignSelf: 'flex-end' }}>

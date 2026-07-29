@@ -493,17 +493,26 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     onChange: (v: string) => void, errKey: string, placeholder: string, hint?: string
   ) => {
     const idx = i++;
+    // A dropdown with nothing in it looks broken. Say what is missing and
+    // where to add it, rather than leaving an empty list.
+    const empty = options.filter((o) => o.id !== '').length === 0;
     return (
       <Field key={errKey} label={label} error={errors[errKey]} hint={hint}>
         <Combo
           ref={chain.set(idx)}
           value={value}
           options={options}
-          placeholder={placeholder}
+          placeholder={empty ? `No ${label.toLowerCase()} available` : placeholder}
           invalid={!!errors[errKey]}
           onChange={onChange}
           onDone={() => chain.focusAt(idx + 1)}
         />
+        {empty && (
+          <div className="field-empty-hint">
+            Nothing to choose from yet — add it under{' '}
+            <strong>Parties &amp; Banks</strong>, then reopen this form.
+          </div>
+        )}
       </Field>
     );
   };

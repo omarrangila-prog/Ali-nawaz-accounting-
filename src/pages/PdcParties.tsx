@@ -6,7 +6,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Icon } from '@/components/ui/Icon';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
@@ -27,7 +27,9 @@ export function PdcParties() {
   const cur = data.settings.currency;
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<Tab>('parties');
+  const [params] = useSearchParams();
+  // Deep links (e.g. from the Ledger page) can open straight on the Banks tab.
+  const [tab, setTab] = useState<Tab>(params.get('tab') === 'banks' ? 'banks' : 'parties');
   const [search, setSearch] = useState('');
   const [partyModal, setPartyModal] = useState<PdcParty | 'new' | null>(null);
   const [bankModal, setBankModal] = useState<Bank | 'new' | null>(null);
