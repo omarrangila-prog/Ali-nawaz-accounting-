@@ -490,7 +490,9 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
 
   const comboField = (
     label: string, value: string, options: Array<{ id: string; label: string; sub?: string }>,
-    onChange: (v: string) => void, errKey: string, placeholder: string, hint?: string
+    onChange: (v: string) => void, errKey: string, placeholder: string, hint?: string,
+    /** Creates a record from a typed name, so an empty list is never a dead end. */
+    onCreate?: (typed: string) => Promise<string>
   ) => {
     const idx = i++;
     // A dropdown with nothing in it looks broken. Say what is missing and
@@ -502,15 +504,22 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
           ref={chain.set(idx)}
           value={value}
           options={options}
-          placeholder={empty ? `No ${label.toLowerCase()} available` : placeholder}
+          placeholder={
+            empty
+              ? (onCreate ? `Type a name to create one` : `No ${label.toLowerCase()} available`)
+              : placeholder
+          }
           invalid={!!errors[errKey]}
+          allowCreate={!!onCreate}
+          onCreate={onCreate}
           onChange={onChange}
           onDone={() => chain.focusAt(idx + 1)}
         />
         {empty && (
           <div className="field-empty-hint">
-            Nothing to choose from yet — add it under{' '}
-            <strong>Parties &amp; Banks</strong>, then reopen this form.
+            {onCreate
+              ? <>Nothing here yet — just type a name and press Enter to create it.</>
+              : <>Nothing to choose from yet — add it under <strong>Parties &amp; Banks</strong>, then reopen this form.</>}
           </div>
         )}
       </Field>
@@ -557,6 +566,22 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
         </select>
       </Field>
     );
+  };
+
+  /**
+   * Create a bank account from a typed name, so an empty account dropdown can
+   * be resolved without leaving the entry form. It attaches to the first bank
+   * on file; the account can be moved and detailed later under Parties & Banks.
+   */
+  const createAccount = async (typed: string): Promise<string> => {
+    const bank = data.banks[0];
+    if (!bank) {
+      toast.error('Add a bank first under Parties & Banks.');
+      return '';
+    }
+    const rec = await store.saveBankAccount({ bankId: bank.id, title: typed.trim() });
+    if (rec) toast.success(`Created ${bank.name} — ${rec.title}`);
+    return rec?.id ?? '';
   };
 
   /**
@@ -687,7 +712,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
         fields.push(comboField(
           'Bank Account', bankAccountId, accountOptions,
           setBankAccountId, 'bankAccountId', 'Select account',
-          isSale ? '(money received into)' : '(money paid from)'
+          isSale ? '(money received into)' : '(money paid from)',
+          createAccount
         ));
       }
       fields.push(textField('Date', date, setDate, 'date', 'date'));
@@ -708,7 +734,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       if (format === 'bank') {
         fields.push(comboField(
           'Bank Account', bankAccountId, accountOptions,
-          setBankAccountId, 'bankAccountId', 'Select account'
+          setBankAccountId, 'bankAccountId', 'Select account', undefined,
+          createAccount
         ));
       }
       fields.push(textField('Date', date, setDate, 'date', 'date'));
@@ -727,7 +754,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
 
     case 'pdc-issued':
       fields.push(partyField('Party', partyId, setPartyId, 'partyId'));
-      fields.push(comboField('Bank Account', bankAccountId, accountOptions, setBankAccountId, 'bankAccountId', 'Your account'));
+      fields.push(comboField('Bank Account', bankAccountId, accountOptions,
+        setBankAccountId, 'bankAccountId', 'Your account', undefined, createAccount));
       fields.push(textField('Cheque Number', chequeNumber, setChequeNumber, 'chequeNumber'));
       fields.push(textField('Cheque Date', chequeDate, setChequeDate, 'chequeDate', 'date'));
       fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00'));
@@ -743,7 +771,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       if (format === 'bank') {
         fields.push(comboField(
           'Bank Account', bankAccountId, accountOptions,
-          setBankAccountId, 'bankAccountId', 'Select account'
+          setBankAccountId, 'bankAccountId', 'Select account', undefined,
+          createAccount
         ));
       }
       fields.push(textField('Date', date, setDate, 'date', 'date'));

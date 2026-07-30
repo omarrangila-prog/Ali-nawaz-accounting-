@@ -387,19 +387,22 @@ function AccountModal({ account, onClose }: { account: BankAccount | 'new' | nul
   const data = store.dataset();
   const editing = account && account !== 'new' ? account : null;
   const [bankId, setBankId] = useState(editing?.bankId ?? '');
-  const [title, setTitle] = useState(editing?.title ?? '');
+  const [title, setTitle] = useState(editing?.title ?? 'Main Account');
   const [accountNumber, setAccountNumber] = useState(editing?.accountNumber ?? '');
   const [iban, setIban] = useState(editing?.iban ?? '');
   const [branch, setBranch] = useState(editing?.branch ?? '');
   const [opening, setOpening] = useState(String(editing?.openingBalance ?? 0));
   const [active, setActive] = useState(editing?.active ?? true);
+  // Account number, branch and IBAN are rarely needed to start using the
+  // account, so they stay out of the way until asked for.
+  const [showMore, setShowMore] = useState(false);
 
   const key = editing?.id ?? account;
   const [lastKey, setLastKey] = useState(key);
   if (key !== lastKey) {
     setLastKey(key);
     setBankId(editing?.bankId ?? '');
-    setTitle(editing?.title ?? '');
+    setTitle(editing?.title ?? 'Main Account');
     setAccountNumber(editing?.accountNumber ?? '');
     setIban(editing?.iban ?? '');
     setBranch(editing?.branch ?? '');
@@ -441,39 +444,60 @@ function AccountModal({ account, onClose }: { account: BankAccount | 'new' | nul
             onCreate={async (name) => (await store.saveBank({ name }))?.id ?? ''}
           />
         </div>
-        <div className="field">
-          <label>Account Title</label>
-          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Main Account" />
-        </div>
+        {/* Only these two matter to get an account working. Everything else is
+            optional and stays hidden until asked for. */}
         <div className="grid-2">
           <div className="field">
-            <label>Account Number</label>
-            <input className="input" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
+            <label>Account Title</label>
+            <input className="input" value={title} onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Main Account"
+              onKeyDown={(e) => e.key === 'Enter' && save()} />
           </div>
           <div className="field">
-            <label>Branch</label>
-            <input className="input" value={branch} onChange={(e) => setBranch(e.target.value)} />
+            <label>Opening Balance <span className="faint">(money in it today)</span></label>
+            <input className="input" type="number" value={opening}
+              onChange={(e) => setOpening(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && save()} />
           </div>
         </div>
-        <div className="grid-2">
-          <div className="field">
-            <label>IBAN</label>
-            <input className="input" value={iban} onChange={(e) => setIban(e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Opening Balance</label>
-            <input className="input" type="number" value={opening} onChange={(e) => setOpening(e.target.value)} />
-          </div>
-        </div>
-        <div className="field">
-          <label>Status</label>
-          <select className="input" value={active ? 'active' : 'inactive'}
-            onChange={(e) => setActive(e.target.value === 'active')}>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
+
+        <button
+          type="button"
+          className="link-btn"
+          style={{ alignSelf: 'flex-start' }}
+          onClick={() => setShowMore((v) => !v)}
+        >
+          {showMore ? 'Hide' : 'Add'} account number, branch, IBAN
+        </button>
+
+        {showMore && (
+          <>
+            <div className="grid-2">
+              <div className="field">
+                <label>Account Number</label>
+                <input className="input" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
+              </div>
+              <div className="field">
+                <label>Branch</label>
+                <input className="input" value={branch} onChange={(e) => setBranch(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid-2">
+              <div className="field">
+                <label>IBAN</label>
+                <input className="input" value={iban} onChange={(e) => setIban(e.target.value)} />
+              </div>
+              <div className="field">
+                <label>Status</label>
+                <select className="input" value={active ? 'active' : 'inactive'}
+                  onChange={(e) => setActive(e.target.value === 'active')}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </Modal>
   );
