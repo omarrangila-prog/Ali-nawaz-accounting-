@@ -11,7 +11,7 @@ import { usePdc } from '@/store/pdcStore';
 import { chequeTimeline } from '@/lib/chequeWorkflow';
 import { bankAccountLabel, holderLabel, partyName } from '@/lib/pdcEngine';
 import type { RegisterRow } from '@/types/pdc';
-import { formatMoney, formatDate, cx } from '@/lib/utils';
+import { formatMoney, formatDate, formatNumber, cx } from '@/lib/utils';
 
 interface Props {
   row: RegisterRow | null;
@@ -44,6 +44,13 @@ export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onCh
   const reversal = txn.reversedByTxnId
     ? data.transactions.find((t) => t.id === txn.reversedByTxnId)
     : undefined;
+
+  // Which direction the money went, so the party can be labelled plainly as
+  // "Received From" or "Paid To" rather than a bare "Party".
+  const inbound = ['Sale', 'Cash Received', 'Income', 'PDC Received', 'Debit Adjustment']
+    .includes(txn.type);
+  const outbound = ['Purchase', 'Cash Paid', 'Expense', 'PDC Issued', 'Credit Adjustment']
+    .includes(txn.type);
 
   const accountLabel = (l: (typeof lines)[number]) => {
     switch (l.account.kind) {
@@ -86,13 +93,44 @@ export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onCh
             </div>
           )}
 
-          {/* --- core facts --- */}
+          {/* --- core facts. Only fields that apply to THIS entry appear. --- */}
           <section className="pdc-detail-grid">
             <div><span className="faint">Date</span><span>{formatDate(txn.date)}</span></div>
-            <div><span className="faint">Amount</span><span className="mono">{formatMoney(txn.amount, cur)}</span></div>
-            {txn.partyId && <div><span className="faint">Party</span><span>{row.partyName}</span></div>}
-            {txn.toPartyId && <div><span className="faint">To Party</span><span>{row.toPartyName}</span></div>}
-            {row.bankLabel && <div><span className="faint">Bank</span><span>{row.bankLabel}</span></div>}
+            <div><span className="faint">Type</span><span>{txn.type}</span></div>
+            <div>
+              <span className="faint">Payment Method</span>
+              <span>
+                <span className={cx('method-pill', `m-${row.method.toLowerCase()}`)}>{row.method}</span>
+              </span>
+            </div>
+            {row.bankName && <div><span className="faint">Bank</span><span>{row.bankName}</span></div>}
+
+            {/* "Received from" / "Paid to" reads more plainly than "Party". */}
+            {txn.partyId && (
+              <div>
+                <span className="faint">{inbound ? 'Received From' : outbound ? 'Paid To' : 'Party'}</span>
+                <span>{row.partyName}</span>
+              </div>
+            )}
+            {txn.toPartyId && <div><span className="faint">Transferred To</span><span>{row.toPartyName}</span></div>}
+
+            {/* Item, quantity and rate for trading entries. */}
+            {txn.itemName && <div><span className="faint">Item</span><span>{txn.itemName}</span></div>}
+            {txn.quantity !== undefined && (
+              <div><span className="faint">Quantity</span><span className="mono">{formatNumber(txn.quantity)}</span></div>
+            )}
+            {txn.rate !== undefined && (
+              <div><span className="faint">Rate</span><span className="mono">{formatMoney(txn.rate, cur)}</span></div>
+            )}
+            {txn.category && <div><span className="faint">Category</span><span>{txn.category}</span></div>}
+            {txn.settlement && (
+              <div>
+                <span className="faint">Settled</span>
+                <span>{txn.settlement === 'cash' ? 'Paid now' : 'On account'}</span>
+              </div>
+            )}
+
+            <div><span className="faint">Total Amount</span><span className="mono detail-total">{formatMoney(txn.amount, cur)}</span></div>
             {txn.description && <div className="wide"><span className="faint">Description</span><span>{txn.description}</span></div>}
           </section>
 
@@ -109,8 +147,38 @@ export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onCh
                 {cheque.allocatedAmount > 0 && (
                   <div><span className="faint">Allocated</span><span className="mono">{formatMoney(cheque.allocatedAmount, cur)}</span></div>
                 )}
+                <div>
+                  <span className="faint">Direction</span>
+                  <span>{cheque.direction === 'received' ? 'Received from party' : 'Issued to party'}</span>
+                </div>
+                {cheque.drawerName && (
+                  <div><span className="faint">Drawer Name</span><span>{cheque.drawerName}</span></div>
+                )}
+                {cheque.accountNumber && (
+                  <div><span className="faint">Account Number</span><span className="mono">{cheque.accountNumber}</span></div>
+                )}
+                {cheque.branch && <div><span className="faint">Branch</span><span>{cheque.branch}</span></div>}
+                {cheque.bouncedOn && (
+                  <div><span className="faint">Bounced On</span><span>{formatDate(cheque.bouncedOn)}</span></div>
+                )}
                 {cheque.bounceReason && (
                   <div className="wide"><span className="faint">Bounce Reason</span><span>{cheque.bounceReason}</span></div>
+                )}
+                {cheque.replacedByChequeId && (
+                  <div>
+                    <span className="faint">Replaced By</span>
+                    <span className="mono">
+                      {data.cheques.find((c) => c.id === cheque.replacedByChequeId)?.chequeNumber ?? '—'}
+                    </span>
+                  </div>
+                )}
+                {cheque.replacesChequeId && (
+                  <div>
+                    <span className="faint">Replaces</span>
+                    <span className="mono">
+                      {data.cheques.find((c) => c.id === cheque.replacesChequeId)?.chequeNumber ?? '—'}
+                    </span>
+                  </div>
                 )}
               </div>
 

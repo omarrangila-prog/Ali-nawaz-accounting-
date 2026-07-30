@@ -295,6 +295,14 @@ export interface PdcTransaction {
   /** Optional quantity / rate detail for trading rows. */
   quantity?: number;
   rate?: number;
+  /**
+   * How the money moved, as the user chose it on the form. `settlement` only
+   * records cash-vs-credit for the accounting; this keeps the finer answer so
+   * the register and details can say "Bank" rather than just "Cash".
+   */
+  paymentMethod?: 'cash' | 'bank' | 'credit' | 'debit' | 'cheque';
+  /** What was sold or bought, for trading rows. */
+  itemName?: string;
   /** Set when this transaction reverses another (spec §26). */
   reversesTxnId?: string;
   /** Set on the original once it has been reversed. */
@@ -505,6 +513,10 @@ export interface RegisterRow {
   bankLabel: string;
   status?: ChequeStatus;
   holderLabel: string;
+  /** "Cash" / "Bank" / "Credit" / "Debit" / "Cheque". */
+  method: string;
+  /** Bank name when the entry touched one, else empty. */
+  bankName: string;
 }
 
 /** Live totals for the summary bar (spec §2). */

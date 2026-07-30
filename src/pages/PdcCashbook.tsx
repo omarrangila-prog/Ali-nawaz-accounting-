@@ -382,6 +382,34 @@ export function PdcCashbook() {
 
       {/* --- Search & filters (spec §2) --- */}
       <div className="card pdc-search-card no-print">
+        {/* Quick filters — the views asked for most often, one click each. */}
+        <div className="quick-filters no-print">
+          {([
+            { label: 'All', on: filters.card === 'all' && filters.method === 'all' && !filters.from,
+              set: () => setFilters((f) => ({ ...f, card: 'all', method: 'all', from: '', to: '' })) },
+            { label: 'Today', on: filters.from === today && filters.to === today,
+              set: () => setFilters((f) => ({ ...f, from: today, to: today })) },
+            { label: 'Cash', on: filters.method === 'cash',
+              set: () => setFilters((f) => ({ ...f, method: f.method === 'cash' ? 'all' : 'cash' })) },
+            { label: 'Bank', on: filters.method === 'bank',
+              set: () => setFilters((f) => ({ ...f, method: f.method === 'bank' ? 'all' : 'bank' })) },
+            { label: 'Cheque', on: filters.method === 'cheque',
+              set: () => setFilters((f) => ({ ...f, method: f.method === 'cheque' ? 'all' : 'cheque' })) },
+            { label: 'Credit', on: filters.method === 'credit',
+              set: () => setFilters((f) => ({ ...f, method: f.method === 'credit' ? 'all' : 'credit' })) },
+            { label: 'Pending', on: filters.status === 'pending',
+              set: () => setFilters((f) => ({ ...f, status: f.status === 'pending' ? 'all' : 'pending' })) },
+            { label: 'Cleared', on: filters.status === 'cleared',
+              set: () => setFilters((f) => ({ ...f, status: f.status === 'cleared' ? 'all' : 'cleared' })) },
+            { label: 'Overdue', on: filters.card === 'overdue',
+              set: () => setCard('overdue') },
+          ]).map((c) => (
+            <button key={c.label} className={cx('chip', c.on && 'chip-done')} onClick={c.set}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+
         <div className="pdc-search-row">
           <div className="pdc-search-box">
             <Icon name="search" size={16} />
@@ -503,7 +531,7 @@ export function PdcCashbook() {
                   {/* Reading order: WHEN → WHAT → WHO → DETAILS → MONEY → STATUS.
                       Money columns sit together just before status, so the eye
                       lands on Debit / Credit / Balance as one block. */}
-                  <th>Date</th><th>Reference</th><th>Type</th>
+                  <th>Date</th><th>Reference</th><th>Type</th><th>Method</th>
                   <th>From Party</th><th>To Party</th>
                   <th>Cheque #</th><th>Due Date</th><th>Bank</th>
                   <th>Description</th>
@@ -526,6 +554,12 @@ export function PdcCashbook() {
                       <td data-label="Date">{formatDate(txn.date)}</td>
                       <td data-label="Reference" className="mono">{txn.reference}</td>
                       <td data-label="Type"><span className="pdc-type">{txn.type}</span></td>
+                      <td data-label="Method">
+                        <span className={cx('method-pill', `m-${row.method.toLowerCase()}`)}>
+                          {row.method}
+                        </span>
+                        {row.bankName && <div className="faint method-bank">{row.bankName}</div>}
+                      </td>
                       <td data-label="From Party">{row.partyName || '—'}</td>
                       <td data-label="To Party">{row.toPartyName || '—'}</td>
                       <td data-label="Cheque #" className="mono">{cheque?.chequeNumber ?? '—'}</td>

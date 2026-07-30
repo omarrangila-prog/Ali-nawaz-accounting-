@@ -38,6 +38,57 @@ export function fundsDelta(data: PdcDataSet, txn: PdcTransaction): number {
 
 /** Debit / credit totals for a transaction, from its ledger lines. */
 /**
+ * How a transaction was paid, in plain words — with the bank named when one was
+ * involved. Derived once here so the register, the details drawer, every ledger
+ * and the reports all say the same thing.
+ */
+export function paymentMethodOf(
+  data: PdcDataSet,
+  txn: PdcTransaction
+): { method: string; bankName: string } {
+  const accId = txn.fromBankAccountId || txn.toBankAccountId;
+  const bankName = accId
+    ? bankAccountLabel(data.banks, data.bankAccounts, accId)
+    : '';
+
+  // A cheque entry is a cheque, whatever else is set.
+  if (txn.chequeId) {
+    const cheque = data.cheques.find((c) => c.id === txn.chequeId);
+    const drawer = cheque
+      ? data.banks.find((b) => b.id === cheque.bankId)?.name ?? ''
+      : '';
+    return { method: 'Cheque', bankName: bankName || drawer };
+  }
+
+  // Explicitly recorded on newer entries.
+  if (txn.paymentMethod) {
+    const label = txn.paymentMethod.charAt(0).toUpperCase() + txn.paymentMethod.slice(1);
+    return { method: label, bankName };
+  }
+
+  // Older entries predate paymentMethod — infer it so history still reads well.
+  if (accId) return { method: 'Bank', bankName };
+  switch (txn.type) {
+    case 'Sale':
+    case 'Purchase':
+      return { method: txn.settlement === 'cash' ? 'Cash' : 'Credit', bankName };
+    case 'Cash Received':
+    case 'Cash Paid':
+    case 'Expense':
+    case 'Income':
+      return { method: 'Cash', bankName };
+    case 'Debit Adjustment':
+      return { method: 'Debit', bankName };
+    case 'Credit Adjustment':
+      return { method: 'Credit', bankName };
+    case 'Bank Transfer':
+      return { method: 'Bank', bankName };
+    default:
+      return { method: '—', bankName };
+  }
+}
+
+/**
  * Debit / credit shown on a register row.
  *
  * A balanced posting always has total debit === total credit, so summing every
@@ -105,6 +156,7 @@ export function buildRegister(data: PdcDataSet): RegisterRow[] {
       ),
       status: cheque?.status,
       holderLabel: cheque ? holderLabel(data, cheque.holder) : '',
+      ...paymentMethodOf(data, txn),
     };
   });
 
@@ -131,6 +183,8 @@ export function matchesSearch(row: RegisterRow, raw: string): boolean {
     row.partyName,
     row.toPartyName,
     row.bankLabel,
+    row.method,
+    row.bankName,
     row.holderLabel,
     row.status,
     c?.chequeNumber,
@@ -153,6 +207,8 @@ export function matchesSearch(row: RegisterRow, raw: string): boolean {
 
 export interface RegisterFilters {
   search: string;
+  /** 'all' or a payment method: Cash / Bank / Credit / Debit / Cheque. */
+  method: string;
   /** Summary-card filter. */
   card: SummaryFilter;
   /** Transaction type, or 'all'. */
@@ -166,6 +222,7 @@ export interface RegisterFilters {
 
 export const EMPTY_FILTERS: RegisterFilters = {
   search: '',
+  method: 'all',
   card: 'all',
   type: 'all',
   status: 'all',
@@ -208,6 +265,7 @@ export function applyFilters(
   return rows.filter((row) => {
     if (!matchesCard(row, f.card, today)) return false;
     if (f.type !== 'all' && row.txn.type !== f.type) return false;
+    if (f.method !== 'all' && row.method.toLowerCase() !== f.method.toLowerCase()) return false;
     if (f.status !== 'all' && row.status !== f.status) return false;
     if (f.partyId && row.txn.partyId !== f.partyId && row.txn.toPartyId !== f.partyId) return false;
     if (

@@ -11,7 +11,9 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Icon } from '@/components/ui/Icon';
 import { Combo } from '@/components/ui/Combo';
 import { usePdc } from '@/store/pdcStore';
-import { buildBankLedger, buildPartyLedger } from '@/lib/pdcRegister';
+import { buildBankLedger, buildPartyLedger, buildRegister, paymentMethodOf } from '@/lib/pdcRegister';
+import { DetailsDrawer } from '@/components/pdc/DetailsDrawer';
+import type { RegisterRow } from '@/types/pdc';
 import { bankAccountLabel, balanceLabel, holderLabel } from '@/lib/pdcEngine';
 import { formatMoney, formatDate, cx } from '@/lib/utils';
 import { buildPartyStatementDoc, pdcFileName } from '@/lib/pdcReports';
@@ -30,6 +32,8 @@ export function PdcLedger() {
 
   const [partyId, setPartyId] = useState(params.get('party') ?? '');
   const [accountId, setAccountId] = useState(params.get('account') ?? '');
+  const [detail, setDetail] = useState<RegisterRow | null>(null);
+  const register = useMemo(() => buildRegister(data), [data]);
 
   // Keep the URL in step so the view is shareable / bookmarkable.
   useEffect(() => {
@@ -200,7 +204,7 @@ export function PdcLedger() {
                   <tr>
                     {/* WHEN → WHAT → WHO → DETAILS → MONEY → STATUS. */}
                     <th>Date</th><th>Reference</th><th>Type</th>
-                    <th>Related</th><th>Method</th>
+                    <th>Related</th><th>Method</th><th>Bank</th>
                     <th>Cheque #</th><th>Cheque Date</th>
                     <th>Description</th>
                     <th className="num">Debit</th><th className="num">Credit</th>
@@ -209,12 +213,31 @@ export function PdcLedger() {
                 </thead>
                 <tbody>
                   {ledger.rows.map(({ entry, txn, cheque, running, relatedName, bankLabel }) => (
-                    <tr key={entry.id} className={cx(txn?.reversed && 'row-reversed')}>
+                    <tr
+                      key={entry.id}
+                      className={cx(txn?.reversed && 'row-reversed')}
+                      style={{ cursor: txn ? 'pointer' : undefined }}
+                      onClick={() => {
+                        // Open the same detail panel the Cash Book uses, so a
+                        // transaction reads identically wherever it appears.
+                        const found = register.find((r) => r.txn.id === txn?.id);
+                        if (found) setDetail(found);
+                      }}
+                    >
                       <td data-label="Date">{formatDate(entry.date)}</td>
                       <td data-label="Reference" className="mono">{txn?.reference ?? '—'}</td>
                       <td data-label="Type">{entry.type}</td>
                       <td data-label="Related">{relatedName || bankLabel || '—'}</td>
-                      <td data-label="Method">{cheque ? 'Cheque' : bankLabel ? 'Bank' : 'Cash'}</td>
+                      <td data-label="Method">
+                        {(() => {
+                          const m = txn ? paymentMethodOf(data, txn).method
+                                        : (cheque ? 'Cheque' : bankLabel ? 'Bank' : 'Cash');
+                          return <span className={cx('method-pill', `m-${m.toLowerCase()}`)}>{m}</span>;
+                        })()}
+                      </td>
+                      <td data-label="Bank">
+                        {(txn ? paymentMethodOf(data, txn).bankName : bankLabel) || '—'}
+                      </td>
                       <td data-label="Cheque #" className="mono">{cheque?.chequeNumber ?? '—'}</td>
                       <td data-label="Cheque Date">{cheque ? formatDate(cheque.chequeDate) : '—'}</td>
                       <td data-label="Description">{entry.description}</td>
@@ -247,6 +270,15 @@ export function PdcLedger() {
           )}
         </div>
       )}
+
+      <DetailsDrawer
+        row={detail}
+        onClose={() => setDetail(null)}
+        onReverse={async (id) => { await store.reverse(id); setDetail(null); }}
+        onDelete={async (id) => { await store.deleteTransaction(id); setDetail(null); }}
+        onPrint={() => window.print()}
+        onChequeAction={() => toast.info('Open this cheque from the Cash Book to change its status.')}
+      />
 
       {printConfirm.dialog}
     </div>

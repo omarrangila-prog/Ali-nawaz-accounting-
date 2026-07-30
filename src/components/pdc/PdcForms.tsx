@@ -31,6 +31,10 @@ import {
 } from '@/lib/pdcEngine';
 import { buildChequeTransfer, isDuplicateCheque, unallocated } from '@/lib/chequeWorkflow';
 import { todayISO, formatMoney, round2, cx } from '@/lib/utils';
+import { PAKISTAN_BANKS } from '@/config/pakistanBanks';
+
+/** Marks a dropdown option that is a bank SUGGESTION, not an existing account. */
+const SUGGEST = 'new-bank:';
 import { toast } from '@/store/toast';
 
 /** Which form is open. */
@@ -167,6 +171,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
    */
   const [format, setFormat] = useState<'bank' | 'cash' | 'credit' | 'debit'>('cash');
   /** Optional quantity × rate; when both are set they drive the amount. */
+  const [showMore, setShowMore] = useState(false);
+  const [itemName, setItemName] = useState('');
   const [qty, setQty] = useState('');
   const [rate, setRate] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -188,6 +194,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     setSettlement('credit');
     setCategory('');
     setFormat('cash');
+    setShowMore(false);
+    setItemName('');
     setQty('');
     setRate('');
     setErrors({});
@@ -215,10 +223,29 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     () => data.parties.filter((p) => p.active).map((p) => ({ id: p.id, label: p.name })),
     [data.parties]
   );
-  const bankOptions = useMemo(
-    () => data.banks.filter((b) => b.active).map((b) => ({ id: b.id, label: b.name })),
-    [data.banks]
-  );
+  const bankOptions = useMemo(() => {
+    const have = data.banks.filter((b) => b.active).map((b) => ({ id: b.id, label: b.name }));
+    const haveNames = new Set(have.map((b) => b.label.trim().toLowerCase()));
+    // Any Pakistani bank can be picked straight away and is created on choosing.
+    const rest = PAKISTAN_BANKS
+      .filter((b) => !haveNames.has(b.name.trim().toLowerCase()))
+      .map((b) => ({ id: `${SUGGEST}${b.name}`, label: b.name, sub: b.kind }));
+    return [...have, ...rest];
+  }, [data.banks]);
+
+  /** Resolve a suggested bank into a real one before storing its id. */
+  const resolveBank = async (value: string) => {
+    if (!value.startsWith(SUGGEST)) { setBankId(value); return; }
+    const name = value.slice(SUGGEST.length);
+    const existing = data.banks.find((b) => b.name.trim().toLowerCase() === name.trim().toLowerCase());
+    const bank = existing ?? (await store.saveBank({ name }));
+    if (bank) setBankId(bank.id);
+  };
+  /**
+   * Accounts the user has, PLUS every Pakistani bank as a one-click option.
+   * Picking a suggestion creates the bank and its account immediately, so the
+   * list is never a dead end and the form never needs reopening.
+   */
   const accountOptions = useMemo(
     () =>
       data.bankAccounts
@@ -230,6 +257,41 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
         })),
     [data.bankAccounts, data.banks]
   );
+
+  /** Suggestions for banks the user has no account with yet. */
+  const bankSuggestions = useMemo(() => {
+    const haveBankIds = new Set(data.bankAccounts.map((a) => a.bankId));
+    const usedNames = new Set(
+      data.banks.filter((b) => haveBankIds.has(b.id)).map((b) => b.name.trim().toLowerCase())
+    );
+    return PAKISTAN_BANKS
+      .filter((b) => !usedNames.has(b.name.trim().toLowerCase()))
+      .map((b) => ({ id: `${SUGGEST}${b.name}`, label: b.name, sub: `${b.kind} · create account` }));
+  }, [data.banks, data.bankAccounts]);
+
+  /** Every option for an account picker: real accounts first, then suggestions. */
+  const accountPickerOptions = useMemo(
+    () => [...accountOptions, ...bankSuggestions],
+    [accountOptions, bankSuggestions]
+  );
+
+  /**
+   * Turn a chosen suggestion into a real bank + account, then select it.
+   * Anything else is an existing account id and passes straight through.
+   */
+  const resolveAccount = async (value: string, set: (v: string) => void) => {
+    if (!value.startsWith(SUGGEST)) { set(value); return; }
+    const bankName = value.slice(SUGGEST.length);
+    const existingBank = data.banks.find(
+      (b) => b.name.trim().toLowerCase() === bankName.trim().toLowerCase()
+    );
+    const bank = existingBank ?? (await store.saveBank({ name: bankName }));
+    if (!bank) { toast.error('Could not create that bank.'); return; }
+    const acct = await store.saveBankAccount({ bankId: bank.id, title: 'Main Account' });
+    if (!acct) { toast.error('Could not create the account.'); return; }
+    set(acct.id);
+    toast.success(`${bank.name} — ${acct.title} ready`);
+  };
   /** Received cheques still available to endorse. */
   const transferableCheques = useMemo(
     () =>
@@ -336,6 +398,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
             bankAccountId: settlement === 'cash' ? bankAccountId || undefined : undefined,
             quantity: qty.trim() ? Number(qty) : undefined,
             rate: rate.trim() ? Number(rate) : undefined,
+            itemName: itemName.trim() || undefined,
+            paymentMethod: format,
           })
         );
         break;
@@ -346,6 +410,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
             bankAccountId: settlement === 'cash' ? bankAccountId || undefined : undefined,
             quantity: qty.trim() ? Number(qty) : undefined,
             rate: rate.trim() ? Number(rate) : undefined,
+            itemName: itemName.trim() || undefined,
+            paymentMethod: format,
           })
         );
         break;
@@ -437,9 +503,9 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
   const fields: ReactNode[] = [];
   const fieldCount = (() => {
     switch (kind) {
-      // party, qty, rate, amount, format, [account], date, desc
+      // party, item, qty, rate, amount, format, [account], date, desc
       case 'sale':
-      case 'purchase': return 8;
+      case 'purchase': return 9;
       // category, qty, rate, amount, format, [account], date, desc
       case 'expense':
       case 'income': return 8;
@@ -517,9 +583,7 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
         />
         {empty && (
           <div className="field-empty-hint">
-            {onCreate
-              ? <>Nothing here yet — just type a name and press Enter to create it.</>
-              : <>Nothing to choose from yet — add it under <strong>Parties &amp; Banks</strong>, then reopen this form.</>}
+            Nothing here yet — type a name and press Enter to create it.
           </div>
         )}
       </Field>
@@ -567,6 +631,19 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       </Field>
     );
   };
+
+  /** Collapses the optional fields so the common entry stays short. */
+  const moreToggle = () => (
+    <button
+      key="more"
+      type="button"
+      className="link-btn"
+      style={{ alignSelf: 'flex-start' }}
+      onClick={() => setShowMore((v) => !v)}
+    >
+      {showMore ? 'Hide' : 'More'} details — item, quantity, description
+    </button>
+  );
 
   /**
    * Create a bank account from a typed name, so an empty account dropdown can
@@ -702,22 +779,24 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     case 'purchase': {
       const isSale = kind === 'sale';
       fields.push(partyField(isSale ? 'Customer' : 'Supplier', partyId, setPartyId, 'partyId'));
-      // Quantity × Rate fills the Amount automatically; leave them blank to
-      // type a lump-sum amount directly.
-      fields.push(qtyRateField());
       fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00',
-        qty.trim() && rate.trim() ? '(qty × rate)' : '(or enter directly)'));
+        qty.trim() && rate.trim() ? '(qty × rate)' : undefined));
       fields.push(formatField(isSale));
       if (format === 'bank') {
         fields.push(comboField(
-          'Bank Account', bankAccountId, accountOptions,
-          setBankAccountId, 'bankAccountId', 'Select account',
-          isSale ? '(money received into)' : '(money paid from)',
-          createAccount
+          'Bank Account', bankAccountId, accountPickerOptions,
+          (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select or search a bank',
+          isSale ? '(money received into)' : '(money paid from)'
         ));
       }
       fields.push(textField('Date', date, setDate, 'date', 'date'));
-      fields.push(textField('Description', description, setDescription, 'description', 'text', 'Optional'));
+      fields.push(moreToggle());
+      if (showMore) {
+        fields.push(textField('Item / Product', itemName, setItemName, 'itemName', 'text',
+          isSale ? 'what you sold' : 'what you bought'));
+        fields.push(qtyRateField());
+        fields.push(textField('Description', description, setDescription, 'description'));
+      }
       break;
     }
 
@@ -733,9 +812,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       fields.push(moneySourceField(kind === 'expense' ? 'paid from' : 'received into'));
       if (format === 'bank') {
         fields.push(comboField(
-          'Bank Account', bankAccountId, accountOptions,
-          setBankAccountId, 'bankAccountId', 'Select account', undefined,
-          createAccount
+          'Bank Account', bankAccountId, accountPickerOptions,
+          (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select or search a bank'
         ));
       }
       fields.push(textField('Date', date, setDate, 'date', 'date'));
@@ -744,7 +822,7 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
 
     case 'pdc-received':
       fields.push(partyField('Party', partyId, setPartyId, 'partyId'));
-      fields.push(comboField('Bank', bankId, bankOptions, setBankId, 'bankId', 'Drawer’s bank'));
+      fields.push(comboField('Bank', bankId, bankOptions, resolveBank, 'bankId', 'Search any bank'));
       fields.push(textField('Cheque Number', chequeNumber, setChequeNumber, 'chequeNumber'));
       fields.push(textField('Cheque Date', chequeDate, setChequeDate, 'chequeDate', 'date'));
       fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00'));
@@ -754,8 +832,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
 
     case 'pdc-issued':
       fields.push(partyField('Party', partyId, setPartyId, 'partyId'));
-      fields.push(comboField('Bank Account', bankAccountId, accountOptions,
-        setBankAccountId, 'bankAccountId', 'Your account', undefined, createAccount));
+      fields.push(comboField('Bank Account', bankAccountId, accountPickerOptions,
+        (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select or search a bank'));
       fields.push(textField('Cheque Number', chequeNumber, setChequeNumber, 'chequeNumber'));
       fields.push(textField('Cheque Date', chequeDate, setChequeDate, 'chequeDate', 'date'));
       fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00'));
@@ -770,9 +848,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       fields.push(moneySourceField(kind === 'cash-received' ? 'received into' : 'paid from'));
       if (format === 'bank') {
         fields.push(comboField(
-          'Bank Account', bankAccountId, accountOptions,
-          setBankAccountId, 'bankAccountId', 'Select account', undefined,
-          createAccount
+          'Bank Account', bankAccountId, accountPickerOptions,
+          (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select or search a bank'
         ));
       }
       fields.push(textField('Date', date, setDate, 'date', 'date'));
@@ -807,8 +884,10 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       break;
 
     case 'bank-transfer':
-      fields.push(comboField('From Account', bankAccountId, accountOptions, setBankAccountId, 'bankAccountId', 'Source account'));
-      fields.push(comboField('To Account', toBankAccountId, accountOptions, setToBankAccountId, 'toBankAccountId', 'Destination account'));
+      fields.push(comboField('From Account', bankAccountId, accountPickerOptions,
+        (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Source account'));
+      fields.push(comboField('To Account', toBankAccountId, accountPickerOptions,
+        (v) => resolveAccount(v, setToBankAccountId), 'toBankAccountId', 'Destination account'));
       fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00'));
       fields.push(textField('Date', date, setDate, 'date', 'date'));
       fields.push(textField('Description', description, setDescription, 'description', 'text', 'Optional'));

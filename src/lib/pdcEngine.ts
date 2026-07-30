@@ -848,6 +848,10 @@ export interface TradeInput {
   description?: string;
   quantity?: number;
   rate?: number;
+  /** What was sold or bought. */
+  itemName?: string;
+  /** Exactly how it was paid, for display (settlement drives the accounting). */
+  paymentMethod?: 'cash' | 'bank' | 'credit' | 'debit';
 }
 
 /**
@@ -865,6 +869,8 @@ export function buildSale(data: PdcDataSet, input: TradeInput): Posting {
     description: input.description,
     quantity: input.quantity,
     rate: input.rate,
+    itemName: input.itemName,
+    paymentMethod: input.paymentMethod,
     toBankAccountId: input.settlement === 'cash' ? input.bankAccountId : undefined,
   });
   const desc = input.description || 'Sale';
@@ -898,6 +904,8 @@ export function buildPurchase(data: PdcDataSet, input: TradeInput): Posting {
     description: input.description,
     quantity: input.quantity,
     rate: input.rate,
+    itemName: input.itemName,
+    paymentMethod: input.paymentMethod,
     fromBankAccountId: input.settlement === 'cash' ? input.bankAccountId : undefined,
   });
   const desc = input.description || 'Purchase';

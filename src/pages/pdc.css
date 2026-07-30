@@ -811,3 +811,33 @@
   background: rgba(15, 23, 42, 0.07);
   border: 1px solid var(--stroke);
 }
+
+/* --- Payment-method pill (register + ledgers) ------------------------------ */
+.method-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text-soft);
+}
+.method-pill.m-cash   { background: var(--green-soft); color: #065f46; }
+.method-pill.m-bank   { background: var(--blue-soft);  color: #1e40af; }
+.method-pill.m-cheque { background: var(--purple-soft); color: #5b21b6; }
+.method-pill.m-credit { background: var(--orange-soft); color: #92400e; }
+.method-pill.m-debit  { background: rgba(15, 23, 42, 0.07); color: var(--text-soft); }
+.method-bank { font-size: 10px; line-height: 1.2; margin-top: 2px; }
+
+/* The headline figure in the details panel. */
+.detail-total { font-size: 15px; font-weight: 700; color: var(--text); }
+
+/* --- Quick filter chips --------------------------------------------------- */
+.quick-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--stroke);
+}
