@@ -531,7 +531,7 @@ export function PdcCashbook() {
                   {/* Reading order: WHEN → WHAT → WHO → DETAILS → MONEY → STATUS.
                       Money columns sit together just before status, so the eye
                       lands on Debit / Credit / Balance as one block. */}
-                  <th>Date</th><th>Reference</th><th>Type</th><th>Method</th>
+                  <th>Date</th><th>Reference</th><th>Type</th><th>Item</th><th>Method</th>
                   <th>From Party</th><th>To Party</th>
                   <th>Cheque #</th><th>Due Date</th><th>Bank</th>
                   <th>Description</th>
@@ -554,6 +554,23 @@ export function PdcCashbook() {
                       <td data-label="Date">{formatDate(txn.date)}</td>
                       <td data-label="Reference" className="mono">{txn.reference}</td>
                       <td data-label="Type"><span className="pdc-type">{txn.type}</span></td>
+                      <td data-label="Item">
+                        {txn.itemName || txn.category ? (
+                          <>
+                            <span className="item-name">{txn.itemName || txn.category}</span>
+                            {/* Quantity x rate reads as "12 x Rs 250" so the
+                                figure in the Amount column is explained. */}
+                            {txn.quantity !== undefined && (
+                              <div className="faint item-qty">
+                                {formatNumber(txn.quantity)}
+                                {txn.rate !== undefined && ` × ${formatMoney(txn.rate, cur)}`}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <span className="faint">—</span>
+                        )}
+                      </td>
                       <td data-label="Method">
                         <span className={cx('method-pill', `m-${row.method.toLowerCase()}`)}>
                           {row.method}

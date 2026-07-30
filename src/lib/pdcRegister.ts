@@ -179,6 +179,8 @@ export function matchesSearch(row: RegisterRow, raw: string): boolean {
     row.txn.reference,
     row.txn.type,
     row.txn.description,
+    row.txn.itemName,
+    row.txn.category,
     row.txn.date,
     row.partyName,
     row.toPartyName,

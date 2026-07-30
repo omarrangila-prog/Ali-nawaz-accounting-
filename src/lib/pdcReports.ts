@@ -250,12 +250,13 @@ function txnSection(
     title,
     subtitle: `${rows.length} transaction${rows.length === 1 ? '' : 's'}`,
     emptyText: 'No transactions match this selection.',
-    head: ['Date', 'Reference', 'Type', 'Party', 'Cheque #', 'Debit', 'Credit', 'Balance'],
-    numericCols: [5, 6, 7],
+    head: ['Date', 'Reference', 'Type', 'Item', 'Party', 'Cheque #', 'Debit', 'Credit', 'Balance'],
+    numericCols: [6, 7, 8],
     rows: rows.map((r) => [
       formatDate(r.txn.date),
       r.txn.reference,
       r.txn.type,
+      r.txn.itemName ?? r.txn.category ?? '—',
       // Show the counterparty inline rather than as its own column, so the
       // remaining columns stay wide enough not to truncate. Plain ASCII "->"
       // because jsPDF's built-in Helvetica has no arrow glyph.
@@ -525,8 +526,9 @@ export function buildPdcReport(
           centerValue: compact(total),
           centerLabel: 'total',
           data: [
-            { label: 'Cash / Bank', value: cashPart, color: T.blue },
-            { label: 'On Credit', value: creditPart, color: T.orange },
+            // Short labels — the donut legend column truncates longer ones.
+            { label: 'Cash', value: cashPart, color: T.blue },
+            { label: 'Credit', value: creditPart, color: T.orange },
           ],
         },
         {
@@ -544,18 +546,21 @@ export function buildPdcReport(
         title: id === 'sales' ? 'Sales' : 'Purchases',
         subtitle: `${rows.length} entr${rows.length === 1 ? 'y' : 'ies'}`,
         emptyText: id === 'sales' ? 'No sales in this period.' : 'No purchases in this period.',
-        head: ['Date', 'Reference', 'Party', 'Payment', 'Description', 'Amount'],
-        numericCols: [5],
-        statusCol: 3,
+        head: ['Date', 'Reference', 'Party', 'Item', 'Qty × Rate', 'Payment', 'Amount'],
+        numericCols: [6],
+        statusCol: 5,
         rows: rows.map((t) => [
           formatDate(t.date),
           t.reference,
           partyName(data, t.partyId),
+          t.itemName ?? t.description ?? '—',
+          t.quantity !== undefined
+            ? `${t.quantity}${t.rate !== undefined ? ` × ${m(t.rate)}` : ''}`
+            : '—',
           t.settlement === 'cash' ? 'Cash / Bank' : 'Credit',
-          t.description ?? '—',
           m(t.amount),
         ]),
-        foot: ['', '', '', '', 'Total', m(rows.reduce((s, t) => s + t.amount, 0))],
+        foot: ['', '', '', '', '', 'Total', m(rows.reduce((s, t) => s + t.amount, 0))],
       });
       break;
     }

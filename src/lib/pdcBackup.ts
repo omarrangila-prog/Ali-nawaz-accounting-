@@ -210,10 +210,15 @@ export function exportExcel(data: PdcDataSet): string {
   sheets.push({
     name: 'Cash Book',
     rows: [
-      ['Date', 'Reference', 'Type', 'From Party', 'To Party', 'Cheque #',
-        'Description', 'Debit', 'Credit', 'Balance', 'Status', 'Reversed'],
+      ['Date', 'Reference', 'Type', 'Item', 'Qty', 'Rate', 'Method',
+        'From Party', 'To Party', 'Cheque #', 'Description',
+        'Debit', 'Credit', 'Balance', 'Status', 'Reversed'],
       ...reg.map((r) => [
-        r.txn.date, r.txn.reference, r.txn.type, r.partyName, r.toPartyName,
+        r.txn.date, r.txn.reference, r.txn.type,
+        r.txn.itemName ?? r.txn.category ?? '',
+        r.txn.quantity ?? '', r.txn.rate !== undefined ? money(r.txn.rate) : '',
+        r.method,
+        r.partyName, r.toPartyName,
         r.cheque?.chequeNumber ?? '', r.txn.description ?? '',
         money(r.debit), money(r.credit), money(r.running),
         r.status ?? '', r.txn.reversed ? 'YES' : '',

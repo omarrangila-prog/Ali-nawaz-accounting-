@@ -203,7 +203,7 @@ export function PdcLedger() {
                 <thead>
                   <tr>
                     {/* WHEN → WHAT → WHO → DETAILS → MONEY → STATUS. */}
-                    <th>Date</th><th>Reference</th><th>Type</th>
+                    <th>Date</th><th>Reference</th><th>Type</th><th>Item</th>
                     <th>Related</th><th>Method</th><th>Bank</th>
                     <th>Cheque #</th><th>Cheque Date</th>
                     <th>Description</th>
@@ -227,6 +227,9 @@ export function PdcLedger() {
                       <td data-label="Date">{formatDate(entry.date)}</td>
                       <td data-label="Reference" className="mono">{txn?.reference ?? '—'}</td>
                       <td data-label="Type">{entry.type}</td>
+                      <td data-label="Item">
+                        {txn?.itemName || txn?.category || <span className="faint">—</span>}
+                      </td>
                       <td data-label="Related">{relatedName || bankLabel || '—'}</td>
                       <td data-label="Method">
                         {(() => {

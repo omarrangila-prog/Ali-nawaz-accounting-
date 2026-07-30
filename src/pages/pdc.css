@@ -841,3 +841,7 @@
   padding-bottom: 10px;
   border-bottom: 1px solid var(--stroke);
 }
+
+/* --- Item column ---------------------------------------------------------- */
+.item-name { font-weight: 600; }
+.item-qty { font-size: 10.5px; line-height: 1.2; margin-top: 1px; }
