@@ -201,6 +201,13 @@ export function PdcCashbook() {
     setSelected((s) => (s >= shown.length ? shown.length - 1 : s));
   }, [shown.length]);
 
+  /**
+   * A trade view (Sale or Purchase only) reads like an invoice list, so it
+   * drops the cheque, holder and reference columns that never apply to a trade
+   * and shows Quantity and Rate as columns of their own instead.
+   */
+  const tradeView = filters.type === 'Sale' || filters.type === 'Purchase';
+
   const partyOptions = data.parties.filter((p) => p.active).map((p) => ({ id: p.id, label: p.name }));
   const accountOptions = data.bankAccounts
     .filter((a) => a.active)
@@ -507,14 +514,27 @@ export function PdcCashbook() {
                   {/* Reading order: WHEN → WHAT → WHO → DETAILS → MONEY → STATUS.
                       Money columns sit together just before status, so the eye
                       lands on Debit / Credit / Balance as one block. */}
-                  <th>Date</th><th>Reference</th><th>Type</th><th>Item</th><th>Method</th>
-                  <th>From Party</th><th>To Party</th>
-                  <th>Cheque #</th><th>Due Date</th><th>Bank</th>
-                  <th>Description</th>
-                  <th className="num">Debit</th><th className="num">Credit</th>
-                  <th className="num">Balance</th>
-                  <th>Status</th><th>Holder</th>
-                  <th className="no-print"></th>
+                  {tradeView ? (
+                    // Date · Description · Qty · Rate · Party · Amount — an
+                    // invoice list, nothing that belongs to a payment.
+                    <>
+                      <th>Date</th><th>Description</th>
+                      <th className="num">Qty</th><th className="num">Rate</th>
+                      <th>Party</th><th className="num">Amount</th>
+                      <th className="no-print"></th>
+                    </>
+                  ) : (
+                    <>
+                      <th>Date</th><th>Reference</th><th>Type</th><th>Item</th><th>Method</th>
+                      <th>From Party</th><th>To Party</th>
+                      <th>Cheque #</th><th>Due Date</th><th>Bank</th>
+                      <th>Description</th>
+                      <th className="num">Debit</th><th className="num">Credit</th>
+                      <th className="num">Balance</th>
+                      <th>Status</th><th>Holder</th>
+                      <th className="no-print"></th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -527,6 +547,37 @@ export function PdcCashbook() {
                       onClick={() => setSelected(idx)}
                       onDoubleClick={() => setDetail(row)}
                     >
+                      {tradeView ? (
+                        <>
+                          <td data-label="Date">{formatDate(txn.date)}</td>
+                          <td data-label="Description">
+                            {txn.description || txn.itemName || txn.category || '—'}
+                          </td>
+                          <td data-label="Qty" className="num mono">
+                            {txn.quantity !== undefined ? formatNumber(txn.quantity) : '—'}
+                          </td>
+                          <td data-label="Rate" className="num mono">
+                            {txn.rate !== undefined ? formatMoney(txn.rate, cur) : '—'}
+                          </td>
+                          <td data-label="Party">{row.partyName || '—'}</td>
+                          <td data-label="Amount" className="num mono">
+                            {formatMoney(txn.amount, cur)}
+                          </td>
+                          <td className="no-print actions-cell">
+                            <div className="row" style={{ gap: 2, justifyContent: 'flex-end' }}>
+                              <button className="btn btn-ghost btn-icon btn-sm" title="Details (Enter)"
+                                onClick={(e) => { e.stopPropagation(); setDetail(row); }}>
+                                <Icon name="eye" size={14} />
+                              </button>
+                              <button className="btn btn-ghost btn-icon btn-sm del-btn" title="Delete permanently (Del)"
+                                onClick={(e) => { e.stopPropagation(); setToDelete(txn.id); }}>
+                                <Icon name="trash" size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                      <>
                       <td data-label="Date">{formatDate(txn.date)}</td>
                       <td data-label="Reference" className="mono">{txn.reference}</td>
                       <td data-label="Type"><span className="pdc-type">{txn.type}</span></td>
@@ -588,6 +639,8 @@ export function PdcCashbook() {
                           </button>
                         </div>
                       </td>
+                      </>
+                      )}
                     </tr>
                   );
                 })}

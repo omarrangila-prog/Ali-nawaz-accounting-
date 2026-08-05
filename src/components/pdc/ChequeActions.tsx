@@ -15,8 +15,10 @@ import {
   buildChequeClear,
   buildChequeDeposit,
   buildChequeReturn,
+  isDuplicateCheque,
   linkReplacement,
 } from '@/lib/chequeWorkflow';
+import { PAKISTAN_BANKS } from '@/config/pakistanBanks';
 import { bankAccountLabel } from '@/lib/pdcEngine';
 import type { Cheque } from '@/types/pdc';
 import { todayISO, formatMoney } from '@/lib/utils';
@@ -41,6 +43,7 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
   const [replacementId, setReplacementId] = useState('');
   // --- edit form ---
   const [editNumber, setEditNumber] = useState('');
+  const [editBankId, setEditBankId] = useState('');
   const [editChequeDate, setEditChequeDate] = useState('');
   const [editAmount, setEditAmount] = useState('');
   const [editDrawer, setEditDrawer] = useState('');
@@ -54,6 +57,7 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
     setDate(todayISO());
     setReplacementId('');
     setEditNumber(cheque?.chequeNumber ?? '');
+    setEditBankId(cheque?.bankId ?? '');
     setEditChequeDate(cheque?.chequeDate ?? '');
     setEditAmount(String(cheque?.amount ?? ''));
     setEditDrawer(cheque?.drawerName ?? '');
@@ -66,6 +70,28 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
   const accountOptions = data.bankAccounts
     .filter((a) => a.active)
     .map((a) => ({ id: a.id, label: bankAccountLabel(data.banks, data.bankAccounts, a.id) }));
+
+  /** Banks on file, then every Pakistani bank — created on first use. */
+  const SUGGEST = 'new-bank:';
+  const have = data.banks.filter((b) => b.active).map((b) => ({ id: b.id, label: b.name }));
+  const haveNames = new Set(have.map((b) => b.label.trim().toLowerCase()));
+  const bankOptions = [
+    ...have,
+    ...PAKISTAN_BANKS
+      .filter((b) => !haveNames.has(b.name.trim().toLowerCase()))
+      .map((b) => ({ id: `${SUGGEST}${b.name}`, label: b.name, sub: b.kind })),
+  ];
+
+  /** Turn a suggested bank into a real one before storing its id. */
+  const resolveEditBank = async (value: string) => {
+    if (!value.startsWith(SUGGEST)) { setEditBankId(value); return; }
+    const name = value.slice(SUGGEST.length);
+    const existing = data.banks.find(
+      (b) => b.name.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+    const bank = existing ?? (await store.saveBank({ name }));
+    if (bank) setEditBankId(bank.id);
+  };
 
   /** Cheques that could serve as a replacement for this bounced one. */
   const replacementOptions = data.cheques
@@ -124,17 +150,30 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
     }
 
     if (action === 'edit') {
+      // Number, date and bank stay optional here as well. This dialog is how a
+      // cheque recorded without them gets completed later, so it must accept a
+      // partly-filled cheque exactly as the entry form does. Only the amount
+      // has to be real, because the ledger already carries it.
       const num = editNumber.trim();
-      if (!num) { toast.error('Cheque number is required.'); return; }
-      if (!editChequeDate) { toast.error('Cheque date is required.'); return; }
       const amt = Number(editAmount);
       if (!Number.isFinite(amt) || amt <= 0) { toast.error('Enter a valid amount.'); return; }
+      if (num && editBankId && isDuplicateCheque(
+        data,
+        { chequeNumber: num, bankId: editBankId, direction: cheque!.direction },
+        cheque!.id
+      )) {
+        toast.error('That cheque number already exists for this bank.');
+        return;
+      }
 
       const ok = await store.updateChequeDetails(
         cheque!.id,
         {
           chequeNumber: num,
-          chequeDate: editChequeDate,
+          // An unknown due date keeps the date the cheque was recorded on,
+          // rather than going blank and sorting before every real cheque.
+          chequeDate: editChequeDate || cheque!.date,
+          bankId: editBankId,
           amount: amt,
           drawerName: editDrawer || undefined,
           description: editDesc || undefined,
@@ -186,7 +225,7 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
     <Modal
       open
       title={titles[action]}
-      subtitle={`Cheque ${cheque.chequeNumber} · ${formatMoney(cheque.amount, cur)} · due ${cheque.chequeDate}`}
+      subtitle={`${cheque.chequeNumber ? `Cheque ${cheque.chequeNumber}` : 'Cheque (number not recorded yet)'} · ${formatMoney(cheque.amount, cur)} · due ${cheque.chequeDate}`}
       onClose={onClose}
       width={460}
       footer={
@@ -230,15 +269,27 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
           <>
             <div className="grid-2">
               <div className="field">
-                <label>Cheque Number</label>
+                <label>Cheque Number <span className="faint">(optional)</span></label>
                 <input className="input" autoFocus value={editNumber}
+                  placeholder="Fill in when you have the cheque"
                   onChange={(e) => setEditNumber(e.target.value)} />
               </div>
               <div className="field">
-                <label>Cheque Date</label>
+                <label>Cheque Date <span className="faint">(optional)</span></label>
                 <input className="input" type="date" value={editChequeDate}
                   onChange={(e) => setEditChequeDate(e.target.value)} />
               </div>
+            </div>
+            {/* The bank belongs here too, so a cheque taken in without any
+                details can be identified fully from this one dialog. */}
+            <div className="field">
+              <label>Bank <span className="faint">(optional)</span></label>
+              <Combo
+                value={editBankId}
+                options={bankOptions}
+                placeholder="Search any bank"
+                onChange={resolveEditBank}
+              />
             </div>
             <div className="field">
               <label>Amount</label>

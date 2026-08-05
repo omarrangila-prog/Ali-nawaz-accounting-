@@ -335,13 +335,13 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     if ((kind === 'expense' || kind === 'income') && !category.trim()) {
       e.category = 'Enter a category (e.g. Rent, Salary).';
     }
-    // Paying by cheque needs the cheque itself, since the record is created here.
-    if (format === 'cheque' &&
-        ['sale', 'purchase', 'cash-received', 'cash-paid'].includes(kind ?? '')) {
-      if (!bankId) e.bankId = 'Select the cheque’s bank.';
-      if (!chequeNumber.trim()) e.chequeNumber = 'Enter the cheque number.';
-      if (!chequeDate) e.chequeDate = 'Enter the cheque date.';
-      const dir = kind === 'sale' || kind === 'cash-received' ? 'received' : 'issued';
+    // Receiving or paying by cheque: every cheque detail is OPTIONAL. The
+    // receipt is the fact that matters and must save even when the cheque is
+    // still in an envelope on the desk — the number, bank and date can be
+    // filled in later by editing the transaction.
+    if (format === 'cheque' && ['cash-received', 'cash-paid'].includes(kind ?? '')) {
+      const dir = kind === 'cash-received' ? 'received' : 'issued';
+      // Only guard against a genuine clash, and only once a number is typed.
       if (bankId && chequeNumber.trim() &&
           isDuplicateCheque(data, { chequeNumber, bankId, direction: dir })) {
         e.chequeNumber = 'That cheque number already exists for this bank.';
@@ -406,33 +406,25 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     let ok = false;
 
     switch (kind) {
+      // A trade always posts to the party ledger. Settlement happens later
+      // through Receive / Pay, so no bank, cash or cheque is touched here.
       case 'sale':
         ok = await store.commit(
           buildSale(data, {
-            partyId, amount: amt, date, settlement, description,
-            bankAccountId: settlement === 'cash' ? bankAccountId || undefined : undefined,
+            partyId, amount: amt, date, settlement: 'credit', description,
             quantity: qty.trim() ? Number(qty) : undefined,
             rate: rate.trim() ? Number(rate) : undefined,
             itemName: itemName.trim() || undefined,
-            paymentMethod: format,
-            cheque: format === 'cheque'
-              ? { chequeNumber: chequeNumber.trim(), chequeDate, bankId }
-              : undefined,
           })
         );
         break;
       case 'purchase':
         ok = await store.commit(
           buildPurchase(data, {
-            partyId, amount: amt, date, settlement, description,
-            bankAccountId: settlement === 'cash' ? bankAccountId || undefined : undefined,
+            partyId, amount: amt, date, settlement: 'credit', description,
             quantity: qty.trim() ? Number(qty) : undefined,
             rate: rate.trim() ? Number(rate) : undefined,
             itemName: itemName.trim() || undefined,
-            paymentMethod: format,
-            cheque: format === 'cheque'
-              ? { chequeNumber: chequeNumber.trim(), chequeDate, bankId }
-              : undefined,
           })
         );
         break;
@@ -538,9 +530,9 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
   const fields: ReactNode[] = [];
   const fieldCount = (() => {
     switch (kind) {
-      // party, item, qty, rate, amount, format, [cheque x3 | account], date, desc
+      // qty, rate, item, party, amount, date, desc
       case 'sale':
-      case 'purchase': return format === 'cheque' ? 11 : 9;
+      case 'purchase': return 7;
       // category, qty, rate, amount, format, [account], date, desc
       case 'expense':
       case 'income': return 8;
@@ -794,13 +786,18 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       'Payment'
     );
 
-  /** The cheque fields, shown only when Cheque is the chosen payment. */
+  /**
+   * The cheque fields, shown only when Cheque is the chosen payment. All three
+   * are OPTIONAL — the receipt saves without them and they can be filled in
+   * later by editing the transaction.
+   */
   const chequeFields = (received: boolean) => [
-    comboField('Cheque Bank', bankId, bankOptions, setBankId, 'bankId',
-      received ? 'Bank it is drawn on' : 'Your bank'),
-    textField('Cheque Number', chequeNumber, setChequeNumber, 'chequeNumber'),
+    comboField('Cheque Bank', bankId, bankOptions, resolveBank, 'bankId',
+      received ? 'Bank it is drawn on' : 'Your bank', '(optional — add later)'),
+    textField('Cheque Number', chequeNumber, setChequeNumber, 'chequeNumber', 'text',
+      'Leave blank if not to hand', '(optional — add later)'),
     textField('Cheque Date', chequeDate, setChequeDate, 'chequeDate', 'date',
-      undefined, '(when it can be presented)'),
+      undefined, '(optional — when it can be presented)'),
   ];
 
   /**
@@ -820,26 +817,18 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     case 'sale':
     case 'purchase': {
       const isSale = kind === 'sale';
+      // A Sale/Purchase records the TRADE only. No payment is taken here —
+      // money is collected through Receive and paid through Pay, so the party
+      // ledger always carries the balance between the two. Quantity and Rate
+      // lead, because that is what the user reads off the invoice first.
+      fields.push(qtyRateField());
+      fields.push(textField('Item / Product', itemName, setItemName, 'itemName', 'text',
+        isSale ? 'what you sold' : 'what you bought'));
       fields.push(partyField(isSale ? 'Customer' : 'Supplier', partyId, setPartyId, 'partyId'));
       fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00',
-        qty.trim() && rate.trim() ? '(qty × rate)' : undefined));
-      fields.push(formatField(isSale));
-      if (format === 'cheque') fields.push(...chequeFields(isSale));
-      if (format === 'bank') {
-        fields.push(comboField(
-          'Bank Account', bankAccountId, accountPickerOptions,
-          (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select or search a bank',
-          isSale ? '(money received into)' : '(money paid from)'
-        ));
-      }
+        qty.trim() && rate.trim() ? '(qty × rate)' : '(or enter directly)'));
       fields.push(textField('Date', date, setDate, 'date', 'date'));
-      fields.push(moreToggle());
-      if (showMore) {
-        fields.push(textField('Item / Product', itemName, setItemName, 'itemName', 'text',
-          isSale ? 'what you sold' : 'what you bought'));
-        fields.push(qtyRateField());
-        fields.push(textField('Description', description, setDescription, 'description'));
-      }
+      fields.push(textField('Description', description, setDescription, 'description', 'text', 'Optional'));
       break;
     }
 

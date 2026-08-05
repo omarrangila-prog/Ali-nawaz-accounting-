@@ -74,6 +74,42 @@ export function PdcLedger() {
     };
   }, [data.cheques, partyId]);
 
+  /**
+   * The opening figure this statement starts from. Always shown as row one,
+   * even when it is zero, so the reader can see where the balance began rather
+   * than having to infer it.
+   */
+  const opening = useMemo(() => {
+    if (party) return { amount: party.openingBalance, date: '' };
+    if (account) return { amount: account.openingBalance, date: '' };
+    return { amount: 0, date: '' };
+  }, [party, account]);
+
+  /**
+   * Statement rows oldest-first. buildPartyLedger returns newest-first for the
+   * register's on-screen feel, but a statement has to read downwards so each
+   * running balance follows from the line above it.
+   */
+  const statementRows = useMemo(
+    () => (ledger ? [...ledger.rows].reverse() : []),
+    [ledger]
+  );
+
+  /**
+   * What a line says on the statement. The user's own words come first — the
+   * printed book reads "shoaib", not a generated label — falling back to the
+   * item, then the category, then the entry type.
+   */
+  const describe = (
+    entry: { description: string; type: string },
+    txn?: { description?: string; itemName?: string; category?: string }
+  ): string =>
+    txn?.description?.trim() ||
+    txn?.itemName?.trim() ||
+    txn?.category?.trim() ||
+    entry.description?.trim() ||
+    entry.type;
+
   /** The printed worksheet, matching the ledger book the business already uses. */
   const makeStatement = () =>
     partyId ? buildPartyWorksheet(data, partyId) : buildBankWorksheet(data, accountId);
@@ -207,17 +243,37 @@ export function PdcLedger() {
               <table className="grid pdc-grid stack-sm">
                 <thead>
                   <tr>
-                    {/* WHEN → WHAT → WHO → DETAILS → MONEY → STATUS. */}
-                    <th>Date</th><th>Reference</th><th>Type</th><th>Item</th>
-                    <th>Related</th><th>Method</th><th>Bank</th>
-                    <th>Cheque #</th><th>Cheque Date</th>
-                    <th>Description</th>
+                    {/* A statement, read like a bank statement: what happened,
+                        what it did to the balance, and nothing else. Everything
+                        further (reference, cheque, method, status) is one click
+                        away in the details panel. */}
+                    <th>Date</th><th>Description</th>
                     <th className="num">Debit</th><th className="num">Credit</th>
-                    <th className="num">Balance</th><th>Status</th>
+                    <th className="num">Balance</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {ledger.rows.map(({ entry, txn, cheque, running, relatedName, bankLabel }) => (
+                  {/* Row one is ALWAYS the Opening Balance — the figure the
+                      statement starts from, shown even when it is zero. */}
+                  <tr className="stmt-opening">
+                    <td data-label="Date">
+                      {opening.date ? formatDate(opening.date) : <span className="faint">—</span>}
+                    </td>
+                    <td data-label="Description"><strong>Opening Balance</strong></td>
+                    <td data-label="Debit" className="num mono pos">
+                      {opening.amount > 0 ? formatMoney(opening.amount, cur) : '—'}
+                    </td>
+                    <td data-label="Credit" className="num mono neg">
+                      {opening.amount < 0 ? formatMoney(-opening.amount, cur) : '—'}
+                    </td>
+                    <td data-label="Balance" className={cx('num mono stmt-bal',
+                      opening.amount > 0 ? 'pos' : opening.amount < 0 ? 'neg' : '')}>
+                      {formatMoney(opening.amount, cur)}
+                    </td>
+                  </tr>
+                  {/* Oldest first, so the running balance builds down the page
+                      exactly as it does on the printed statement. */}
+                  {statementRows.map(({ entry, txn, running }) => (
                     <tr
                       key={entry.id}
                       className={cx(txn?.reversed && 'row-reversed')}
@@ -230,25 +286,7 @@ export function PdcLedger() {
                       }}
                     >
                       <td data-label="Date">{formatDate(entry.date)}</td>
-                      <td data-label="Reference" className="mono">{txn?.reference ?? '—'}</td>
-                      <td data-label="Type">{entry.type}</td>
-                      <td data-label="Item">
-                        {txn?.itemName || txn?.category || <span className="faint">—</span>}
-                      </td>
-                      <td data-label="Related">{relatedName || bankLabel || '—'}</td>
-                      <td data-label="Method">
-                        {(() => {
-                          const m = txn ? paymentMethodOf(data, txn).method
-                                        : (cheque ? 'Cheque' : bankLabel ? 'Bank' : 'Cash');
-                          return <span className={cx('method-pill', `m-${m.toLowerCase()}`)}>{m}</span>;
-                        })()}
-                      </td>
-                      <td data-label="Bank">
-                        {(txn ? paymentMethodOf(data, txn).bankName : bankLabel) || '—'}
-                      </td>
-                      <td data-label="Cheque #" className="mono">{cheque?.chequeNumber ?? '—'}</td>
-                      <td data-label="Cheque Date">{cheque ? formatDate(cheque.chequeDate) : '—'}</td>
-                      <td data-label="Description">{entry.description}</td>
+                      <td data-label="Description">{describe(entry, txn)}</td>
                       <td data-label="Debit" className="num mono pos">{entry.debit ? formatMoney(entry.debit, cur) : '—'}</td>
                       <td data-label="Credit" className="num mono neg">{entry.credit ? formatMoney(entry.credit, cur) : '—'}</td>
                       <td data-label="Balance" className={cx('num mono stmt-bal', running > 0 ? 'pos' : running < 0 ? 'neg' : '')}>
@@ -257,11 +295,6 @@ export function PdcLedger() {
                             ? formatMoney(0, cur)
                             : `${running > 0 ? '+' : '−'}${formatMoney(Math.abs(running), cur)}`
                           : formatMoney(running, cur)}
-                      </td>
-                      <td data-label="Status">
-                        {cheque
-                          ? <span className={cx('pdc-status', `st-${cheque.status}`)}>{cheque.status}</span>
-                          : <span className="faint">—</span>}
                       </td>
                     </tr>
                   ))}

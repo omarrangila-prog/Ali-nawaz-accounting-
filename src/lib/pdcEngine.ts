@@ -752,9 +752,12 @@ export interface CashInput {
   paymentMethod?: 'cash' | 'bank' | 'cheque';
   /** Cheque details when paid by cheque; the cheque record is created here. */
   cheque?: {
-    chequeNumber: string;
-    chequeDate: ISODate;
-    bankId: string;
+    /** Optional — a cheque can be recorded before its number is known. */
+    chequeNumber?: string;
+    /** Optional — defaults to the entry date. */
+    chequeDate?: ISODate;
+    /** Optional — the drawer's bank can be identified later. */
+    bankId?: string;
     drawerName?: string;
   };
 }
@@ -895,17 +898,23 @@ export function buildCreditAdjustment(data: PdcDataSet, input: AdjustmentInput):
  */
 function newChequeFor(
   input: { partyId: string; amount: number; date: ISODate; description?: string },
-  cq: { chequeNumber: string; chequeDate: ISODate; bankId: string; drawerName?: string },
+  cq: { chequeNumber?: string; chequeDate?: ISODate; bankId?: string; drawerName?: string },
   direction: ChequeDirection,
   bankAccountId?: string
 ): Cheque {
   return {
     id: uid(),
     direction,
-    chequeNumber: cq.chequeNumber.trim(),
-    bankId: cq.bankId,
+    // Every cheque detail is optional at entry time. A cheque with no number
+    // yet is still a real cheque sitting in the drawer — it is recorded now and
+    // identified later, rather than blocking the receipt.
+    chequeNumber: (cq.chequeNumber ?? '').trim(),
+    bankId: cq.bankId ?? '',
     bankAccountId,
-    chequeDate: cq.chequeDate,
+    // Ageing and due-date views sort on chequeDate, so an unknown date falls
+    // back to the entry date rather than an empty string that would sort before
+    // every real cheque.
+    chequeDate: cq.chequeDate || input.date,
     date: input.date,
     amount: round2(input.amount),
     partyId: input.partyId,
@@ -944,9 +953,12 @@ export interface TradeInput {
    * Receiving a cheque does NOT mean it has cleared — it starts as pending.
    */
   cheque?: {
-    chequeNumber: string;
-    chequeDate: ISODate;
-    bankId: string;
+    /** Optional — a cheque can be recorded before its number is known. */
+    chequeNumber?: string;
+    /** Optional — defaults to the entry date. */
+    chequeDate?: ISODate;
+    /** Optional — the drawer's bank can be identified later. */
+    bankId?: string;
     drawerName?: string;
   };
 }
