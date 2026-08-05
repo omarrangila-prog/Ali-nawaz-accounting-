@@ -218,9 +218,7 @@ export function PdcLedgers() {
           <div className="faint" style={{ flex: 1, fontSize: 12.5 }}>
             A ledger totals the entries posted to it plus every party assigned to it.
           </div>
-          <button className="btn btn-primary" onClick={() => setModal('new')}>
-            <Icon name="plus" size={15} /> New Ledger
-          </button>
+
         </div>
       </div>
 

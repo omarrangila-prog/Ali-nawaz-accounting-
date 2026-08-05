@@ -16,7 +16,8 @@ import { DetailsDrawer } from '@/components/pdc/DetailsDrawer';
 import type { RegisterRow } from '@/types/pdc';
 import { bankAccountLabel, balanceLabel, holderLabel } from '@/lib/pdcEngine';
 import { formatMoney, formatDate, cx } from '@/lib/utils';
-import { buildPartyStatementDoc, pdcFileName } from '@/lib/pdcReports';
+import { pdcFileName } from '@/lib/pdcReports';
+import { buildPartyWorksheet, buildBankWorksheet } from '@/lib/pdcWorksheet';
 import { usePrintConfirm } from '@/components/ui/PrintConfirm';
 import { toast } from '@/store/toast';
 import './pdc.css';
@@ -73,18 +74,22 @@ export function PdcLedger() {
     };
   }, [data.cheques, partyId]);
 
+  /** The printed worksheet, matching the ledger book the business already uses. */
+  const makeStatement = () =>
+    partyId ? buildPartyWorksheet(data, partyId) : buildBankWorksheet(data, accountId);
+
+  const statementName = () =>
+    pdcFileName(`ledger-${(party?.name ?? title) || 'statement'}`);
+
   const printStatement = () => {
-    if (!partyId) return;
-    printConfirm.print({
-      makeDoc: () => buildPartyStatementDoc(data, partyId),
-      fileName: pdcFileName(`statement-${party?.name ?? 'party'}`),
-    });
+    if (!partyId && !accountId) return;
+    printConfirm.print({ makeDoc: makeStatement, fileName: statementName() });
   };
 
   const downloadStatement = () => {
-    if (!partyId) return;
-    buildPartyStatementDoc(data, partyId).save(pdcFileName(`statement-${party?.name ?? 'party'}`));
-    toast.success('Statement PDF downloaded');
+    if (!partyId && !accountId) return;
+    makeStatement().save(statementName());
+    toast.success('Ledger PDF downloaded');
   };
 
   return (
@@ -133,7 +138,7 @@ export function PdcLedger() {
               </div>
             )}
           </div>
-          {partyId && (
+          {(partyId || accountId) && (
             <div className="row" style={{ gap: 6, alignSelf: 'flex-end' }}>
               <button className="btn btn-sm" onClick={printStatement}>
                 <Icon name="print" size={15} /> Print

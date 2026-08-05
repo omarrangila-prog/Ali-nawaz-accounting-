@@ -748,6 +748,15 @@ export interface CashInput {
   description?: string;
   /** Deposit into a bank account instead of physical cash. */
   bankAccountId?: string;
+  /** 'cash' | 'bank' | 'cheque' — how the money actually moved. */
+  paymentMethod?: 'cash' | 'bank' | 'cheque';
+  /** Cheque details when paid by cheque; the cheque record is created here. */
+  cheque?: {
+    chequeNumber: string;
+    chequeDate: ISODate;
+    bankId: string;
+    drawerName?: string;
+  };
 }
 
 /** Cash received: Dr Cash/Bank, Cr Party (their receivable drops). */
@@ -758,7 +767,29 @@ export function buildCashReceived(data: PdcDataSet, input: CashInput): Posting {
     toBankAccountId: input.bankAccountId,
     description: input.description,
   });
-  const desc = input.description || 'Cash received';
+  const desc = input.description || (input.paymentMethod === 'cheque' ? 'Cheque received' : 'Cash received');
+
+  if (input.paymentMethod === 'cheque' && input.cheque) {
+    const cheque = newChequeFor(input, input.cheque, 'received');
+    txn.chequeId = cheque.id;
+    txn.paymentMethod = 'cheque';
+    return {
+      txn,
+      cheque,
+      lines: buildLines(txn, [
+        { account: chequeAcc(cheque.id, 'received'), debit: amount, description: desc,
+          chequeId: cheque.id, mainLedger: 'PDC Received', relatedPartyId: input.partyId },
+        { account: partyAcc(input.partyId), credit: amount, description: desc, chequeId: cheque.id },
+      ]),
+      movements: [{
+        id: uid(), chequeId: cheque.id, at: now(), date: input.date,
+        action: 'Created — received from party', toStatus: 'pending',
+        toHolder: { kind: 'business' }, fromPartyId: input.partyId,
+        txnId: txn.id, reference: txn.reference, description: desc,
+      }],
+    };
+  }
+
   const target = input.bankAccountId ? bankAcc(input.bankAccountId) : cashAcc();
   return {
     txn,
@@ -778,7 +809,29 @@ export function buildCashPaid(data: PdcDataSet, input: CashInput): Posting {
     fromBankAccountId: input.bankAccountId,
     description: input.description,
   });
-  const desc = input.description || 'Cash paid';
+  const desc = input.description || (input.paymentMethod === 'cheque' ? 'Cheque issued' : 'Cash paid');
+
+  if (input.paymentMethod === 'cheque' && input.cheque) {
+    const cheque = newChequeFor(input, input.cheque, 'issued', input.bankAccountId);
+    txn.chequeId = cheque.id;
+    txn.paymentMethod = 'cheque';
+    return {
+      txn,
+      cheque,
+      lines: buildLines(txn, [
+        { account: partyAcc(input.partyId), debit: amount, description: desc, chequeId: cheque.id },
+        { account: chequeAcc(cheque.id, 'issued'), credit: amount, description: desc,
+          chequeId: cheque.id, mainLedger: 'PDC Issued', relatedPartyId: input.partyId },
+      ]),
+      movements: [{
+        id: uid(), chequeId: cheque.id, at: now(), date: input.date,
+        action: 'Created — issued to party', toStatus: 'pending',
+        toHolder: { kind: 'party', partyId: input.partyId }, toPartyId: input.partyId,
+        txnId: txn.id, reference: txn.reference, description: desc,
+      }],
+    };
+  }
+
   const source = input.bankAccountId ? bankAcc(input.bankAccountId) : cashAcc();
   return {
     txn,
@@ -835,6 +888,39 @@ export function buildCreditAdjustment(data: PdcDataSet, input: AdjustmentInput):
   };
 }
 
+/**
+ * Build the cheque record for an entry paid by cheque. The cheque starts
+ * `pending` and held by whoever should hold it — receiving one does not mean
+ * it has cleared.
+ */
+function newChequeFor(
+  input: { partyId: string; amount: number; date: ISODate; description?: string },
+  cq: { chequeNumber: string; chequeDate: ISODate; bankId: string; drawerName?: string },
+  direction: ChequeDirection,
+  bankAccountId?: string
+): Cheque {
+  return {
+    id: uid(),
+    direction,
+    chequeNumber: cq.chequeNumber.trim(),
+    bankId: cq.bankId,
+    bankAccountId,
+    chequeDate: cq.chequeDate,
+    date: input.date,
+    amount: round2(input.amount),
+    partyId: input.partyId,
+    status: 'pending',
+    holder: direction === 'received'
+      ? { kind: 'business' }
+      : { kind: 'party', partyId: input.partyId },
+    allocatedAmount: 0,
+    drawerName: cq.drawerName,
+    description: input.description,
+    createdAt: now(),
+    updatedAt: now(),
+  };
+}
+
 // --- Sale / Purchase (everyday trading) ------------------------------------
 
 export interface TradeInput {
@@ -851,7 +937,18 @@ export interface TradeInput {
   /** What was sold or bought. */
   itemName?: string;
   /** Exactly how it was paid, for display (settlement drives the accounting). */
-  paymentMethod?: 'cash' | 'bank' | 'credit' | 'debit';
+  paymentMethod?: 'cash' | 'bank' | 'credit' | 'debit' | 'cheque';
+  /**
+   * When paid by cheque, its details. The cheque record is created as part of
+   * the SAME posting, so a cheque never has to be entered twice.
+   * Receiving a cheque does NOT mean it has cleared — it starts as pending.
+   */
+  cheque?: {
+    chequeNumber: string;
+    chequeDate: ISODate;
+    bankId: string;
+    drawerName?: string;
+  };
 }
 
 /**
@@ -874,6 +971,31 @@ export function buildSale(data: PdcDataSet, input: TradeInput): Posting {
     toBankAccountId: input.settlement === 'cash' ? input.bankAccountId : undefined,
   });
   const desc = input.description || 'Sale';
+
+  // Paid by cheque: create the cheque here so it never has to be entered
+  // twice. It is pending, NOT cleared — the value sits in cheque custody until
+  // it actually clears, so cash and bank are untouched.
+  if (input.paymentMethod === 'cheque' && input.cheque) {
+    const cheque = newChequeFor(input, input.cheque, 'received');
+    txn.chequeId = cheque.id;
+    return {
+      txn,
+      cheque,
+      lines: buildLines(txn, [
+        { account: chequeAcc(cheque.id, 'received'), debit: amount, description: desc,
+          chequeId: cheque.id, mainLedger: 'PDC Received', relatedPartyId: input.partyId },
+        { account: revenueAcc(), credit: amount, description: desc,
+          mainLedger: 'Sales', relatedPartyId: input.partyId },
+      ]),
+      movements: [{
+        id: uid(), chequeId: cheque.id, at: now(), date: input.date,
+        action: 'Created — received against sale', toStatus: 'pending',
+        toHolder: { kind: 'business' }, fromPartyId: input.partyId,
+        txnId: txn.id, reference: txn.reference, description: desc,
+      }],
+    };
+  }
+
   const debitSide =
     input.settlement === 'credit'
       ? partyAcc(input.partyId)
@@ -909,6 +1031,30 @@ export function buildPurchase(data: PdcDataSet, input: TradeInput): Posting {
     fromBankAccountId: input.settlement === 'cash' ? input.bankAccountId : undefined,
   });
   const desc = input.description || 'Purchase';
+
+  // Paid by cheque: the cheque is created here and carried as outstanding
+  // until it clears, so the bank is not touched yet.
+  if (input.paymentMethod === 'cheque' && input.cheque) {
+    const cheque = newChequeFor(input, input.cheque, 'issued', input.bankAccountId);
+    txn.chequeId = cheque.id;
+    return {
+      txn,
+      cheque,
+      lines: buildLines(txn, [
+        { account: costAcc(), debit: amount, description: desc,
+          mainLedger: 'Purchases', relatedPartyId: input.partyId },
+        { account: chequeAcc(cheque.id, 'issued'), credit: amount, description: desc,
+          chequeId: cheque.id, mainLedger: 'PDC Issued', relatedPartyId: input.partyId },
+      ]),
+      movements: [{
+        id: uid(), chequeId: cheque.id, at: now(), date: input.date,
+        action: 'Created — issued against purchase', toStatus: 'pending',
+        toHolder: { kind: 'party', partyId: input.partyId }, toPartyId: input.partyId,
+        txnId: txn.id, reference: txn.reference, description: desc,
+      }],
+    };
+  }
+
   const creditSide =
     input.settlement === 'credit'
       ? partyAcc(input.partyId)

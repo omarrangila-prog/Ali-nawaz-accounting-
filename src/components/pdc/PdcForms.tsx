@@ -61,8 +61,8 @@ const TITLES: Record<NonNullable<PdcFormKind>, string> = {
   income: 'Other Income',
   'pdc-received': 'PDC Received',
   'pdc-issued': 'PDC Issued',
-  'cash-received': 'Cash Received',
-  'cash-paid': 'Cash Paid',
+  'cash-received': 'Receive',
+  'cash-paid': 'Pay',
   debit: 'Debit Entry',
   credit: 'Credit Entry',
   'party-transfer': 'Party-to-Party Transfer',
@@ -77,8 +77,8 @@ const SUBTITLES: Record<NonNullable<PdcFormKind>, string> = {
   income: 'money earned that is not a sale',
   'pdc-received': 'F5 · cheque received from a party',
   'pdc-issued': 'F6 · cheque issued to a party',
-  'cash-received': 'F3 · cash or bank receipt',
-  'cash-paid': 'F4 · cash or bank payment',
+  'cash-received': 'F3 · money received — cash or cheque',
+  'cash-paid': 'F4 · money paid — cash or cheque',
   debit: 'increases what the party owes you',
   credit: 'increases what you owe the party',
   'party-transfer': 'move a balance between parties',
@@ -169,7 +169,7 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
    * differ in WHERE it lands, so choosing 'bank' reveals the account picker.
    * 'credit' and 'debit' leave it on the party's account instead.
    */
-  const [format, setFormat] = useState<'bank' | 'cash' | 'credit' | 'debit'>('cash');
+  const [format, setFormat] = useState<'bank' | 'cash' | 'credit' | 'debit' | 'cheque'>('cash');
   /** Optional quantity × rate; when both are set they drive the amount. */
   const [showMore, setShowMore] = useState(false);
   const [itemName, setItemName] = useState('');
@@ -213,9 +213,12 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
   // The format selector IS the settlement choice — keep them in step so the
   // engine still receives a plain 'cash' | 'credit'.
   useEffect(() => {
-    setSettlement(format === 'bank' || format === 'cash' ? 'cash' : 'credit');
+    // A cheque settles the party immediately (the debt moves onto the cheque),
+    // so it counts as 'cash' for the accounting even though no money moved yet.
+    setSettlement(format === 'credit' || format === 'debit' ? 'credit' : 'cash');
     // Only a bank settlement needs an account; the others clear it.
     if (format !== 'bank') setBankAccountId('');
+    if (format !== 'cheque') { setChequeNumber(''); setChequeDate(''); setBankId(''); }
   }, [format]);
 
   // --- options -------------------------------------------------------------
@@ -332,6 +335,18 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     if ((kind === 'expense' || kind === 'income') && !category.trim()) {
       e.category = 'Enter a category (e.g. Rent, Salary).';
     }
+    // Paying by cheque needs the cheque itself, since the record is created here.
+    if (format === 'cheque' &&
+        ['sale', 'purchase', 'cash-received', 'cash-paid'].includes(kind ?? '')) {
+      if (!bankId) e.bankId = 'Select the cheque’s bank.';
+      if (!chequeNumber.trim()) e.chequeNumber = 'Enter the cheque number.';
+      if (!chequeDate) e.chequeDate = 'Enter the cheque date.';
+      const dir = kind === 'sale' || kind === 'cash-received' ? 'received' : 'issued';
+      if (bankId && chequeNumber.trim() &&
+          isDuplicateCheque(data, { chequeNumber, bankId, direction: dir })) {
+        e.chequeNumber = 'That cheque number already exists for this bank.';
+      }
+    }
     if (needsAmount) {
       if (!amount.trim()) e.amount = 'Enter an amount.';
       else if (!Number.isFinite(amt)) e.amount = 'Amount must be a number.';
@@ -400,6 +415,9 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
             rate: rate.trim() ? Number(rate) : undefined,
             itemName: itemName.trim() || undefined,
             paymentMethod: format,
+            cheque: format === 'cheque'
+              ? { chequeNumber: chequeNumber.trim(), chequeDate, bankId }
+              : undefined,
           })
         );
         break;
@@ -412,6 +430,9 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
             rate: rate.trim() ? Number(rate) : undefined,
             itemName: itemName.trim() || undefined,
             paymentMethod: format,
+            cheque: format === 'cheque'
+              ? { chequeNumber: chequeNumber.trim(), chequeDate, bankId }
+              : undefined,
           })
         );
         break;
@@ -449,12 +470,26 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
         break;
       case 'cash-received':
         ok = await store.commit(
-          buildCashReceived(data, { partyId, amount: amt, date, description, bankAccountId: bankAccountId || undefined })
+          buildCashReceived(data, {
+            partyId, amount: amt, date, description,
+            bankAccountId: format === 'bank' ? bankAccountId || undefined : undefined,
+            paymentMethod: format === 'cheque' ? 'cheque' : format === 'bank' ? 'bank' : 'cash',
+            cheque: format === 'cheque'
+              ? { chequeNumber: chequeNumber.trim(), chequeDate, bankId }
+              : undefined,
+          })
         );
         break;
       case 'cash-paid':
         ok = await store.commit(
-          buildCashPaid(data, { partyId, amount: amt, date, description, bankAccountId: bankAccountId || undefined })
+          buildCashPaid(data, {
+            partyId, amount: amt, date, description,
+            bankAccountId: format === 'bank' ? bankAccountId || undefined : undefined,
+            paymentMethod: format === 'cheque' ? 'cheque' : format === 'bank' ? 'bank' : 'cash',
+            cheque: format === 'cheque'
+              ? { chequeNumber: chequeNumber.trim(), chequeDate, bankId }
+              : undefined,
+          })
         );
         break;
       case 'debit':
@@ -503,17 +538,17 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
   const fields: ReactNode[] = [];
   const fieldCount = (() => {
     switch (kind) {
-      // party, item, qty, rate, amount, format, [account], date, desc
+      // party, item, qty, rate, amount, format, [cheque x3 | account], date, desc
       case 'sale':
-      case 'purchase': return 9;
+      case 'purchase': return format === 'cheque' ? 11 : 9;
       // category, qty, rate, amount, format, [account], date, desc
       case 'expense':
       case 'income': return 8;
       case 'pdc-received': return 7;   // party, bank, cheque#, cheque date, amount, date, desc
       case 'pdc-issued': return 7;     // party, account, cheque#, cheque date, amount, date, desc
-      // party, amount, format, [account], date, desc
+      // party, amount, format, [cheque x3 | account], date, desc
       case 'cash-received':
-      case 'cash-paid': return 6;
+      case 'cash-paid': return format === 'cheque' ? 8 : 6;
       case 'debit':
       case 'credit': return 4;         // party, amount, date, desc
       case 'party-transfer': return 5; // from, to, amount, date, desc
@@ -699,7 +734,7 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
 
   /** Four buttons choosing how the entry settles. */
   const formatButtons = (
-    opts: Array<{ id: 'bank' | 'cash' | 'credit' | 'debit'; label: string; hint: string }>,
+    opts: Array<{ id: 'bank' | 'cash' | 'credit' | 'debit' | 'cheque'; label: string; hint: string }>,
     label: string
   ) => {
     const idx = i++;
@@ -749,17 +784,24 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     );
   };
 
-  /** Sale / Purchase: all four options are meaningful. */
+  /** Sale / Purchase / Receive / Pay: cash in hand, or a cheque. */
   const formatField = (isSale: boolean) =>
     formatButtons(
       [
         { id: 'cash', label: 'Cash', hint: isSale ? 'cash received now' : 'cash paid now' },
-        { id: 'bank', label: 'Bank', hint: isSale ? 'into an account' : 'from an account' },
-        { id: 'credit', label: 'Credit', hint: isSale ? 'they pay later' : 'we pay later' },
-        { id: 'debit', label: 'Debit', hint: 'on account' },
+        { id: 'cheque', label: 'Cheque', hint: 'recorded now, clears later' },
       ],
-      'Format'
+      'Payment'
     );
+
+  /** The cheque fields, shown only when Cheque is the chosen payment. */
+  const chequeFields = (received: boolean) => [
+    comboField('Cheque Bank', bankId, bankOptions, setBankId, 'bankId',
+      received ? 'Bank it is drawn on' : 'Your bank'),
+    textField('Cheque Number', chequeNumber, setChequeNumber, 'chequeNumber'),
+    textField('Cheque Date', chequeDate, setChequeDate, 'chequeDate', 'date',
+      undefined, '(when it can be presented)'),
+  ];
 
   /**
    * Expense / Income / Cash entries always move money now, so only the
@@ -782,6 +824,7 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00',
         qty.trim() && rate.trim() ? '(qty × rate)' : undefined));
       fields.push(formatField(isSale));
+      if (format === 'cheque') fields.push(...chequeFields(isSale));
       if (format === 'bank') {
         fields.push(comboField(
           'Bank Account', bankAccountId, accountPickerOptions,
@@ -845,7 +888,9 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     case 'cash-paid':
       fields.push(partyField('Party', partyId, setPartyId, 'partyId'));
       fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00'));
-      fields.push(moneySourceField(kind === 'cash-received' ? 'received into' : 'paid from'));
+      // Cash or cheque, both handled here — no separate Cheques screen.
+      fields.push(formatField(kind === 'cash-received'));
+      if (format === 'cheque') fields.push(...chequeFields(kind === 'cash-received'));
       if (format === 'bank') {
         fields.push(comboField(
           'Bank Account', bankAccountId, accountPickerOptions,

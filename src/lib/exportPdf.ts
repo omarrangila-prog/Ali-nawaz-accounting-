@@ -16,6 +16,11 @@ export interface PdfSection {
   foot?: (string | number)[];
   /** Right-align these column indexes. */
   numericCols?: number[];
+  /**
+   * Column index that should be given extra width because it carries free text
+   * (e.g. a Tafseel description). Optional — omitted, widths are unchanged.
+   */
+  wideCol?: number;
 }
 
 export interface PdfSummaryCard {
@@ -140,6 +145,19 @@ export function buildReportPdf(opts: {
     const colStyles = (): Record<number, any> => {
       const cs: Record<number, any> = { 0: { halign: 'left', cellWidth: unit * FIRST_MULT } };
       for (let c = 1; c < cols; c++) cs[c] = { cellWidth: unit };
+      // Give the free-text column the room it needs, taken evenly from the
+      // numeric columns, which have figures of predictable width.
+      if (section.wideCol !== undefined && section.wideCol < realCols) {
+        const extra = unit * 0.9;
+        cs[section.wideCol] = { ...cs[section.wideCol], cellWidth: unit + extra };
+        const numeric = (section.numericCols ?? []).filter((c) => c < realCols);
+        if (numeric.length) {
+          const give = extra / numeric.length;
+          numeric.forEach((c) => {
+            cs[c] = { ...cs[c], cellWidth: Math.max(MIN_COL, unit - give) };
+          });
+        }
+      }
       (section.numericCols ?? []).forEach((c) => { cs[c] = { ...cs[c], halign: 'right' }; });
       return cs;
     };

@@ -61,39 +61,17 @@ interface EntryButton {
 
 const ENTRY_GROUPS: Array<{ label: string; buttons: EntryButton[] }> = [
   {
-    label: 'Trading',
+    // The four everyday modules, plus Expense for running costs.
+    label: 'Record',
     buttons: [
-      { kind: 'sale', label: 'Sale', icon: 'trend-up', key: 'F1', variant: 'in', title: 'Record goods or services sold' },
-      { kind: 'purchase', label: 'Purchase', icon: 'trend-down', key: 'F2', variant: 'out', title: 'Record goods or services bought' },
+      { kind: 'sale', label: 'Sale', icon: 'trend-up', key: 'F1', variant: 'in', title: 'Goods or services sold' },
+      { kind: 'purchase', label: 'Purchase', icon: 'trend-down', key: 'F2', variant: 'out', title: 'Goods or services bought' },
+      { kind: 'cash-received', label: 'Receive', icon: 'arrow-down', key: 'F3', variant: 'in', title: 'Money received — cash or cheque' },
+      { kind: 'cash-paid', label: 'Pay', icon: 'arrow-up', key: 'F4', variant: 'out', title: 'Money paid — cash or cheque' },
+      { kind: 'expense', label: 'Expense', icon: 'receipt', key: 'F5', variant: 'accent-orange', title: 'Rent, salary, fuel and other running costs' },
     ],
   },
-  {
-    label: 'Cash',
-    buttons: [
-      { kind: 'cash-received', label: 'Received', icon: 'arrow-down', key: 'F3', variant: 'in', title: 'Money received from a party' },
-      { kind: 'cash-paid', label: 'Paid', icon: 'arrow-up', key: 'F4', variant: 'out', title: 'Money paid to a party' },
-    ],
-  },
-  {
-    label: 'Cheques',
-    buttons: [
-      { kind: 'pdc-received', label: 'Cheque In', icon: 'cheque-in', key: 'F5', variant: 'in', title: 'Cheque received from a party' },
-      { kind: 'pdc-issued', label: 'Cheque Out', icon: 'cheque-out', key: 'F6', variant: 'out', title: 'Cheque issued to a party' },
-      { kind: 'cheque-transfer', label: 'Transfer', icon: 'transfer', key: 'F7', variant: 'accent-purple', title: 'Endorse a received cheque to another party' },
-    ],
-  },
-  {
-    label: 'Costs & Adjustments',
-    buttons: [
-      { kind: 'expense', label: 'Expense', icon: 'receipt', variant: 'accent-orange', title: 'Rent, salary, fuel and other running costs' },
-      { kind: 'income', label: 'Income', icon: 'coins', variant: 'accent-orange', title: 'Money earned that is not a sale' },
-      { kind: 'debit', label: 'Debit', icon: 'receivable', variant: 'accent-slate', title: 'Increase what a party owes you' },
-      { kind: 'credit', label: 'Credit', icon: 'payable', variant: 'accent-slate', title: 'Increase what you owe a party' },
-      { kind: 'party-transfer', label: 'Party Transfer', icon: 'transfer', variant: 'accent-blue', title: 'Move a balance between two parties' },
-      { kind: 'bank-transfer', label: 'Bank Transfer', icon: 'bank', variant: 'accent-blue', title: 'Move money between your own accounts' },
-    ],
-  },
-];
+]
 
 export function PdcCashbook() {
   const store = usePdc();
@@ -161,9 +139,7 @@ export function PdcCashbook() {
         F2: () => openForm('purchase'),
         F3: () => openForm('cash-received'),
         F4: () => openForm('cash-paid'),
-        F5: () => openForm('pdc-received'),
-        F6: () => openForm('pdc-issued'),
-        F7: () => openForm('cheque-transfer'),
+        F5: () => openForm('expense'),
         F8: () => navigate('/ledger'),
         F9: () => searchRef.current?.focus(),
         F10: () => navigate('/reports'),
