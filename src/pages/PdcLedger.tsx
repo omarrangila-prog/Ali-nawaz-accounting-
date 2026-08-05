@@ -15,7 +15,7 @@ import { buildBankLedger, buildPartyLedger, buildRegister, paymentMethodOf } fro
 import { DetailsDrawer } from '@/components/pdc/DetailsDrawer';
 import type { RegisterRow } from '@/types/pdc';
 import { bankAccountLabel, balanceLabel, holderLabel } from '@/lib/pdcEngine';
-import { formatMoney, formatDate, cx } from '@/lib/utils';
+import { formatMoney, formatDate, formatNumber, cx } from '@/lib/utils';
 import { pdcFileName } from '@/lib/pdcReports';
 import { buildPartyWorksheet, buildBankWorksheet } from '@/lib/pdcWorksheet';
 import { usePrintConfirm } from '@/components/ui/PrintConfirm';
@@ -243,11 +243,14 @@ export function PdcLedger() {
               <table className="grid pdc-grid stack-sm">
                 <thead>
                   <tr>
-                    {/* A statement, read like a bank statement: what happened,
-                        what it did to the balance, and nothing else. Everything
-                        further (reference, cheque, method, status) is one click
-                        away in the details panel. */}
-                    <th>Date</th><th>Description</th>
+                    {/* A statement, read like a bank statement. The figures that
+                        explain the amount — quantity, rate, how it was paid —
+                        come before the free text, so the eye reaches them
+                        without crossing a sentence. */}
+                    <th>Date</th>
+                    <th className="num">Qty</th><th className="num">Rate</th>
+                    <th>Method</th>
+                    <th>Description</th>
                     <th className="num">Debit</th><th className="num">Credit</th>
                     <th className="num">Balance</th>
                   </tr>
@@ -259,6 +262,9 @@ export function PdcLedger() {
                     <td data-label="Date">
                       {opening.date ? formatDate(opening.date) : <span className="faint">—</span>}
                     </td>
+                    <td data-label="Qty" className="num mono">—</td>
+                    <td data-label="Rate" className="num mono">—</td>
+                    <td data-label="Method"><span className="faint">—</span></td>
                     <td data-label="Description"><strong>Opening Balance</strong></td>
                     <td data-label="Debit" className="num mono pos">
                       {opening.amount > 0 ? formatMoney(opening.amount, cur) : '—'}
@@ -286,6 +292,20 @@ export function PdcLedger() {
                       }}
                     >
                       <td data-label="Date">{formatDate(entry.date)}</td>
+                      <td data-label="Qty" className="num mono">
+                        {txn?.quantity !== undefined ? formatNumber(txn.quantity) : '—'}
+                      </td>
+                      <td data-label="Rate" className="num mono">
+                        {txn?.rate !== undefined ? formatMoney(txn.rate, cur) : '—'}
+                      </td>
+                      <td data-label="Method">
+                        {(() => {
+                          const m = txn ? paymentMethodOf(data, txn).method : '—';
+                          return m === '—'
+                            ? <span className="faint">—</span>
+                            : <span className={cx('method-pill', `m-${m.toLowerCase()}`)}>{m}</span>;
+                        })()}
+                      </td>
                       <td data-label="Description">{describe(entry, txn)}</td>
                       <td data-label="Debit" className="num mono pos">{entry.debit ? formatMoney(entry.debit, cur) : '—'}</td>
                       <td data-label="Credit" className="num mono neg">{entry.credit ? formatMoney(entry.credit, cur) : '—'}</td>

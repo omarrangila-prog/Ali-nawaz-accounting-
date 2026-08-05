@@ -511,24 +511,29 @@ export function PdcCashbook() {
             <table className="grid pdc-grid stack-sm">
               <thead>
                 <tr>
-                  {/* Reading order: WHEN → WHAT → WHO → DETAILS → MONEY → STATUS.
-                      Money columns sit together just before status, so the eye
-                      lands on Debit / Credit / Balance as one block. */}
+                  {/* Reading order: WHEN → WHAT (item, qty, rate, method) →
+                      DESCRIPTION → WHO → MONEY → STATUS. The figures that
+                      explain the amount come before the free text, so the eye
+                      reaches Qty and Rate without crossing a sentence. */}
                   {tradeView ? (
-                    // Date · Description · Qty · Rate · Party · Amount — an
-                    // invoice list, nothing that belongs to a payment.
+                    // Date · Item · Qty · Rate · Description · Party · Amount —
+                    // an invoice list, nothing that belongs to a payment.
                     <>
-                      <th>Date</th><th>Description</th>
+                      <th>Date</th><th>Item</th>
                       <th className="num">Qty</th><th className="num">Rate</th>
+                      <th>Description</th>
                       <th>Party</th><th className="num">Amount</th>
                       <th className="no-print"></th>
                     </>
                   ) : (
                     <>
-                      <th>Date</th><th>Reference</th><th>Type</th><th>Item</th><th>Method</th>
+                      <th>Date</th><th>Reference</th><th>Type</th>
+                      <th>Item</th>
+                      <th className="num">Qty</th><th className="num">Rate</th>
+                      <th>Method</th>
+                      <th>Description</th>
                       <th>From Party</th><th>To Party</th>
                       <th>Cheque #</th><th>Due Date</th><th>Bank</th>
-                      <th>Description</th>
                       <th className="num">Debit</th><th className="num">Credit</th>
                       <th className="num">Balance</th>
                       <th>Status</th><th>Holder</th>
@@ -550,8 +555,8 @@ export function PdcCashbook() {
                       {tradeView ? (
                         <>
                           <td data-label="Date">{formatDate(txn.date)}</td>
-                          <td data-label="Description">
-                            {txn.description || txn.itemName || txn.category || '—'}
+                          <td data-label="Item">
+                            {txn.itemName || txn.category || <span className="faint">—</span>}
                           </td>
                           <td data-label="Qty" className="num mono">
                             {txn.quantity !== undefined ? formatNumber(txn.quantity) : '—'}
@@ -559,6 +564,7 @@ export function PdcCashbook() {
                           <td data-label="Rate" className="num mono">
                             {txn.rate !== undefined ? formatMoney(txn.rate, cur) : '—'}
                           </td>
+                          <td data-label="Description">{txn.description || '—'}</td>
                           <td data-label="Party">{row.partyName || '—'}</td>
                           <td data-label="Amount" className="num mono">
                             {formatMoney(txn.amount, cur)}
@@ -582,21 +588,18 @@ export function PdcCashbook() {
                       <td data-label="Reference" className="mono">{txn.reference}</td>
                       <td data-label="Type"><span className="pdc-type">{txn.type}</span></td>
                       <td data-label="Item">
-                        {txn.itemName || txn.category ? (
-                          <>
-                            <span className="item-name">{txn.itemName || txn.category}</span>
-                            {/* Quantity x rate reads as "12 x Rs 250" so the
-                                figure in the Amount column is explained. */}
-                            {txn.quantity !== undefined && (
-                              <div className="faint item-qty">
-                                {formatNumber(txn.quantity)}
-                                {txn.rate !== undefined && ` × ${formatMoney(txn.rate, cur)}`}
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <span className="faint">—</span>
-                        )}
+                        {txn.itemName || txn.category
+                          ? <span className="item-name">{txn.itemName || txn.category}</span>
+                          : <span className="faint">—</span>}
+                      </td>
+                      {/* Quantity and Rate stand as their own columns so the
+                          figures line up down the page and explain the Amount
+                          without being buried under the item name. */}
+                      <td data-label="Qty" className="num mono">
+                        {txn.quantity !== undefined ? formatNumber(txn.quantity) : '—'}
+                      </td>
+                      <td data-label="Rate" className="num mono">
+                        {txn.rate !== undefined ? formatMoney(txn.rate, cur) : '—'}
                       </td>
                       <td data-label="Method">
                         <span className={cx('method-pill', `m-${row.method.toLowerCase()}`)}>
@@ -604,12 +607,12 @@ export function PdcCashbook() {
                         </span>
                         {row.bankName && <div className="faint method-bank">{row.bankName}</div>}
                       </td>
+                      <td data-label="Description">{txn.description || '—'}</td>
                       <td data-label="From Party">{row.partyName || '—'}</td>
                       <td data-label="To Party">{row.toPartyName || '—'}</td>
                       <td data-label="Cheque #" className="mono">{cheque?.chequeNumber ?? '—'}</td>
                       <td data-label="Due Date">{cheque ? formatDate(cheque.chequeDate) : '—'}</td>
                       <td data-label="Bank">{row.bankLabel || '—'}</td>
-                      <td data-label="Description">{txn.description || '—'}</td>
                       <td data-label="Debit" className="num mono pos">{row.debit ? formatMoney(row.debit, cur) : '—'}</td>
                       <td data-label="Credit" className="num mono neg">{row.credit ? formatMoney(row.credit, cur) : '—'}</td>
                       <td data-label="Balance" className={cx('num mono stmt-bal', row.running >= 0 ? 'pos' : 'neg')}>

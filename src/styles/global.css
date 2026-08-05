@@ -265,6 +265,12 @@ table.grid tfoot td {
   background: rgba(59, 130, 246, 0.05);
 }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
+/* A money heading must sit over its own figures. `table.grid thead th` sets
+   text-align:left and outranks a bare `.num`, which left the Qty / Rate /
+   Debit / Credit / Balance headings drifting away from the numbers beneath
+   them — so match that specificity and pull them back over the column. */
+table.grid thead th.num,
+table.grid tfoot td.num { text-align: right; }
 
 /* ---------- Badges ---------- */
 .badge {
