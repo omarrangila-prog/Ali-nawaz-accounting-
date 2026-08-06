@@ -122,13 +122,17 @@ export function PdcParties() {
                   {parties.map((p) => {
                     const bal = balances.get(p.id) ?? 0;
                     return (
-                      <tr key={p.id} className={cx(!p.active && 'row-reversed')}>
-                        <td data-label="Party">
-                          <button className="btn btn-ghost btn-sm" style={{ padding: 0, height: 'auto' }}
-                            onClick={() => navigate(`/ledger?party=${p.id}`)}>
-                            {p.name}
-                          </button>
-                        </td>
+                      // The whole row opens the ledger — clicking a customer is
+                      // how you look at their account, so it should not depend
+                      // on hitting the name exactly.
+                      <tr
+                        key={p.id}
+                        className={cx(!p.active && 'row-reversed', 'row-link')}
+                        style={{ cursor: 'pointer' }}
+                        title={`Open ${p.name}'s ledger`}
+                        onClick={() => navigate(`/ledger?party=${p.id}`)}
+                      >
+                        <td data-label="Party"><span className="link-text">{p.name}</span></td>
                         <td data-label="Opening" className="num mono">{formatMoney(p.openingBalance, cur)}</td>
                         <td data-label="Balance" className={cx('num mono', bal > 0 ? 'pos' : bal < 0 ? 'neg' : '')}>
                           {formatMoney(Math.abs(bal), cur)}
@@ -140,16 +144,18 @@ export function PdcParties() {
                         </td>
                         <td className="no-print actions-cell">
                           <div className="row" style={{ gap: 2, justifyContent: 'flex-end' }}>
+                            {/* stopPropagation so Edit and Delete do not also
+                                open the ledger behind the dialog. */}
                             <button className="btn btn-ghost btn-icon btn-sm" title="Ledger"
-                              onClick={() => navigate(`/ledger?party=${p.id}`)}>
+                              onClick={(e) => { e.stopPropagation(); navigate(`/ledger?party=${p.id}`); }}>
                               <Icon name="book" size={14} />
                             </button>
                             <button className="btn btn-ghost btn-icon btn-sm" title="Edit"
-                              onClick={() => setPartyModal(p)}>
+                              onClick={(e) => { e.stopPropagation(); setPartyModal(p); }}>
                               <Icon name="settings" size={14} />
                             </button>
                             <button className="btn btn-ghost btn-icon btn-sm del-btn" title="Delete"
-                              onClick={() => setToDelete(p)}>
+                              onClick={(e) => { e.stopPropagation(); setToDelete(p); }}>
                               <Icon name="trash" size={14} />
                             </button>
                           </div>
@@ -181,14 +187,17 @@ export function PdcParties() {
                     const bank = data.banks.find((b) => b.id === a.bankId);
                     const bal = bankBals.get(a.id) ?? 0;
                     return (
-                      <tr key={a.id} className={cx(!a.active && 'row-reversed')}>
+                      // Clicking anywhere on a bank account opens its ledger,
+                      // exactly as clicking a customer does.
+                      <tr
+                        key={a.id}
+                        className={cx(!a.active && 'row-reversed', 'row-link')}
+                        style={{ cursor: 'pointer' }}
+                        title={`Open the ${bank?.name ?? 'bank'} — ${a.title} ledger`}
+                        onClick={() => navigate(`/ledger?account=${a.id}`)}
+                      >
                         <td data-label="Bank">{bank?.name ?? '—'}</td>
-                        <td data-label="Account Title">
-                          <button className="btn btn-ghost btn-sm" style={{ padding: 0, height: 'auto' }}
-                            onClick={() => navigate(`/ledger?account=${a.id}`)}>
-                            {a.title}
-                          </button>
-                        </td>
+                        <td data-label="Account Title"><span className="link-text">{a.title}</span></td>
                         <td data-label="Account #" className="mono">{a.accountNumber || '—'}</td>
                         <td data-label="Branch">{a.branch || '—'}</td>
                         <td data-label="Opening" className="num mono">{formatMoney(a.openingBalance, cur)}</td>
@@ -198,11 +207,11 @@ export function PdcParties() {
                         <td className="no-print actions-cell">
                           <div className="row" style={{ gap: 2, justifyContent: 'flex-end' }}>
                             <button className="btn btn-ghost btn-icon btn-sm" title="Ledger"
-                              onClick={() => navigate(`/ledger?account=${a.id}`)}>
+                              onClick={(e) => { e.stopPropagation(); navigate(`/ledger?account=${a.id}`); }}>
                               <Icon name="book" size={14} />
                             </button>
                             <button className="btn btn-ghost btn-icon btn-sm" title="Edit"
-                              onClick={() => setAccountModal(a)}>
+                              onClick={(e) => { e.stopPropagation(); setAccountModal(a); }}>
                               <Icon name="settings" size={14} />
                             </button>
                           </div>

@@ -264,6 +264,13 @@ table.grid tfoot td {
   border-top: 2px solid var(--stroke-strong);
   background: rgba(59, 130, 246, 0.05);
 }
+/* A whole row that opens something when clicked (a party or bank account
+   opening its ledger). The name is tinted and the row lifts on hover, so it
+   reads as clickable without needing a button. */
+table.grid tbody tr.row-link:hover { background: var(--blue-soft); }
+.link-text { color: var(--blue); font-weight: 600; }
+table.grid tbody tr.row-link:hover .link-text { text-decoration: underline; }
+
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 /* A money heading must sit over its own figures. `table.grid thead th` sets
    text-align:left and outranks a bare `.num`, which left the Qty / Rate /

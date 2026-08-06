@@ -8,7 +8,7 @@
 
 import type jsPDF from 'jspdf';
 import type { Cheque, PdcDataSet, PdcTxnType } from '@/types/pdc';
-import { money } from './exportPdf';
+import { money, buildReportPdf } from './exportPdf';
 import {
   buildDesignedPdf,
   compact,
@@ -30,7 +30,7 @@ import {
   balanceLabel,
 } from './pdcEngine';
 import { buildBankLedger, buildPartyLedger, buildRegister, fundsDelta } from './pdcRegister';
-import { formatDate, todayISO } from './utils';
+import { formatDate, formatNumber, round2, todayISO } from './utils';
 
 /** Every report the module can produce (spec §23). */
 export type PdcReportId =
@@ -157,7 +157,15 @@ function inRange(date: string, f: PdcReportFilters): boolean {
   return true;
 }
 
-const M = (data: PdcDataSet) => (n: number) => money(n, data.settings.currency);
+/**
+ * Money as it appears on the worksheet: the plain figure, no "Rs " prefix.
+ *
+ * The prefix cost ~18pt in every money cell, which is what forced figures to
+ * truncate to "Rs 2,50…" on a wide report. The currency belongs in the report
+ * header, not repeated on every line — this is how the printed ledger book
+ * writes it.
+ */
+const M = (_data: PdcDataSet) => (n: number) => formatNumber(round2(n));
 
 /** Rotating palette for category charts. */
 const SERIES_TONES: RGB[] = [T.orange, T.blue, T.purple, T.green, T.red, T.slate];
@@ -1085,31 +1093,64 @@ export function buildPdcReport(
     }
   }
 
-  // Accent colour follows the report's tone, so the PDF matches the card the
-  // user clicked on the Reports page.
-  const ACCENT: Record<PdcReportTone, RGB> = {
-    blue: T.blue, green: T.green, red: T.red,
-    orange: T.orange, purple: T.purple, slate: T.slate,
-  };
-
-  const periodLabel = f.from || f.to
-    ? `${f.from ? formatDate(f.from) : 'Start'} — ${f.to ? formatDate(f.to) : 'Today'}`
-    : 'All dates';
   const scope = [
     f.partyId ? partyName(data, f.partyId) : '',
     f.bankAccountId ? bankAccountLabel(data.banks, data.bankAccounts, f.bankAccountId) : '',
   ].filter(Boolean).join(' · ');
 
-  return buildDesignedPdf({
-    title: meta.title,
-    subtitle: scope || meta.description,
-    businessName: data.settings.businessName || 'Ali Nawaz',
-    periodLabel,
-    accent: ACCENT[meta.tone],
-    kpis,
-    charts,
-    sections,
+  // EVERY report prints in the worksheet style of the ledger book the business
+  // already uses: a bordered grid, right-aligned figures, a bold totals row and
+  // blank ruled rows filling the page. The KPI cards and charts that used to
+  // head these reports are deliberately not drawn — `kpis` and `charts` are
+  // still computed above because several sections read from them, but a printed
+  // report is a worksheet, not a dashboard.
+  const from = f.from ? new Date(f.from) : new Date();
+  const cur = data.settings.currency;
+  return buildReportPdf({
+    // Currency named once in the heading, since the figures below are plain.
+    title: `${scope ? `${meta.title} — ${scope}` : meta.title}${cur ? ` (${cur})` : ''}`,
+    settings: {
+      businessName: data.settings.businessName || 'Ali Nawaz',
+      ownerName: data.settings.businessName || 'Ali Nawaz',
+      currency: data.settings.currency,
+      smartEntryEnabled: false,
+      updatedAt: data.settings.updatedAt,
+    },
+    month: from.getMonth() + 1,
+    year: from.getFullYear(),
+    sections: sections.map((s) => ({
+      title: s.title,
+      head: s.head,
+      rows: s.rows,
+      foot: s.foot,
+      numericCols: s.numericCols,
+      // Give the widest free-text column room, so a description like
+      // "Raheem easy paisa" prints in full instead of being clipped.
+      wideCol: widestTextCol(s.head, s.numericCols),
+    })),
   });
+}
+
+/**
+ * The column most likely to carry free text — the first non-numeric column
+ * after the date. Used to widen it so descriptions are never truncated.
+ */
+function widestTextCol(head: string[], numericCols?: number[]): number | undefined {
+  const numeric = new Set(numericCols ?? []);
+  for (let i = 0; i < head.length; i++) {
+    if (numeric.has(i)) continue;
+    const h = head[i].toLowerCase();
+    if (h.includes('description') || h.includes('tafseel') ||
+        h.includes('particular') || h.includes('detail') || h.includes('narration')) {
+      return i;
+    }
+  }
+  // No obvious description column — widen the first non-numeric, non-date one.
+  for (let i = 0; i < head.length; i++) {
+    if (numeric.has(i) || head[i].toLowerCase().includes('date')) continue;
+    return i;
+  }
+  return undefined;
 }
 
 /** Convenience wrapper used by the ledger page's Print / PDF buttons. */

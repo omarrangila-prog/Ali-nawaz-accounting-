@@ -45,8 +45,16 @@ export function buildReportPdf(opts: {
   year: number;
   summary?: PdfSummaryCard[];
   sections: PdfSection[];
+  /**
+   * Force landscape. Omitted, a section with many columns picks it up
+   * automatically — ten columns on a portrait page truncate every money cell
+   * to "Rs 2,50…", which is worse than useless on an accounting worksheet.
+   */
+  landscape?: boolean;
 }): jsPDF {
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  const WIDE_COLS = 8;
+  const wide = opts.landscape ?? opts.sections.some((s) => s.head.length > WIDE_COLS);
+  const doc = new jsPDF({ orientation: wide ? 'landscape' : 'portrait', unit: 'pt', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const M = 24;              // tighter page margin — more usable width, less edge space
   let y = 30;
