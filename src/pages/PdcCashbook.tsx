@@ -16,6 +16,7 @@ import { ConfirmDialog } from '@/components/ui/Modal';
 import { PdcForm, type PdcFormKind } from '@/components/pdc/PdcForms';
 import { ChequeActionDialog, type ChequeAction } from '@/components/pdc/ChequeActions';
 import { DetailsDrawer } from '@/components/pdc/DetailsDrawer';
+import { EditTxnModal, canEdit } from '@/components/pdc/EditTxnModal';
 import { ChequePanel } from '@/components/pdc/ChequePanel';
 import { SetupChecklist } from '@/components/pdc/SetupChecklist';
 import { usePdc } from '@/store/pdcStore';
@@ -92,6 +93,7 @@ export function PdcCashbook() {
   const [chequeAction, setChequeAction] = useState<{ id: string; action: ChequeAction }>({ id: '', action: null });
   const [toReverse, setToReverse] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<string | null>(null);
+  const [toEdit, setToEdit] = useState<RegisterRow | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -548,23 +550,23 @@ export function PdcCashbook() {
                     // because a sale is not a payment: the customer may settle
                     // later, and in several instalments.
                     <>
-                      <th>Date</th><th>Description</th>
+                      <th className="mid">Date</th><th>Description</th>
                       <th className="num">Qty</th><th className="num">Rate</th>
                       <th>Party</th><th className="num">Amount</th>
                       <th className="no-print"></th>
                     </>
                   ) : (
                     <>
-                      <th>Date</th><th>Reference</th><th>Type</th>
+                      <th className="mid">Date</th><th className="mid">Reference</th><th className="mid">Type</th>
                       <th>Item</th>
                       <th className="num">Qty</th><th className="num">Rate</th>
-                      <th>Method</th>
+                      <th className="mid">Method</th>
                       <th>Description</th>
                       <th>From Party</th><th>To Party</th>
-                      <th>Cheque #</th><th>Due Date</th><th>Bank</th>
+                      <th className="mid">Cheque #</th><th className="mid">Due Date</th><th>Bank</th>
                       <th className="num">Debit</th><th className="num">Credit</th>
                       <th className="num">Balance</th>
-                      <th>Status</th><th>Holder</th>
+                      <th className="mid">Status</th><th>Holder</th>
                       <th className="no-print"></th>
                     </>
                   )}
@@ -582,7 +584,7 @@ export function PdcCashbook() {
                     >
                       {tradeView ? (
                         <>
-                          <td data-label="Date">{formatDate(txn.date)}</td>
+                          <td data-label="Date" className="mid">{formatDate(txn.date)}</td>
                           {/* One plain line naming what this was — "Rizwan
                               Lunch". The user's own words first, then the item
                               they picked, then the category. */}
@@ -605,6 +607,10 @@ export function PdcCashbook() {
                                 onClick={(e) => { e.stopPropagation(); setDetail(row); }}>
                                 <Icon name="eye" size={14} />
                               </button>
+                              <button className="btn btn-ghost btn-icon btn-sm" title="Edit this entry"
+                                onClick={(e) => { e.stopPropagation(); setToEdit(row); }}>
+                                <Icon name="settings" size={14} />
+                              </button>
                               <button className="btn btn-ghost btn-icon btn-sm del-btn" title="Delete permanently (Del)"
                                 onClick={(e) => { e.stopPropagation(); setToDelete(txn.id); }}>
                                 <Icon name="trash" size={14} />
@@ -614,9 +620,9 @@ export function PdcCashbook() {
                         </>
                       ) : (
                       <>
-                      <td data-label="Date">{formatDate(txn.date)}</td>
-                      <td data-label="Reference" className="mono">{txn.reference}</td>
-                      <td data-label="Type"><span className="pdc-type">{txn.type}</span></td>
+                      <td data-label="Date" className="mid">{formatDate(txn.date)}</td>
+                      <td data-label="Reference" className="mono mid">{txn.reference}</td>
+                      <td data-label="Type" className="mid"><span className="pdc-type">{txn.type}</span></td>
                       <td data-label="Item">
                         {txn.itemName || txn.category
                           ? <span className="item-name">{txn.itemName || txn.category}</span>
@@ -631,7 +637,7 @@ export function PdcCashbook() {
                       <td data-label="Rate" className="num mono">
                         {txn.rate !== undefined ? formatMoney(txn.rate, cur) : '—'}
                       </td>
-                      <td data-label="Method">
+                      <td data-label="Method" className="mid">
                         <span className={cx('method-pill', `m-${row.method.toLowerCase()}`)}>
                           {row.method}
                         </span>
@@ -640,15 +646,15 @@ export function PdcCashbook() {
                       <td data-label="Description">{txn.description || '—'}</td>
                       <td data-label="From Party">{row.partyName || '—'}</td>
                       <td data-label="To Party">{row.toPartyName || '—'}</td>
-                      <td data-label="Cheque #" className="mono">{cheque?.chequeNumber ?? '—'}</td>
-                      <td data-label="Due Date">{cheque ? formatDate(cheque.chequeDate) : '—'}</td>
+                      <td data-label="Cheque #" className="mono mid">{cheque?.chequeNumber ?? '—'}</td>
+                      <td data-label="Due Date" className="mid">{cheque ? formatDate(cheque.chequeDate) : '—'}</td>
                       <td data-label="Bank">{row.bankLabel || '—'}</td>
                       <td data-label="Debit" className="num mono pos">{row.debit ? formatMoney(row.debit, cur) : '—'}</td>
                       <td data-label="Credit" className="num mono neg">{row.credit ? formatMoney(row.credit, cur) : '—'}</td>
                       <td data-label="Balance" className={cx('num mono stmt-bal', row.running >= 0 ? 'pos' : 'neg')}>
                         {formatMoney(row.running, cur)}
                       </td>
-                      <td data-label="Status">
+                      <td data-label="Status" className="mid">
                         {row.status
                           ? <span className={cx('pdc-status', `st-${row.status}`)}>{row.status}</span>
                           : <span className="faint">—</span>}
@@ -666,6 +672,12 @@ export function PdcCashbook() {
                               <Icon name="undo" size={14} />
                             </button>
                           )}
+                          {/* Edit beside Delete — the two things you reach for
+                              when a row is wrong. */}
+                          <button className="btn btn-ghost btn-icon btn-sm" title="Edit this entry"
+                            onClick={(e) => { e.stopPropagation(); setToEdit(row); }}>
+                            <Icon name="settings" size={14} />
+                          </button>
                           <button className="btn btn-ghost btn-icon btn-sm del-btn" title="Delete permanently (Del)"
                             onClick={(e) => { e.stopPropagation(); setToDelete(txn.id); }}>
                             <Icon name="trash" size={14} />
@@ -692,6 +704,14 @@ export function PdcCashbook() {
         onDelete={(id) => setToDelete(id)}
         onPrint={printRow}
         onChequeAction={(id, action) => setChequeAction({ id, action })}
+        onEdit={(row) => {
+          if (!canEdit(row)) {
+            toast.info('This entry cannot be edited — reverse it and post a fresh one.');
+            return;
+          }
+          setDetail(null);
+          setToEdit(row);
+        }}
         /**
          * Hand a payment on to someone else. A cheque that is still ours to
          * pass on is ENDORSED — one physical cheque, one record for life — so
@@ -708,6 +728,8 @@ export function PdcCashbook() {
           setDetail(null);
         }}
       />
+
+      <EditTxnModal row={toEdit} onClose={() => setToEdit(null)} />
 
       <ChequeActionDialog
         action={chequeAction.action}

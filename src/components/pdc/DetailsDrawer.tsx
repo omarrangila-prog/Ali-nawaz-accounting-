@@ -20,11 +20,13 @@ interface Props {
   onDelete: (txnId: string) => void;
   /** Hand this payment on to another party (cheque endorsement, or a balance move). */
   onTransfer?: (row: RegisterRow) => void;
+  /** Correct this entry — every captured field can be changed. */
+  onEdit?: (row: RegisterRow) => void;
   onPrint: (row: RegisterRow) => void;
   onChequeAction: (chequeId: string, action: 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | 'edit' | 'return') => void;
 }
 
-export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onChequeAction, onTransfer }: Props) {
+export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onChequeAction, onTransfer, onEdit }: Props) {
   const store = usePdc();
   const data = store.dataset();
   const cur = data.settings.currency;
@@ -288,6 +290,13 @@ export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onCh
               }
             >
               <Icon name="transfer" size={15} /> Transfer
+            </button>
+          )}
+          {/* Edit sits beside Delete: the two things you reach for when an
+              entry is wrong. Editing corrects it; deleting removes it. */}
+          {!txn.reversed && onEdit && (
+            <button className="btn btn-sm btn-primary" onClick={() => onEdit(row)}>
+              <Icon name="settings" size={15} /> Edit
             </button>
           )}
           {!txn.reversed && (

@@ -13,6 +13,8 @@ import { Combo } from '@/components/ui/Combo';
 import { usePdc } from '@/store/pdcStore';
 import { buildBankLedger, buildPartyLedger, buildRegister, paymentMethodOf } from '@/lib/pdcRegister';
 import { DetailsDrawer } from '@/components/pdc/DetailsDrawer';
+import { EditTxnModal, canEdit } from '@/components/pdc/EditTxnModal';
+import { ConfirmDialog } from '@/components/ui/Modal';
 import type { RegisterRow } from '@/types/pdc';
 import { bankAccountLabel, balanceLabel, holderLabel } from '@/lib/pdcEngine';
 import { formatMoney, formatDate, formatNumber, cx } from '@/lib/utils';
@@ -34,6 +36,8 @@ export function PdcLedger() {
   const [partyId, setPartyId] = useState(params.get('party') ?? '');
   const [accountId, setAccountId] = useState(params.get('account') ?? '');
   const [detail, setDetail] = useState<RegisterRow | null>(null);
+  const [toEdit, setToEdit] = useState<RegisterRow | null>(null);
+  const [toDelete, setToDelete] = useState<string | null>(null);
   const register = useMemo(() => buildRegister(data), [data]);
 
   // Keep the URL in step so the view is shareable / bookmarkable.
@@ -247,27 +251,36 @@ export function PdcLedger() {
                         explain the amount — quantity, rate, how it was paid —
                         come before the free text, so the eye reaches them
                         without crossing a sentence. */}
-                    <th>Date</th>
+                    <th className="mid">Date</th>
                     <th className="num">Qty</th><th className="num">Rate</th>
-                    <th>Method</th>
+                    <th className="mid">Method</th>
+                    {/* Who it came from or went to, and the cheque it rode on —
+                        a statement line has to be readable on its own. */}
+                    <th>From / To</th>
+                    <th className="mid">Cheque #</th><th className="mid">Cheque Date</th>
                     <th>Description</th>
                     {/* On a bank account a debit is money IN and a credit is
                         money OUT, so name them the way a bank statement does. */}
                     <th className="num">{account ? 'Deposits' : 'Debit'}</th>
                     <th className="num">{account ? 'Withdrawals' : 'Credit'}</th>
                     <th className="num">Balance</th>
+                    <th className="mid">Status</th>
+                    <th className="no-print"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {/* Row one is ALWAYS the Opening Balance — the figure the
                       statement starts from, shown even when it is zero. */}
                   <tr className="stmt-opening">
-                    <td data-label="Date">
+                    <td data-label="Date" className="mid">
                       {opening.date ? formatDate(opening.date) : <span className="faint">—</span>}
                     </td>
                     <td data-label="Qty" className="num mono">—</td>
                     <td data-label="Rate" className="num mono">—</td>
-                    <td data-label="Method"><span className="faint">—</span></td>
+                    <td data-label="Method" className="mid"><span className="faint">—</span></td>
+                    <td data-label="From / To"><span className="faint">—</span></td>
+                    <td data-label="Cheque #" className="mid"><span className="faint">—</span></td>
+                    <td data-label="Cheque Date" className="mid"><span className="faint">—</span></td>
                     <td data-label="Description"><strong>Opening Balance</strong></td>
                     <td data-label={account ? 'Deposits' : 'Debit'} className="num mono pos">
                       {opening.amount > 0 ? formatMoney(opening.amount, cur) : '—'}
@@ -279,10 +292,12 @@ export function PdcLedger() {
                       opening.amount > 0 ? 'pos' : opening.amount < 0 ? 'neg' : '')}>
                       {formatMoney(opening.amount, cur)}
                     </td>
+                    <td data-label="Status" className="mid"><span className="faint">—</span></td>
+                    <td className="no-print"></td>
                   </tr>
                   {/* Oldest first, so the running balance builds down the page
                       exactly as it does on the printed statement. */}
-                  {statementRows.map(({ entry, txn, running }) => (
+                  {statementRows.map(({ entry, txn, cheque, running, relatedName, bankLabel }) => (
                     <tr
                       key={entry.id}
                       className={cx(txn?.reversed && 'row-reversed')}
@@ -294,14 +309,14 @@ export function PdcLedger() {
                         if (found) setDetail(found);
                       }}
                     >
-                      <td data-label="Date">{formatDate(entry.date)}</td>
+                      <td data-label="Date" className="mid">{formatDate(entry.date)}</td>
                       <td data-label="Qty" className="num mono">
                         {txn?.quantity !== undefined ? formatNumber(txn.quantity) : '—'}
                       </td>
                       <td data-label="Rate" className="num mono">
                         {txn?.rate !== undefined ? formatMoney(txn.rate, cur) : '—'}
                       </td>
-                      <td data-label="Method">
+                      <td data-label="Method" className="mid">
                         {(() => {
                           const m = txn ? paymentMethodOf(data, txn).method : '—';
                           return m === '—'
@@ -309,6 +324,9 @@ export function PdcLedger() {
                             : <span className={cx('method-pill', `m-${m.toLowerCase()}`)}>{m}</span>;
                         })()}
                       </td>
+                      <td data-label="From / To">{relatedName || bankLabel || '—'}</td>
+                      <td data-label="Cheque #" className="mono mid">{cheque?.chequeNumber || '—'}</td>
+                      <td data-label="Cheque Date" className="mid">{cheque ? formatDate(cheque.chequeDate) : '—'}</td>
                       <td data-label="Description">{describe(entry, txn)}</td>
                       <td data-label={account ? 'Deposits' : 'Debit'} className="num mono pos">{entry.debit ? formatMoney(entry.debit, cur) : '—'}</td>
                       <td data-label={account ? 'Withdrawals' : 'Credit'} className="num mono neg">{entry.credit ? formatMoney(entry.credit, cur) : '—'}</td>
@@ -318,6 +336,29 @@ export function PdcLedger() {
                             ? formatMoney(0, cur)
                             : `${running > 0 ? '+' : '−'}${formatMoney(Math.abs(running), cur)}`
                           : formatMoney(running, cur)}
+                      </td>
+                      <td data-label="Status" className="mid">
+                        {cheque
+                          ? <span className={cx('pdc-status', `st-${cheque.status}`)}>{cheque.status}</span>
+                          : <span className="faint">—</span>}
+                      </td>
+                      <td className="no-print actions-cell">
+                        <div className="row" style={{ gap: 2, justifyContent: 'flex-end' }}>
+                          {/* Edit and Delete right here, so a wrong line can be
+                              put right without leaving the statement. */}
+                          <button className="btn btn-ghost btn-icon btn-sm" title="Edit this entry"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const found = register.find((r) => r.txn.id === txn?.id);
+                              if (found) setToEdit(found);
+                            }}>
+                            <Icon name="settings" size={14} />
+                          </button>
+                          <button className="btn btn-ghost btn-icon btn-sm del-btn" title="Delete permanently"
+                            onClick={(e) => { e.stopPropagation(); if (txn) setToDelete(txn.id); }}>
+                            <Icon name="trash" size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -348,6 +389,30 @@ export function PdcLedger() {
           setDetail(null);
           navigate(`/cashbook?transfer=${row.txn.id}`);
         }}
+        onEdit={(row) => {
+          if (!canEdit(row)) {
+            toast.info('This entry cannot be edited — reverse it and post a fresh one.');
+            return;
+          }
+          setDetail(null);
+          setToEdit(row);
+        }}
+      />
+
+      <EditTxnModal row={toEdit} onClose={() => setToEdit(null)} />
+
+      <ConfirmDialog
+        open={!!toDelete}
+        title="Delete this entry permanently?"
+        message="The entry, its ledger effect and any cheque it created are removed completely — balances update immediately. Use Edit instead if the entry really happened and only a detail is wrong."
+        confirmLabel="Delete"
+        danger
+        onConfirm={async () => {
+          const id = toDelete;
+          setToDelete(null);
+          if (id) await store.deleteTransaction(id);
+        }}
+        onCancel={() => setToDelete(null)}
       />
 
       {printConfirm.dialog}

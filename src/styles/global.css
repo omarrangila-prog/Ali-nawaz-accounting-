@@ -279,6 +279,17 @@ table.grid tbody tr.row-link:hover .link-text { text-decoration: underline; }
 table.grid thead th.num,
 table.grid tfoot td.num { text-align: right; }
 
+/* Short, fixed-width values — a date, a cheque number, a status pill, a method
+   badge — sit centred in their column, with the heading centred over them so
+   the two always line up. Money stays right-aligned so digits align on the
+   decimal, and free text stays left so a sentence starts where the eye
+   expects. Each column is therefore aligned to what it actually holds. */
+.mid { text-align: center; }
+table.grid thead th.mid,
+table.grid tfoot td.mid { text-align: center; }
+table.grid td.mid > .pdc-status,
+table.grid td.mid > .method-pill { margin: 0 auto; }
+
 /* ---------- Badges ---------- */
 .badge {
   display: inline-flex;
