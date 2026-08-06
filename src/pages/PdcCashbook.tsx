@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Combo } from '@/components/ui/Combo';
@@ -78,6 +78,7 @@ export function PdcCashbook() {
   const data = store.dataset();
   const cur = data.settings.currency;
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
   const today = todayISO();
 
   const [form, setForm] = useState<PdcFormKind>(null);
@@ -108,6 +109,25 @@ export function PdcCashbook() {
     setFormCheque('');
     setForm(kind);
   };
+
+  /**
+   * Arriving from a statement's Transfer button (`/cashbook?transfer=<txnId>`):
+   * open the right transfer form for that entry, then drop the parameter so a
+   * refresh does not reopen it.
+   */
+  useEffect(() => {
+    const txnId = params.get('transfer');
+    if (!txnId) return;
+    const row = register.find((r) => r.txn.id === txnId);
+    if (row) {
+      const c = row.cheque;
+      const endorsable = c && c.direction === 'received' && c.status === 'pending';
+      setFormParty(row.txn.partyId ?? '');
+      setFormCheque(endorsable ? c!.id : '');
+      setForm(endorsable ? 'cheque-transfer' : 'party-transfer');
+    }
+    setParams(new URLSearchParams(), { replace: true });
+  }, [params, register]);
 
   // --- keyboard: F-keys + row navigation (spec §3, §25) --------------------
   useEffect(() => {
@@ -672,6 +692,21 @@ export function PdcCashbook() {
         onDelete={(id) => setToDelete(id)}
         onPrint={printRow}
         onChequeAction={(id, action) => setChequeAction({ id, action })}
+        /**
+         * Hand a payment on to someone else. A cheque that is still ours to
+         * pass on is ENDORSED — one physical cheque, one record for life — so
+         * the cheque form opens pre-loaded with it. Anything else moves the
+         * balance between the two parties instead.
+         */
+        onTransfer={(row) => {
+          const c = row.cheque;
+          const endorsable =
+            c && c.direction === 'received' && c.status === 'pending';
+          setFormParty(row.txn.partyId ?? '');
+          setFormCheque(endorsable ? c!.id : '');
+          setForm(endorsable ? 'cheque-transfer' : 'party-transfer');
+          setDetail(null);
+        }}
       />
 
       <ChequeActionDialog

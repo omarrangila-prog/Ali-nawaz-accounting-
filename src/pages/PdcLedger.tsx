@@ -342,6 +342,12 @@ export function PdcLedger() {
         onDelete={async (id) => { await store.deleteTransaction(id); setDetail(null); }}
         onPrint={() => window.print()}
         onChequeAction={() => toast.info('Open this cheque from the Cash Book to change its status.')}
+        // The entry forms live on the Cash Book, so a transfer started here
+        // hands over to that screen with the party already chosen.
+        onTransfer={(row) => {
+          setDetail(null);
+          navigate(`/cashbook?transfer=${row.txn.id}`);
+        }}
       />
 
       {printConfirm.dialog}

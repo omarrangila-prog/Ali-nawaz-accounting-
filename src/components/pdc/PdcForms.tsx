@@ -678,12 +678,26 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
    * on file; the account can be moved and detailed later under Parties & Banks.
    */
   const createAccount = async (typed: string): Promise<string> => {
-    const bank = data.banks[0];
-    if (!bank) {
-      toast.error('Add a bank first under Parties & Banks.');
-      return '';
-    }
-    const rec = await store.saveBankAccount({ bankId: bank.id, title: typed.trim() });
+    const name = typed.trim();
+    if (!name) return '';
+
+    // Typing a bank's name creates the BANK and its account together, so the
+    // entry never has to be abandoned to go and set one up first. A name that
+    // matches a bank already on file (or any Pakistani bank) attaches to it;
+    // anything else becomes an account under the first bank.
+    const known =
+      data.banks.find((b) => b.name.trim().toLowerCase() === name.toLowerCase()) ??
+      (PAKISTAN_BANKS.some((b) => b.name.trim().toLowerCase() === name.toLowerCase())
+        ? await store.saveBank({ name })
+        : undefined);
+
+    const bank = known ?? data.banks[0] ?? (await store.saveBank({ name }));
+    if (!bank) { toast.error('Could not create that bank.'); return ''; }
+
+    // Naming the bank itself makes this its main account; naming something
+    // else makes that the account title under the bank we have.
+    const title = bank.name.trim().toLowerCase() === name.toLowerCase() ? 'Main Account' : name;
+    const rec = await store.saveBankAccount({ bankId: bank.id, title });
     if (rec) toast.success(`Created ${bank.name} — ${rec.title}`);
     return rec?.id ?? '';
   };
@@ -845,7 +859,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       if (format === 'bank') {
         fields.push(comboField(
           'Bank Account', bankAccountId, accountPickerOptions,
-          (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select or search a bank'
+          (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select, search or type a bank',
+          undefined, createAccount
         ));
       }
       fields.push(textField('Date', date, setDate, 'date', 'date'));
@@ -865,7 +880,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     case 'pdc-issued':
       fields.push(partyField('Party', partyId, setPartyId, 'partyId'));
       fields.push(comboField('Bank Account', bankAccountId, accountPickerOptions,
-        (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select or search a bank'));
+        (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select, search or type a bank',
+        undefined, createAccount));
       fields.push(textField('Cheque Number', chequeNumber, setChequeNumber, 'chequeNumber'));
       fields.push(textField('Cheque Date', chequeDate, setChequeDate, 'chequeDate', 'date'));
       fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00'));
@@ -883,7 +899,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       if (format === 'bank') {
         fields.push(comboField(
           'Bank Account', bankAccountId, accountPickerOptions,
-          (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select or search a bank'
+          (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select, search or type a bank',
+          undefined, createAccount
         ));
       }
       fields.push(textField('Date', date, setDate, 'date', 'date'));
@@ -919,9 +936,11 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
 
     case 'bank-transfer':
       fields.push(comboField('From Account', bankAccountId, accountPickerOptions,
-        (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Source account'));
+        (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Source account',
+        undefined, createAccount));
       fields.push(comboField('To Account', toBankAccountId, accountPickerOptions,
-        (v) => resolveAccount(v, setToBankAccountId), 'toBankAccountId', 'Destination account'));
+        (v) => resolveAccount(v, setToBankAccountId), 'toBankAccountId', 'Destination account',
+        undefined, createAccount));
       fields.push(textField('Amount', amount, setAmount, 'amount', 'number', '0.00'));
       fields.push(textField('Date', date, setDate, 'date', 'date'));
       fields.push(textField('Description', description, setDescription, 'description', 'text', 'Optional'));

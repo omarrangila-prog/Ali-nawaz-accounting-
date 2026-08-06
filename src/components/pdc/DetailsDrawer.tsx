@@ -18,11 +18,13 @@ interface Props {
   onClose: () => void;
   onReverse: (txnId: string) => void;
   onDelete: (txnId: string) => void;
+  /** Hand this payment on to another party (cheque endorsement, or a balance move). */
+  onTransfer?: (row: RegisterRow) => void;
   onPrint: (row: RegisterRow) => void;
   onChequeAction: (chequeId: string, action: 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | 'edit' | 'return') => void;
 }
 
-export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onChequeAction }: Props) {
+export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onChequeAction, onTransfer }: Props) {
   const store = usePdc();
   const data = store.dataset();
   const cur = data.settings.currency;
@@ -272,6 +274,22 @@ export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onCh
           <button className="btn btn-sm" onClick={() => onPrint(row)}>
             <Icon name="print" size={15} /> Print
           </button>
+          {/* Hand this payment on to someone else. A cheque is ENDORSED — the
+              same physical cheque changes hands, never a copy — while anything
+              else moves the balance between the two parties. */}
+          {!txn.reversed && txn.partyId && onTransfer && (
+            <button
+              className="btn btn-sm"
+              onClick={() => onTransfer(row)}
+              title={
+                cheque
+                  ? `Endorse cheque ${cheque.chequeNumber || '(no number)'} to another party`
+                  : 'Move this amount to another party'
+              }
+            >
+              <Icon name="transfer" size={15} /> Transfer
+            </button>
+          )}
           {!txn.reversed && (
             <button className="btn btn-sm" onClick={() => onReverse(txn.id)}>
               Reverse
