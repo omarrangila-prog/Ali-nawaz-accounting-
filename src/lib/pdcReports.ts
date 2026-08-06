@@ -40,6 +40,7 @@ export type PdcReportId =
   | 'purchases'
   | 'expenses'
   | 'balance-sheet'
+  | 'trial-balance'
   | 'pdc-received'
   | 'pdc-issued'
   | 'receivable'
@@ -97,6 +98,7 @@ export const PDC_REPORTS: PdcReportMeta[] = [
   { id: 'cashbook', title: 'Complete Cash Book', description: 'Every transaction with running balance', group: 'Financial', icon: 'book', tone: 'blue', featured: true },
   { id: 'profit-loss', title: 'Profit & Loss', description: 'Income less purchases and expenses', group: 'Financial', icon: 'trend-up', tone: 'green', featured: true },
   { id: 'balance-sheet', title: 'Balance Sheet', description: 'What you own and what you owe', group: 'Financial', icon: 'scale', tone: 'purple', featured: true },
+  { id: 'trial-balance', title: 'Trial Balance', description: 'Every account with its debit or credit — totals must agree', group: 'Financial', icon: 'scale', tone: 'slate', featured: true },
   { id: 'receivable', title: 'Receivable Report', description: 'Outstanding amounts owed to you', group: 'Financial', icon: 'receivable', tone: 'green' },
   { id: 'payable', title: 'Payable Report', description: 'Outstanding amounts you owe', group: 'Financial', icon: 'payable', tone: 'red' },
   { id: 'debit-credit', title: 'Debit & Credit', description: 'All manual adjustments', group: 'Financial', icon: 'scale', tone: 'slate' },
@@ -497,6 +499,97 @@ export function buildPdcReport(
           ['Profit / (Loss) to date', m(pl.netProfit)],
         ],
         foot: ['NET WORTH', m(assets - payable)],
+      });
+      break;
+    }
+
+    /**
+     * TRIAL BALANCE — every account with a balance, in the column its sign
+     * puts it in. Debits total must equal credits total; when they do, the
+     * books are internally consistent.
+     *
+     * Balances are REPLAYED from the ledger (never stored), so this report is
+     * also the proof that every posting in the system is balanced.
+     */
+    case 'trial-balance': {
+      type TB = { name: string; debit: number; credit: number };
+      const rows: TB[] = [];
+      /** A balance lands in Debit when positive, Credit when negative. */
+      const put = (name: string, bal: number) => {
+        if (round2(bal) === 0) return;          // a nil account adds nothing
+        rows.push({ name, debit: bal > 0 ? bal : 0, credit: bal < 0 ? -bal : 0 });
+      };
+
+      // Cash and every bank account — assets, so normally debit.
+      put('Cash in Hand', cashBalance(data));
+      for (const [id, v] of bankBalances(data).entries()) {
+        put(bankAccountLabel(data.banks, data.bankAccounts, id), v);
+      }
+
+      // Every party: a receivable is a debit, a payable is a credit.
+      for (const p of data.parties) {
+        put(p.name, partyBalances(data).get(p.id) ?? 0);
+      }
+
+      // Cheques still in hand are an asset until they clear or bounce.
+      const pendingReceived = data.cheques
+        .filter((c) => c.direction === 'received' && live(c))
+        .reduce((s, c) => s + c.amount, 0);
+      const pendingIssued = data.cheques
+        .filter((c) => c.direction === 'issued' && live(c))
+        .reduce((s, c) => s + c.amount, 0);
+      put('Cheques in Hand (received, uncleared)', pendingReceived);
+      put('Cheques Issued (not yet cleared)', -pendingIssued);
+
+      // Trading and P&L accounts. Sales and income are credits; purchases and
+      // expenses are debits — the normal balance of each.
+      const pl = computeProfit(data);
+      put('Sales', -pl.sales);
+      put('Other Income', -(pl.otherIncome ?? 0));
+      put('Purchases', pl.purchases);
+      put('Expenses', pl.expenses);
+
+      // Opening balances are seeded onto their accounts without a matching
+      // entry anywhere — that is what an opening balance IS: the position
+      // carried in from before the books started. Left alone they would tip the
+      // trial balance by their own total, so the opposing side is stated here
+      // as capital, exactly as it would be written into a new ledger book.
+      const openingCapital =
+        data.parties.reduce((s, p) => s + p.openingBalance, 0) +
+        data.bankAccounts.reduce((s, a) => s + a.openingBalance, 0) +
+        data.ledgers.reduce((s, l) => s + l.openingBalance, 0);
+      put('Opening Capital', -openingCapital);
+
+      const totalDebit = rows.reduce((s, r) => s + r.debit, 0);
+      const totalCredit = rows.reduce((s, r) => s + r.credit, 0);
+      const diff = round2(totalDebit - totalCredit);
+
+      sections.push({
+        title: 'Trial Balance',
+        head: ['Account', 'Debit', 'Credit'],
+        numericCols: [1, 2],
+        emptyText: 'No accounts carry a balance yet.',
+        rows: rows.map((r) => [r.name, r.debit ? m(r.debit) : '-', r.credit ? m(r.credit) : '-']),
+        foot: ['TOTAL', m(totalDebit), m(totalCredit)],
+      });
+
+      // State the result plainly, rather than leaving the reader to compare two
+      // long figures by eye.
+      sections.push({
+        title: 'Check',
+        head: ['', 'Result'],
+        rows: [
+          ['Total Debits', m(totalDebit)],
+          ['Total Credits', m(totalCredit)],
+          ['Difference', m(Math.abs(diff))],
+          [
+            'Status',
+            diff === 0
+              ? 'BALANCED — debits equal credits'
+              : 'OUT OF BALANCE — investigate before relying on these figures',
+          ],
+        ],
+        numericCols: [1],
       });
       break;
     }
