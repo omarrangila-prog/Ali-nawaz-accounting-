@@ -55,12 +55,17 @@ export const PAKISTAN_BANKS: BankSuggestion[] = [
   { name: 'Apna Microfinance Bank', kind: 'Microfinance' },
   { name: 'Advans Pakistan Microfinance Bank', kind: 'Microfinance' },
   { name: 'HBL Microfinance Bank', kind: 'Microfinance' },
+  { name: 'The First MicroFinance Bank', kind: 'Microfinance' },
+  { name: 'Sindh Microfinance Bank', kind: 'Microfinance' },
 
   // --- Development / specialised ---
   { name: 'Zarai Taraqiati Bank (ZTBL)', kind: 'Development' },
   { name: 'Industrial Development Bank of Pakistan', kind: 'Development' },
   { name: 'SME Bank', kind: 'Development' },
   { name: 'Punjab Provincial Cooperative Bank', kind: 'Cooperative' },
+  { name: 'Bank of Azad Jammu & Kashmir', kind: 'Public' },
+  { name: 'Pak Oman Investment Company', kind: 'Development' },
+  { name: 'Pak Brunei Investment Company', kind: 'Development' },
 
   // --- Foreign banks operating locally ---
   { name: 'Citibank Pakistan', kind: 'Foreign' },

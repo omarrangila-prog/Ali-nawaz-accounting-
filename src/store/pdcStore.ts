@@ -44,6 +44,7 @@ import {
   ledgerDeleteImpact,
   type Posting,
 } from '@/lib/pdcEngine';
+import { PAKISTAN_BANKS } from '@/config/pakistanBanks';
 import type { PdcBackup } from '@/lib/pdcBackup';
 import { buildReversal } from '@/lib/chequeWorkflow';
 import { uid, now, todayISO } from '@/lib/utils';
@@ -126,6 +127,44 @@ const COLLECTIONS: Record<string, CollectionName> = {
 
 let unsubs: Array<() => void> = [];
 
+/**
+ * Guards the one-time bank seed per bound workspace, so a deliberate deletion
+ * is not immediately undone and the seed cannot loop against its own writes.
+ */
+let seededBanks = false;
+
+/**
+ * Write every Pakistani bank into an empty workspace.
+ *
+ * Called only when the workspace holds no banks at all — a brand-new book, or
+ * one that has just been cleared. Existing names are skipped, so this can never
+ * create a duplicate even if it somehow runs twice.
+ */
+async function seedPakistaniBanks(workspace: string): Promise<void> {
+  try {
+    const existing = new Set(
+      usePdc.getState().banks.map((b) => b.name.trim().toLowerCase())
+    );
+    let added = 0;
+    for (const b of PAKISTAN_BANKS) {
+      if (existing.has(b.name.trim().toLowerCase())) continue;
+      const rec: Bank = {
+        id: uid(),
+        name: b.name,
+        active: true,
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      await upsertDoc(workspace, 'pdcBanks', rec);
+      added++;
+    }
+    if (added > 0) toast.success(`${added} Pakistani banks ready to use`);
+  } catch {
+    // A failed seed is not worth interrupting the user: every bank can still
+    // be created by typing its name, and the seed retries next session.
+  }
+}
+
 export const usePdc = create<PdcStore>((set, get) => ({
   uidRef: null,
   ready: false,
@@ -146,11 +185,24 @@ export const usePdc = create<PdcStore>((set, get) => ({
   bind(workspace) {
     get().unbind();
     set({ uidRef: workspace, ready: false });
+    seededBanks = false;
 
     for (const [key, coll] of Object.entries(COLLECTIONS)) {
       unsubs.push(
         subscribeCollection<any>(workspace, coll, (rows) => {
           set({ [key]: rows } as any);
+
+          /**
+           * A workspace with no banks at all seeds every Pakistani bank by
+           * itself, so a fresh book is ready to use without hunting for a
+           * button. Guarded to run at most once per session: after that the
+           * bank list is the user's to manage, and deleting one must not see
+           * it quietly reappear.
+           */
+          if (key === 'banks' && rows.length === 0 && !seededBanks) {
+            seededBanks = true;
+            void seedPakistaniBanks(workspace);
+          }
         })
       );
     }
