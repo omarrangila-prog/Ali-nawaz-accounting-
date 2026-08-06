@@ -368,10 +368,17 @@ export function PdcCashbook() {
         {/* Quick filters — the views asked for most often, one click each. */}
         <div className="quick-filters no-print">
           {([
-            { label: 'All', on: filters.card === 'all' && filters.method === 'all' && !filters.from,
-              set: () => setFilters((f) => ({ ...f, card: 'all', method: 'all', from: '', to: '' })) },
+            { label: 'All', on: filters.card === 'all' && filters.method === 'all' && !filters.from && filters.type === 'all',
+              set: () => setFilters((f) => ({ ...f, card: 'all', method: 'all', type: 'all', from: '', to: '' })) },
             { label: 'Today', on: filters.from === today && filters.to === today,
               set: () => setFilters((f) => ({ ...f, from: today, to: today })) },
+            // Sales and Purchases switch the list to the simplified invoice
+            // layout — Date, Item, Qty, Rate, Description, Party, Amount. They
+            // belong on the front of the screen, not buried under Filters.
+            { label: 'Sales', on: filters.type === 'Sale',
+              set: () => setFilters((f) => ({ ...f, type: f.type === 'Sale' ? 'all' : 'Sale' })) },
+            { label: 'Purchases', on: filters.type === 'Purchase',
+              set: () => setFilters((f) => ({ ...f, type: f.type === 'Purchase' ? 'all' : 'Purchase' })) },
             { label: 'Cash', on: filters.method === 'cash',
               set: () => setFilters((f) => ({ ...f, method: f.method === 'cash' ? 'all' : 'cash' })) },
             { label: 'Bank', on: filters.method === 'bank',
@@ -516,12 +523,13 @@ export function PdcCashbook() {
                       explain the amount come before the free text, so the eye
                       reaches Qty and Rate without crossing a sentence. */}
                   {tradeView ? (
-                    // Date · Item · Qty · Rate · Description · Party · Amount —
-                    // an invoice list, nothing that belongs to a payment.
+                    // Date · Description · Qty · Rate · Party · Amount — an
+                    // invoice list. Nothing about how it was paid appears here,
+                    // because a sale is not a payment: the customer may settle
+                    // later, and in several instalments.
                     <>
-                      <th>Date</th><th>Item</th>
+                      <th>Date</th><th>Description</th>
                       <th className="num">Qty</th><th className="num">Rate</th>
-                      <th>Description</th>
                       <th>Party</th><th className="num">Amount</th>
                       <th className="no-print"></th>
                     </>
@@ -555,8 +563,11 @@ export function PdcCashbook() {
                       {tradeView ? (
                         <>
                           <td data-label="Date">{formatDate(txn.date)}</td>
-                          <td data-label="Item">
-                            {txn.itemName || txn.category || <span className="faint">—</span>}
+                          {/* One plain line naming what this was — "Rizwan
+                              Lunch". The user's own words first, then the item
+                              they picked, then the category. */}
+                          <td data-label="Description">
+                            {txn.description || txn.itemName || txn.category || '—'}
                           </td>
                           <td data-label="Qty" className="num mono">
                             {txn.quantity !== undefined ? formatNumber(txn.quantity) : '—'}
@@ -564,7 +575,6 @@ export function PdcCashbook() {
                           <td data-label="Rate" className="num mono">
                             {txn.rate !== undefined ? formatMoney(txn.rate, cur) : '—'}
                           </td>
-                          <td data-label="Description">{txn.description || '—'}</td>
                           <td data-label="Party">{row.partyName || '—'}</td>
                           <td data-label="Amount" className="num mono">
                             {formatMoney(txn.amount, cur)}

@@ -399,3 +399,48 @@ describe('a full trading month', () => {
     expect(buildPartyLedger(d, 'SUPP').balance).toBe(partyBalance(d, 'SUPP'));
   });
 });
+
+// --- 11. Many payments against one sale ------------------------------------
+
+describe('a sale settled by several later payments', () => {
+  it('accepts cash and multiple cheques against one invoice', () => {
+    let d = seed();
+    // One sale on credit. Nothing about payment is recorded with it.
+    d = apply(d, buildSale(d, {
+      partyId: 'CUST', amount: 300_000, date: '2026-08-01', settlement: 'credit',
+      quantity: 1_000, rate: 300, itemName: 'Rice', description: 'Rizwan order',
+    }));
+    expect(partyBalance(d, 'CUST')).toBe(OPENING + 300_000);
+    expect(d.cheques).toHaveLength(0);          // a sale creates no cheque
+
+    // The customer then pays in four separate instalments, over time.
+    d = apply(d, buildCashReceived(d, { partyId: 'CUST', amount: 50_000, date: '2026-08-10', paymentMethod: 'cash' }));
+    d = apply(d, buildCashReceived(d, {
+      partyId: 'CUST', amount: 100_000, date: '2026-08-15',
+      paymentMethod: 'cheque', cheque: { chequeNumber: 'A1', bankId: 'HBL', chequeDate: '2026-09-01' },
+    }));
+    d = apply(d, buildCashReceived(d, {
+      partyId: 'CUST', amount: 100_000, date: '2026-08-20',
+      paymentMethod: 'cheque', cheque: { chequeNumber: 'A2', bankId: 'HBL', chequeDate: '2026-09-10' },
+    }));
+    d = apply(d, buildCashReceived(d, {
+      partyId: 'CUST', amount: 50_000, date: '2026-08-25',
+      paymentMethod: 'cheque', cheque: { chequeNumber: 'A3', bankId: 'HBL', chequeDate: '2026-09-20' },
+    }));
+
+    // Each payment is its own entry, and each cheque its own record.
+    expect(d.transactions).toHaveLength(5);
+    expect(d.cheques).toHaveLength(3);
+    expect(d.cheques.every((c) => c.status === 'pending')).toBe(true);
+
+    // The invoice is fully settled: 50,000 opening + 300,000 − 300,000.
+    expect(partyBalance(d, 'CUST')).toBe(OPENING);
+    // Only the cash instalment has actually moved money so far.
+    expect(cashBalance(d)).toBe(50_000);
+    expect(ledgerIsBalanced(d)).toBe(true);
+
+    // The statement walks the balance down payment by payment.
+    const stmt = [...buildPartyLedger(d, 'CUST').rows].reverse();
+    expect(stmt.map((r) => r.running)).toEqual([350_000, 300_000, 200_000, 100_000, 50_000]);
+  });
+});
