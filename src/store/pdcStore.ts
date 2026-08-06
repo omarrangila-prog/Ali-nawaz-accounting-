@@ -134,11 +134,25 @@ let unsubs: Array<() => void> = [];
 let seededBanks = false;
 
 /**
+ * A stable document id for a seeded bank, derived from its name.
+ *
+ * This is what makes seeding safe. A random id would write a NEW document every
+ * time the seed ran, so two browser tabs — or one tab reloading before the
+ * writes landed — would each add all 48 and the list would multiply. Keying on
+ * the name means a repeat seed overwrites the same document instead, so the
+ * result is identical whether it runs once or fifty times.
+ */
+function seedBankId(name: string): string {
+  return `pk-${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+}
+
+/**
  * Write every Pakistani bank into an empty workspace.
  *
  * Called only when the workspace holds no banks at all — a brand-new book, or
- * one that has just been cleared. Existing names are skipped, so this can never
- * create a duplicate even if it somehow runs twice.
+ * one that has just been cleared. Idempotent by construction: each bank is
+ * written under its own name-derived id, so running this twice leaves exactly
+ * 48 banks, not 96.
  */
 async function seedPakistaniBanks(workspace: string): Promise<void> {
   try {
@@ -149,7 +163,7 @@ async function seedPakistaniBanks(workspace: string): Promise<void> {
     for (const b of PAKISTAN_BANKS) {
       if (existing.has(b.name.trim().toLowerCase())) continue;
       const rec: Bank = {
-        id: uid(),
+        id: seedBankId(b.name),
         name: b.name,
         active: true,
         createdAt: now(),

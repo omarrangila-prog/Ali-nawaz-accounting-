@@ -73,3 +73,48 @@ describe('seeding into a workspace', () => {
     expect(remaining.some((b) => b.name.toLowerCase().includes('meezan'))).toBe(false);
   });
 });
+
+/**
+ * The seed writes each bank under an id derived from its NAME, not a random
+ * one. That is what makes a repeat seed overwrite rather than duplicate — with
+ * random ids, two tabs seeding at once would leave 96 banks instead of 48.
+ */
+describe('the name-derived document id', () => {
+  // Mirrors seedBankId in the store.
+  const seedBankId = (name: string) =>
+    `pk-${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+
+  it('gives every bank a distinct id', () => {
+    // A collision would merge two banks into one ledger.
+    const ids = PAKISTAN_BANKS.map((b) => seedBankId(b.name));
+    expect(new Set(ids).size).toBe(PAKISTAN_BANKS.length);
+  });
+
+  it('is stable — the same name always yields the same id', () => {
+    for (const b of PAKISTAN_BANKS) {
+      expect(seedBankId(b.name)).toBe(seedBankId(b.name));
+    }
+  });
+
+  it('ignores case and surrounding spaces', () => {
+    expect(seedBankId('  Meezan Bank ')).toBe(seedBankId('meezan bank'));
+  });
+
+  it('produces ids Firestore accepts', () => {
+    for (const b of PAKISTAN_BANKS) {
+      const id = seedBankId(b.name);
+      expect(id).toMatch(/^[a-z0-9-]+$/);   // no slashes, spaces or brackets
+      expect(id.startsWith('__')).toBe(false); // double underscore is reserved
+      expect(id.length).toBeLessThan(1500);
+      expect(id).not.toBe('.');
+      expect(id).not.toBe('..');
+    }
+  });
+
+  it('keeps banks with bracketed short names apart', () => {
+    // "Habib Bank Limited (HBL)" and "Habib Metropolitan Bank" must not collapse
+    // to the same id once punctuation is stripped.
+    expect(seedBankId('Habib Bank Limited (HBL)'))
+      .not.toBe(seedBankId('Habib Metropolitan Bank'));
+  });
+});
