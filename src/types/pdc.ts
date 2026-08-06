@@ -75,6 +75,17 @@ export interface NamedLedger {
   /** Optional label, e.g. "Salesman — North zone". */
   description?: string;
   /**
+   * Parent ledger this one sits under, making it a SUB-LEDGER.
+   *
+   * Example: parent "Yameen" with sub-ledgers "Jeeb" and "Kamran". A parent's
+   * total rolls up its own entries, its own parties, and every sub-ledger
+   * beneath it. Undefined means this is a top-level (parent) ledger.
+   *
+   * Only ONE level of nesting is supported: a sub-ledger cannot itself have
+   * children. That keeps the roll-up unambiguous and makes cycles impossible.
+   */
+  parentId?: string;
+  /**
    * Opening balance for the ledger's OWN account (not its parties').
    * Positive => receivable, negative => payable.
    */
@@ -486,7 +497,14 @@ export interface LedgerView {
   }>;
   /** Sum of every assigned party's balance. */
   partiesTotal: number;
-  /** ownBalance + partiesTotal — the headline figure. */
+  /**
+   * Sub-ledgers sitting under this one (empty for a sub-ledger itself).
+   * Example: parent "Yameen" listing "Jeeb" and "Kamran".
+   */
+  subLedgers: Array<{ ledger: NamedLedger; total: number }>;
+  /** Combined total of every sub-ledger. */
+  subLedgersTotal: number;
+  /** ownBalance + partiesTotal + subLedgersTotal — the headline figure. */
   total: number;
   /** Positive portion of `total` across parties (money owed to you). */
   receivable: number;

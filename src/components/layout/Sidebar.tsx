@@ -13,9 +13,11 @@ const groups: NavGroup[] = [
   {
     items: [
       { to: '/', tkey: 'Cash Book', icon: 'wallet' },
-      { to: '/parties', tkey: 'Parties & Banks', icon: 'user' },
-      { to: '/ledgers', tkey: 'Ledgers', icon: 'book' },
-      { to: '/ledger', tkey: 'Party Ledger', icon: 'ledger', shortcut: 'F8' },
+      // Everything is CREATED in one place — parties, ledgers and banks.
+      { to: '/parties', tkey: 'Parties, Ledgers & Banks', icon: 'user' },
+      // The two below are views of what exists, not places to create things.
+      { to: '/ledgers', tkey: 'Ledger Totals', icon: 'book' },
+      { to: '/ledger', tkey: 'Statements', icon: 'ledger', shortcut: 'F8' },
       { to: '/reports', tkey: 'Reports', icon: 'reports', shortcut: 'F10' },
       { to: '/backup', tkey: 'Backup & Export', icon: 'save' },
       { to: '/settings', tkey: 'Settings', icon: 'settings' },

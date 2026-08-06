@@ -127,45 +127,57 @@ export function buildPartyWorksheet(data: PdcDataSet, partyId: string): jsPDF {
   });
 }
 
-/** Bank account ledger, same worksheet format. */
+/**
+ * BANK STATEMENT — reads like the statement a bank itself issues.
+ *
+ * Opening Balance first, then every movement in date order with the cheque
+ * named where one was involved, Deposits and Withdrawals in their own columns,
+ * and a running balance down the page.
+ */
 export function buildBankWorksheet(data: PdcDataSet, accountId: string): jsPDF {
   const account = data.bankAccounts.find((a) => a.id === accountId);
   const label = bankAccountLabel(data.banks, data.bankAccounts, accountId);
   const { rows } = buildBankLedger(data, accountId);
   const opening = account?.openingBalance ?? 0;
-  const chrono = [...rows].reverse();
+  const chrono = [...rows].reverse();   // oldest first, so the balance builds
 
   let running = opening;
   const body: (string | number)[][] = [
-    ['', 'Opening Balance', opening > 0 ? formatNumber(opening) : '-',
-      opening < 0 ? formatNumber(-opening) : '-', bal(opening)],
+    // Row one is ALWAYS the opening balance, even at zero.
+    ['', 'Opening Balance', '-',
+      opening > 0 ? formatNumber(opening) : '-',
+      opening < 0 ? formatNumber(-opening) : '-',
+      bal(opening)],
   ];
   for (const r of chrono) {
+    // On a bank account a debit is money IN (a deposit) and a credit is money
+    // OUT (a withdrawal) — the customer's view, which is how a statement reads.
     running += r.entry.debit - r.entry.credit;
     body.push([
       formatDate(r.entry.date),
       tafseelFor(data, r),
+      r.cheque?.chequeNumber || '-',
       num(r.entry.debit),
       num(r.entry.credit),
       bal(running),
     ]);
   }
 
-  const totalDebit = chrono.reduce((s, r) => s + r.entry.debit, 0) + Math.max(opening, 0);
-  const totalCredit = chrono.reduce((s, r) => s + r.entry.credit, 0) + Math.max(-opening, 0);
+  const deposits = chrono.reduce((s, r) => s + r.entry.debit, 0) + Math.max(opening, 0);
+  const withdrawals = chrono.reduce((s, r) => s + r.entry.credit, 0) + Math.max(-opening, 0);
 
   const now = new Date();
   return buildReportPdf({
-    title: `${label} — Ledger`,
+    title: `${label} — Bank Statement`,
     settings: shim(data),
     month: now.getMonth() + 1,
     year: now.getFullYear(),
     sections: [{
       title: `${label} Statement`,
-      head: ['Date', 'Tafseel', 'Debit (-)', 'Credit (+)', 'Balance'],
+      head: ['Date', 'Tafseel', 'Cheque #', 'Deposit (+)', 'Withdraw (-)', 'Balance'],
       rows: body,
-      foot: ['', 'Total', formatNumber(totalDebit), formatNumber(totalCredit), bal(running)],
-      numericCols: [2, 3, 4],
+      foot: ['', 'Total', '', formatNumber(deposits), formatNumber(withdrawals), bal(running)],
+      numericCols: [3, 4, 5],
       wideCol: 1,
     }],
   });

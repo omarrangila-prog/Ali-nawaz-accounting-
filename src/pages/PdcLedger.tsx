@@ -251,7 +251,10 @@ export function PdcLedger() {
                     <th className="num">Qty</th><th className="num">Rate</th>
                     <th>Method</th>
                     <th>Description</th>
-                    <th className="num">Debit</th><th className="num">Credit</th>
+                    {/* On a bank account a debit is money IN and a credit is
+                        money OUT, so name them the way a bank statement does. */}
+                    <th className="num">{account ? 'Deposits' : 'Debit'}</th>
+                    <th className="num">{account ? 'Withdrawals' : 'Credit'}</th>
                     <th className="num">Balance</th>
                   </tr>
                 </thead>
@@ -266,10 +269,10 @@ export function PdcLedger() {
                     <td data-label="Rate" className="num mono">—</td>
                     <td data-label="Method"><span className="faint">—</span></td>
                     <td data-label="Description"><strong>Opening Balance</strong></td>
-                    <td data-label="Debit" className="num mono pos">
+                    <td data-label={account ? 'Deposits' : 'Debit'} className="num mono pos">
                       {opening.amount > 0 ? formatMoney(opening.amount, cur) : '—'}
                     </td>
-                    <td data-label="Credit" className="num mono neg">
+                    <td data-label={account ? 'Withdrawals' : 'Credit'} className="num mono neg">
                       {opening.amount < 0 ? formatMoney(-opening.amount, cur) : '—'}
                     </td>
                     <td data-label="Balance" className={cx('num mono stmt-bal',
@@ -307,8 +310,8 @@ export function PdcLedger() {
                         })()}
                       </td>
                       <td data-label="Description">{describe(entry, txn)}</td>
-                      <td data-label="Debit" className="num mono pos">{entry.debit ? formatMoney(entry.debit, cur) : '—'}</td>
-                      <td data-label="Credit" className="num mono neg">{entry.credit ? formatMoney(entry.credit, cur) : '—'}</td>
+                      <td data-label={account ? 'Deposits' : 'Debit'} className="num mono pos">{entry.debit ? formatMoney(entry.debit, cur) : '—'}</td>
+                      <td data-label={account ? 'Withdrawals' : 'Credit'} className="num mono neg">{entry.credit ? formatMoney(entry.credit, cur) : '—'}</td>
                       <td data-label="Balance" className={cx('num mono stmt-bal', running > 0 ? 'pos' : running < 0 ? 'neg' : '')}>
                         {party
                           ? running === 0

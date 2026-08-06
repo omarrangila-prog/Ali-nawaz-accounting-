@@ -35,6 +35,10 @@ import {
 } from '@/firebase/dataAccess';
 import {
   assertBalanced,
+  bankAccountDeleteImpact,
+  bankAccountDeleteTxnIds,
+  bankAccountLabel,
+  bankDeleteImpact,
   partyDeleteImpact,
   partyDeleteTxnIds,
   ledgerDeleteImpact,
@@ -87,6 +91,10 @@ interface PdcStore {
   deleteParty: (id: string) => Promise<boolean>;
   saveBank: (b: Partial<Bank> & { name: string; id?: string }) => Promise<Bank | null>;
   saveBankAccount: (a: Partial<BankAccount> & { bankId: string; title: string; id?: string }) => Promise<BankAccount | null>;
+  /** Delete one bank account and everything that touched it. */
+  deleteBankAccount: (id: string) => Promise<boolean>;
+  /** Delete a bank and every account under it. */
+  deleteBank: (id: string) => Promise<boolean>;
   saveCheque: (c: Cheque) => Promise<void>;
   updateSettings: (patch: Partial<PdcSettings>) => Promise<void>;
   logAudit: (entry: Omit<PdcAuditLog, 'id' | 'at' | 'date' | 'user'>) => Promise<void>;
@@ -389,10 +397,35 @@ export const usePdc = create<PdcStore>((set, get) => ({
       toast.error(`A ledger named "${name}" already exists.`);
       return null;
     }
+    // Guard the one-level rule so the roll-up stays unambiguous and no cycle
+    // can ever form.
+    const parentId = l.parentId ?? existing?.parentId;
+    if (parentId) {
+      if (parentId === (l.id ?? '')) {
+        toast.error('A ledger cannot be its own parent.');
+        return null;
+      }
+      const parent = get().ledgers.find((x) => x.id === parentId);
+      if (!parent) {
+        toast.error('That parent ledger no longer exists.');
+        return null;
+      }
+      if (parent.parentId) {
+        toast.error(`${parent.name} is already a sub-ledger — only one level of nesting is supported.`);
+        return null;
+      }
+      // Moving a ledger under a parent is refused while it still has children.
+      if (l.id && get().ledgers.some((x) => x.parentId === l.id)) {
+        toast.error(`${name} has sub-ledgers of its own, so it cannot become one.`);
+        return null;
+      }
+    }
+
     const rec: NamedLedger = {
       id: l.id ?? uid(),
       name,
       description: l.description,
+      parentId,
       openingBalance: l.openingBalance ?? existing?.openingBalance ?? 0,
       active: l.active ?? existing?.active ?? true,
       notes: l.notes,
@@ -525,6 +558,125 @@ export const usePdc = create<PdcStore>((set, get) => ({
     };
     await upsertDoc(workspace, 'pdcBankAccounts', rec);
     return rec;
+  },
+
+  /**
+   * Delete a bank account and everything that touched it — the entries posted
+   * to it, any cheque drawn on or deposited into it, and that cheque's history.
+   * Balances are replayed from the ledger, so removing the lines is what makes
+   * the figures correct again; nothing has to be recalculated by hand.
+   */
+  async deleteBankAccount(id) {
+    const s = get();
+    const workspace = s.uidRef;
+    if (!workspace || s.saving) return false;
+
+    const account = s.bankAccounts.find((a) => a.id === id);
+    if (!account) return false;
+
+    const data = s.dataset();
+    const impact = bankAccountDeleteImpact(data, id);
+    const txnIds = new Set(bankAccountDeleteTxnIds(data, id));
+    const chequeIds = new Set(
+      s.cheques.filter((c) => c.bankAccountId === id).map((c) => c.id)
+    );
+    const label = bankAccountLabel(s.banks, s.bankAccounts, id);
+
+    set({ saving: true });
+    try {
+      await get().logAudit({
+        action: 'delete',
+        entity: 'bank-account',
+        entityId: id,
+        before: { title: account.title, ...impact },
+        description:
+          `Deleted bank account ${label} with ${impact.transactions} transaction(s), ` +
+          `${impact.cheques} cheque(s)`,
+      });
+
+      for (const txnId of txnIds) await removeDoc(workspace, 'pdcTransactions', txnId);
+      for (const line of s.ledger.filter((l) => txnIds.has(l.txnId))) {
+        await removeDoc(workspace, 'pdcLedger', line.id);
+      }
+      for (const m of s.movements.filter((mv) => chequeIds.has(mv.chequeId))) {
+        await removeDoc(workspace, 'pdcMovements', m.id);
+      }
+      for (const cid of chequeIds) await removeDoc(workspace, 'pdcCheques', cid);
+      for (const al of s.allocations.filter((a) => chequeIds.has(a.chequeId))) {
+        await removeDoc(workspace, 'pdcAllocations', al.id);
+      }
+      await removeDoc(workspace, 'pdcBankAccounts', id);
+
+      toast.success(
+        impact.clean ? `Deleted ${label}` : `Deleted ${label} and ${impact.transactions} transaction(s)`
+      );
+      return true;
+    } catch (e) {
+      toast.error(`Delete failed: ${(e as Error).message}`);
+      return false;
+    } finally {
+      set({ saving: false });
+    }
+  },
+
+  /**
+   * Delete a whole bank: every account under it, and every cheque drawn on it
+   * (a received cheque names the drawer's bank even when no account of ours is
+   * involved). Accounts are removed through deleteBankAccount so the cascade is
+   * identical either way.
+   */
+  async deleteBank(id) {
+    const s = get();
+    const workspace = s.uidRef;
+    if (!workspace || s.saving) return false;
+
+    const bank = s.banks.find((b) => b.id === id);
+    if (!bank) return false;
+
+    const impact = bankDeleteImpact(s.dataset(), id);
+    const accountIds = s.bankAccounts.filter((a) => a.bankId === id).map((a) => a.id);
+
+    await get().logAudit({
+      action: 'delete',
+      entity: 'bank',
+      entityId: id,
+      before: { name: bank.name, accounts: accountIds.length, ...impact },
+      description:
+        `Deleted bank ${bank.name} with ${accountIds.length} account(s), ` +
+        `${impact.transactions} transaction(s), ${impact.cheques} cheque(s)`,
+    });
+
+    // Each account clears itself down completely first.
+    for (const accId of accountIds) {
+      if (!(await get().deleteBankAccount(accId))) return false;
+    }
+
+    const after = get();
+    set({ saving: true });
+    try {
+      // Cheques recorded as drawn on this bank but held on no account of ours.
+      const strays = after.cheques.filter((c) => c.bankId === id);
+      const strayIds = new Set(strays.map((c) => c.id));
+      const strayTxns = after.transactions.filter((t) => t.chequeId && strayIds.has(t.chequeId));
+      for (const t of strayTxns) await removeDoc(workspace, 'pdcTransactions', t.id);
+      const strayTxnIds = new Set(strayTxns.map((t) => t.id));
+      for (const l of after.ledger.filter((x) => strayTxnIds.has(x.txnId))) {
+        await removeDoc(workspace, 'pdcLedger', l.id);
+      }
+      for (const m of after.movements.filter((mv) => strayIds.has(mv.chequeId))) {
+        await removeDoc(workspace, 'pdcMovements', m.id);
+      }
+      for (const cid of strayIds) await removeDoc(workspace, 'pdcCheques', cid);
+
+      await removeDoc(workspace, 'pdcBanks', id);
+      toast.success(`Deleted ${bank.name}`);
+      return true;
+    } catch (e) {
+      toast.error(`Delete failed: ${(e as Error).message}`);
+      return false;
+    } finally {
+      set({ saving: false });
+    }
   },
 
   async saveCheque(c) {

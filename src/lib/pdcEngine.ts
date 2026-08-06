@@ -282,10 +282,32 @@ export function buildLedgerView(data: PdcDataSet, ledgerId: string): LedgerView 
 
   const partiesTotal = round2(parties.reduce((s, r) => s + r.balance, 0));
 
-  // Receivable / payable count the ledger's own balance as well as its parties'.
+  /**
+   * Sub-ledgers beneath this one. A sub-ledger's total is its own entries plus
+   * its parties — it can have no children of its own, so this never recurses
+   * more than one level and cannot loop.
+   */
+  const subLedgers = data.ledgers
+    .filter((l) => l.parentId === ledgerId)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((sub) => {
+      const subOwn = accountBalance(data, ledgerAcc(sub.id));
+      const subParties = data.parties
+        .filter((p) => (p.ledgerIds ?? []).includes(sub.id))
+        .reduce((s, p) => s + (balances.get(p.id) ?? 0), 0);
+      return { ledger: sub, total: round2(subOwn + subParties) };
+    });
+  const subLedgersTotal = round2(subLedgers.reduce((s, r) => s + r.total, 0));
+
+  // Receivable / payable count the ledger's own balance, its parties' and
+  // every sub-ledger's, so a parent reports the whole book beneath it.
   let receivable = 0;
   let payable = 0;
-  for (const v of [...parties.map((r) => r.balance), ownBalance]) {
+  for (const v of [
+    ...parties.map((r) => r.balance),
+    ...subLedgers.map((r) => r.total),
+    ownBalance,
+  ]) {
     if (v > 0) receivable += v;
     else if (v < 0) payable += -v;
   }
@@ -295,7 +317,9 @@ export function buildLedgerView(data: PdcDataSet, ledgerId: string): LedgerView 
     ownBalance,
     parties,
     partiesTotal,
-    total: round2(ownBalance + partiesTotal),
+    subLedgers,
+    subLedgersTotal,
+    total: round2(ownBalance + partiesTotal + subLedgersTotal),
     receivable: round2(receivable),
     payable: round2(payable),
     sharedPartyIds: parties.filter((r) => r.shared).map((r) => r.party.id),
@@ -369,6 +393,68 @@ export function partyDeleteTxnIds(data: PdcDataSet, partyId: string): string[] {
     if (t.chequeId && chequeIds.has(t.chequeId)) ids.add(t.id);
   }
   return [...ids];
+}
+
+/**
+ * Transaction ids that would be removed with a BANK ACCOUNT.
+ *
+ * Anything that touched the account: entries posted to it, transfers naming it
+ * on either side, and any cheque drawn on or deposited into it.
+ */
+export function bankAccountDeleteTxnIds(data: PdcDataSet, accountId: string): string[] {
+  const ids = new Set<string>();
+  for (const l of data.ledger) {
+    if (l.account.kind === 'bank' && l.account.id === accountId) ids.add(l.txnId);
+  }
+  for (const t of data.transactions) {
+    if (t.fromBankAccountId === accountId || t.toBankAccountId === accountId) ids.add(t.id);
+  }
+  const chequeIds = new Set(
+    data.cheques.filter((c) => c.bankAccountId === accountId).map((c) => c.id)
+  );
+  for (const t of data.transactions) {
+    if (t.chequeId && chequeIds.has(t.chequeId)) ids.add(t.id);
+  }
+  return [...ids];
+}
+
+/** What deleting a bank account would take with it. */
+export function bankAccountDeleteImpact(data: PdcDataSet, accountId: string): DeleteImpact {
+  const txnIds = new Set(bankAccountDeleteTxnIds(data, accountId));
+  const cheques = data.cheques.filter((c) => c.bankAccountId === accountId);
+  const chequeIds = new Set(cheques.map((c) => c.id));
+  return {
+    transactions: txnIds.size,
+    ledgerLines: data.ledger.filter((l) => txnIds.has(l.txnId)).length,
+    cheques: cheques.length,
+    movements: data.movements.filter((m) => chequeIds.has(m.chequeId)).length,
+    clean: txnIds.size === 0 && cheques.length === 0,
+  };
+}
+
+/** What deleting a whole BANK would take with it — every account under it. */
+export function bankDeleteImpact(data: PdcDataSet, bankId: string): DeleteImpact {
+  const accounts = data.bankAccounts.filter((a) => a.bankId === bankId);
+  const txnIds = new Set<string>();
+  for (const a of accounts) {
+    for (const id of bankAccountDeleteTxnIds(data, a.id)) txnIds.add(id);
+  }
+  // Cheques drawn on this bank count even when no account of ours is named —
+  // a received cheque records the drawer's bank, not one of our accounts.
+  const cheques = data.cheques.filter(
+    (c) => c.bankId === bankId || accounts.some((a) => a.id === c.bankAccountId)
+  );
+  const chequeIds = new Set(cheques.map((c) => c.id));
+  for (const t of data.transactions) {
+    if (t.chequeId && chequeIds.has(t.chequeId)) txnIds.add(t.id);
+  }
+  return {
+    transactions: txnIds.size,
+    ledgerLines: data.ledger.filter((l) => txnIds.has(l.txnId)).length,
+    cheques: cheques.length,
+    movements: data.movements.filter((m) => chequeIds.has(m.chequeId)).length,
+    clean: txnIds.size === 0 && cheques.length === 0 && accounts.length === 0,
+  };
 }
 
 /** What deleting a named ledger would take with it (its OWN entries only). */
