@@ -15,6 +15,7 @@ import type {
   RegisterRow,
   SummaryFilter,
 } from '@/types/pdc';
+import { CASH_ACCOUNT_ID } from '@/types/pdc';
 import type { ISODate } from '@/types';
 import { bankAccountLabel, holderLabel, isFundsAccount, partyName } from '@/lib/pdcEngine';
 import { round2 } from '@/lib/utils';
@@ -355,6 +356,97 @@ export function buildBankLedger(
   });
 
   return { rows: rows.reverse(), balance: round2(running) };
+}
+
+/**
+ * Cash in hand, broken down by where it came from and what it went on.
+ *
+ * Every entry touching physical cash lands here automatically: it reads the
+ * same ledger lines the balance itself is replayed from, so there is no second
+ * list that could fall out of step.
+ */
+export interface CashLedgerView {
+  /** Every cash movement, newest first for the screen. */
+  rows: PartyLedgerRow[];
+  /** Cash in hand right now. */
+  balance: number;
+  /** Everything that came in. */
+  totalIn: number;
+  /** Everything that went out. */
+  totalOut: number;
+  breakdown: {
+    fromSales: number;
+    fromReceive: number;
+    fromOther: number;
+    forPurchases: number;
+    forPay: number;
+    forExpenses: number;
+    forOther: number;
+  };
+}
+
+/** The cash account's ledger, with totals in and out. */
+export function buildCashLedger(data: PdcDataSet): CashLedgerView {
+  const entries = data.ledger
+    .filter((l) => l.account.kind === 'cash' && l.account.id === CASH_ACCOUNT_ID)
+    .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt);
+
+  const txnById = new Map(data.transactions.map((t) => [t.id, t]));
+  const chequeById = new Map(data.cheques.map((c) => [c.id, c]));
+
+  let running = 0;
+  let totalIn = 0;
+  let totalOut = 0;
+  const b = {
+    fromSales: 0, fromReceive: 0, fromOther: 0,
+    forPurchases: 0, forPay: 0, forExpenses: 0, forOther: 0,
+  };
+
+  const rows: PartyLedgerRow[] = entries.map((entry) => {
+    // On the cash account a debit is money IN and a credit is money OUT.
+    running += entry.debit - entry.credit;
+    totalIn += entry.debit;
+    totalOut += entry.credit;
+
+    const txn = txnById.get(entry.txnId);
+    const type = txn?.type;
+    if (entry.debit > 0) {
+      if (type === 'Sale') b.fromSales += entry.debit;
+      else if (type === 'Cash Received') b.fromReceive += entry.debit;
+      else b.fromOther += entry.debit;
+    }
+    if (entry.credit > 0) {
+      if (type === 'Purchase') b.forPurchases += entry.credit;
+      else if (type === 'Cash Paid') b.forPay += entry.credit;
+      else if (type === 'Expense') b.forExpenses += entry.credit;
+      else b.forOther += entry.credit;
+    }
+
+    return {
+      entry,
+      txn,
+      cheque: entry.chequeId ? chequeById.get(entry.chequeId) : undefined,
+      running: round2(running),
+      relatedName: partyName(data, entry.relatedPartyId),
+      bankLabel: bankAccountLabel(data.banks, data.bankAccounts, entry.relatedBankAccountId),
+    };
+  });
+
+  return {
+    rows: rows.reverse(),
+    balance: round2(running),
+    totalIn: round2(totalIn),
+    totalOut: round2(totalOut),
+    breakdown: {
+      fromSales: round2(b.fromSales),
+      fromReceive: round2(b.fromReceive),
+      fromOther: round2(b.fromOther),
+      forPurchases: round2(b.forPurchases),
+      forPay: round2(b.forPay),
+      forExpenses: round2(b.forExpenses),
+      forOther: round2(b.forOther),
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------

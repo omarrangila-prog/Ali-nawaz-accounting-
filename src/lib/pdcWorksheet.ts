@@ -17,7 +17,7 @@ import type { Settings } from '@/types';
 import type { PdcDataSet } from '@/types/pdc';
 import { buildReportPdf, type PdfSection } from './exportPdf';
 import { bankAccountLabel, partyName } from './pdcEngine';
-import { buildBankLedger, buildPartyLedger, buildRegister, paymentMethodOf } from './pdcRegister';
+import { buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, paymentMethodOf } from './pdcRegister';
 import { formatDate, formatNumber, todayISO } from './utils';
 
 /** A figure, or a dash when it is zero — as the printed ledger shows it. */
@@ -224,4 +224,67 @@ export function buildCashBookWorksheet(data: PdcDataSet): jsPDF {
 
 export function worksheetFileName(base: string): string {
   return `${base.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${todayISO()}.pdf`;
+}
+
+/**
+ * CASH ACCOUNT statement — every physical-cash movement, with what came in and
+ * what went out in their own columns and a running balance down the page.
+ */
+export function buildCashWorksheet(data: PdcDataSet): jsPDF {
+  const { rows, balance, totalIn, totalOut, breakdown } = buildCashLedger(data);
+  const chrono = [...rows].reverse();   // oldest first, so the balance builds
+
+  let running = 0;
+  const body: (string | number)[][] = [
+    // Cash always starts from nothing: it is created by the entries below it.
+    ['', 'Opening Balance', '-', '-', '-', bal(0)],
+  ];
+  for (const r of chrono) {
+    running += r.entry.debit - r.entry.credit;
+    body.push([
+      formatDate(r.entry.date),
+      tafseelFor(data, r),
+      r.txn?.type ?? '-',
+      num(r.entry.debit),
+      num(r.entry.credit),
+      bal(running),
+    ]);
+  }
+
+  const now = new Date();
+  return buildReportPdf({
+    title: 'Cash Account — Statement',
+    settings: shim(data),
+    month: now.getMonth() + 1,
+    year: now.getFullYear(),
+    sections: [
+      {
+        title: 'Cash Account',
+        head: ['Date', 'Tafseel', 'Type', 'Cash In (+)', 'Cash Out (-)', 'Balance'],
+        rows: body,
+        foot: ['', 'Total', '', formatNumber(totalIn), formatNumber(totalOut), bal(balance)],
+        numericCols: [3, 4, 5],
+        wideCol: 1,
+      },
+      {
+        // Where the cash came from and what it went on, so the balance above is
+        // explained rather than merely stated.
+        title: 'Summary',
+        head: ['', 'Amount'],
+        rows: [
+          ['Cash received from Sales', formatNumber(breakdown.fromSales)],
+          ['Cash received through Receive', formatNumber(breakdown.fromReceive)],
+          ['Other cash received', formatNumber(breakdown.fromOther)],
+          ['Cash paid for Purchases', formatNumber(breakdown.forPurchases)],
+          ['Cash paid through Pay', formatNumber(breakdown.forPay)],
+          ['Cash paid for Expenses', formatNumber(breakdown.forExpenses)],
+          ['Other cash paid', formatNumber(breakdown.forOther)],
+          ['Total Cash In', formatNumber(totalIn)],
+          ['Total Cash Out', formatNumber(totalOut)],
+        ],
+        foot: ['CASH IN HAND', bal(balance)],
+        numericCols: [1],
+      },
+    ],
+  });
 }

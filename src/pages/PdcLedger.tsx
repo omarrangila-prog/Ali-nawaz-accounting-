@@ -11,7 +11,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Icon } from '@/components/ui/Icon';
 import { Combo } from '@/components/ui/Combo';
 import { usePdc } from '@/store/pdcStore';
-import { buildBankLedger, buildPartyLedger, buildRegister, paymentMethodOf } from '@/lib/pdcRegister';
+import { buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, paymentMethodOf } from '@/lib/pdcRegister';
 import { DetailsDrawer } from '@/components/pdc/DetailsDrawer';
 import { EditTxnModal, canEdit } from '@/components/pdc/EditTxnModal';
 import { ConfirmDialog } from '@/components/ui/Modal';
@@ -19,7 +19,7 @@ import type { RegisterRow } from '@/types/pdc';
 import { bankAccountLabel, balanceLabel, holderLabel } from '@/lib/pdcEngine';
 import { formatMoney, formatDate, formatNumber, cx } from '@/lib/utils';
 import { pdcFileName } from '@/lib/pdcReports';
-import { buildPartyWorksheet, buildBankWorksheet } from '@/lib/pdcWorksheet';
+import { buildPartyWorksheet, buildBankWorksheet, buildCashWorksheet } from '@/lib/pdcWorksheet';
 import { usePrintConfirm } from '@/components/ui/PrintConfirm';
 import { toast } from '@/store/toast';
 import './pdc.css';
@@ -35,6 +35,8 @@ export function PdcLedger() {
 
   const [partyId, setPartyId] = useState(params.get('party') ?? '');
   const [accountId, setAccountId] = useState(params.get('account') ?? '');
+  /** The Cash Account view — physical cash in hand, with nothing else in it. */
+  const [showCash, setShowCash] = useState(params.get('cash') === '1');
   const [detail, setDetail] = useState<RegisterRow | null>(null);
   const [toEdit, setToEdit] = useState<RegisterRow | null>(null);
   const [toDelete, setToDelete] = useState<string | null>(null);
@@ -45,8 +47,9 @@ export function PdcLedger() {
     const next = new URLSearchParams();
     if (partyId) next.set('party', partyId);
     if (accountId) next.set('account', accountId);
+    if (showCash) next.set('cash', '1');
     setParams(next, { replace: true });
-  }, [partyId, accountId]);
+  }, [partyId, accountId, showCash]);
 
   const partyOptions = data.parties.map((p) => ({ id: p.id, label: p.name }));
   const accountOptions = data.bankAccounts.map((a) => ({
@@ -54,15 +57,24 @@ export function PdcLedger() {
     label: bankAccountLabel(data.banks, data.bankAccounts, a.id),
   }));
 
+  /** The cash account, computed whenever it is the chosen view. */
+  const cash = useMemo(
+    () => (showCash ? buildCashLedger(data) : null),
+    [data, showCash]
+  );
+
   const ledger = useMemo(() => {
+    if (showCash && cash) return { rows: cash.rows, balance: cash.balance };
     if (partyId) return buildPartyLedger(data, partyId);
     if (accountId) return buildBankLedger(data, accountId);
     return null;
-  }, [data, partyId, accountId]);
+  }, [data, partyId, accountId, showCash, cash]);
 
   const party = data.parties.find((p) => p.id === partyId);
   const account = data.bankAccounts.find((a) => a.id === accountId);
-  const title = party?.name ?? (account ? bankAccountLabel(data.banks, data.bankAccounts, account.id) : '');
+  const title = showCash
+    ? 'Cash Account'
+    : party?.name ?? (account ? bankAccountLabel(data.banks, data.bankAccounts, account.id) : '');
 
   /** Cheques connected to this party, for the summary strip. */
   const chequeStats = useMemo(() => {
@@ -116,18 +128,20 @@ export function PdcLedger() {
 
   /** The printed worksheet, matching the ledger book the business already uses. */
   const makeStatement = () =>
-    partyId ? buildPartyWorksheet(data, partyId) : buildBankWorksheet(data, accountId);
+    showCash ? buildCashWorksheet(data)
+      : partyId ? buildPartyWorksheet(data, partyId)
+      : buildBankWorksheet(data, accountId);
 
   const statementName = () =>
-    pdcFileName(`ledger-${(party?.name ?? title) || 'statement'}`);
+    pdcFileName(showCash ? 'cash-account' : `ledger-${(party?.name ?? title) || 'statement'}`);
 
   const printStatement = () => {
-    if (!partyId && !accountId) return;
+    if (!partyId && !accountId && !showCash) return;
     printConfirm.print({ makeDoc: makeStatement, fileName: statementName() });
   };
 
   const downloadStatement = () => {
-    if (!partyId && !accountId) return;
+    if (!partyId && !accountId && !showCash) return;
     makeStatement().save(statementName());
     toast.success('Ledger PDF downloaded');
   };
@@ -144,7 +158,7 @@ export function PdcLedger() {
               value={partyId}
               options={[{ id: '', label: 'Select a party…' }, ...partyOptions]}
               placeholder={partyOptions.length ? 'Select a party' : 'No parties yet'}
-              onChange={(v) => { setPartyId(v); if (v) setAccountId(''); }}
+              onChange={(v) => { setPartyId(v); if (v) { setAccountId(''); setShowCash(false); } }}
             />
             {/* An empty dropdown with no explanation looks broken — say why and
                 where to fix it. */}
@@ -164,7 +178,7 @@ export function PdcLedger() {
               value={accountId}
               options={[{ id: '', label: 'Select an account…' }, ...accountOptions]}
               placeholder={accountOptions.length ? 'Select an account' : 'No bank accounts yet'}
-              onChange={(v) => { setAccountId(v); if (v) setPartyId(''); }}
+              onChange={(v) => { setAccountId(v); if (v) { setPartyId(''); setShowCash(false); } }}
             />
             {accountOptions.length === 0 && (
               <div className="faint" style={{ fontSize: 11.5, marginTop: 4 }}>
@@ -178,7 +192,22 @@ export function PdcLedger() {
               </div>
             )}
           </div>
-          {(partyId || accountId) && (
+          {/* Cash in hand is an account like any other, so it is chosen here
+              alongside the party and bank pickers rather than hidden away. */}
+          <div className="field" style={{ flex: '0 0 auto', alignSelf: 'flex-end' }}>
+            <button
+              className={cx('btn', showCash && 'btn-primary')}
+              onClick={() => {
+                const next = !showCash;
+                setShowCash(next);
+                if (next) { setPartyId(''); setAccountId(''); }
+              }}
+              title="Every physical-cash movement, with totals in and out"
+            >
+              <Icon name="coins" size={15} /> Cash Account
+            </button>
+          </div>
+          {(partyId || accountId || showCash) && (
             <div className="row" style={{ gap: 6, alignSelf: 'flex-end' }}>
               <button className="btn btn-sm" onClick={printStatement}>
                 <Icon name="print" size={15} /> Print
@@ -193,7 +222,7 @@ export function PdcLedger() {
 
       {!ledger ? (
         <div className="card">
-          <div className="empty">Select a party or bank account above to view its ledger.</div>
+          <div className="empty">Select a party, a bank account, or the Cash Account above to view its ledger.</div>
         </div>
       ) : (
         <div className="card">
@@ -202,6 +231,40 @@ export function PdcLedger() {
           </div>
 
           <div className="pdc-ledger-summary">
+            {/* Cash: where it came from, what it went on, and what is left —
+                the whole answer to "how much cash do we have?" in one strip. */}
+            {cash && (
+              <>
+                <div>
+                  <span className="lbl">Cash from Sales</span>
+                  <span className="val mono pos">{formatMoney(cash.breakdown.fromSales, cur)}</span>
+                </div>
+                <div>
+                  <span className="lbl">Cash from Receive</span>
+                  <span className="val mono pos">{formatMoney(cash.breakdown.fromReceive, cur)}</span>
+                </div>
+                <div>
+                  <span className="lbl">Cash for Purchases</span>
+                  <span className="val mono neg">{formatMoney(cash.breakdown.forPurchases, cur)}</span>
+                </div>
+                <div>
+                  <span className="lbl">Cash for Pay</span>
+                  <span className="val mono neg">{formatMoney(cash.breakdown.forPay, cur)}</span>
+                </div>
+                <div>
+                  <span className="lbl">Cash for Expenses</span>
+                  <span className="val mono neg">{formatMoney(cash.breakdown.forExpenses, cur)}</span>
+                </div>
+                <div>
+                  <span className="lbl">Total Cash In</span>
+                  <span className="val mono pos">{formatMoney(cash.totalIn, cur)}</span>
+                </div>
+                <div>
+                  <span className="lbl">Total Cash Out</span>
+                  <span className="val mono neg">{formatMoney(cash.totalOut, cur)}</span>
+                </div>
+              </>
+            )}
             {party && (
               <>
                 <div>
@@ -231,7 +294,7 @@ export function PdcLedger() {
               </div>
             )}
             <div>
-              <span className="lbl">{party ? 'Status' : 'Balance'}</span>
+              <span className="lbl">{party ? 'Status' : showCash ? 'Cash in Hand' : 'Balance'}</span>
               <span className={cx('val', ledger.balance > 0 ? 'pos' : ledger.balance < 0 ? 'neg' : '')}>
                 {party
                   ? `${formatMoney(Math.abs(ledger.balance), cur)} ${balanceLabel(ledger.balance)}`
@@ -261,8 +324,8 @@ export function PdcLedger() {
                     <th>Description</th>
                     {/* On a bank account a debit is money IN and a credit is
                         money OUT, so name them the way a bank statement does. */}
-                    <th className="num">{account ? 'Deposits' : 'Debit'}</th>
-                    <th className="num">{account ? 'Withdrawals' : 'Credit'}</th>
+                    <th className="num">{showCash ? 'Cash In' : account ? 'Deposits' : 'Debit'}</th>
+                    <th className="num">{showCash ? 'Cash Out' : account ? 'Withdrawals' : 'Credit'}</th>
                     <th className="num">Balance</th>
                     <th className="mid">Status</th>
                     <th className="no-print"></th>
@@ -281,11 +344,13 @@ export function PdcLedger() {
                     <td data-label="From / To"><span className="faint">—</span></td>
                     <td data-label="Cheque #" className="mid"><span className="faint">—</span></td>
                     <td data-label="Cheque Date" className="mid"><span className="faint">—</span></td>
-                    <td data-label="Description"><strong>Opening Balance</strong></td>
-                    <td data-label={account ? 'Deposits' : 'Debit'} className="num mono pos">
+                    <td data-label="Description">
+                      <strong>{showCash ? 'Opening Cash' : 'Opening Balance'}</strong>
+                    </td>
+                    <td data-label={showCash ? 'Cash In' : account ? 'Deposits' : 'Debit'} className="num mono pos">
                       {opening.amount > 0 ? formatMoney(opening.amount, cur) : '—'}
                     </td>
-                    <td data-label={account ? 'Withdrawals' : 'Credit'} className="num mono neg">
+                    <td data-label={showCash ? 'Cash Out' : account ? 'Withdrawals' : 'Credit'} className="num mono neg">
                       {opening.amount < 0 ? formatMoney(-opening.amount, cur) : '—'}
                     </td>
                     <td data-label="Balance" className={cx('num mono stmt-bal',
@@ -328,8 +393,8 @@ export function PdcLedger() {
                       <td data-label="Cheque #" className="mono mid">{cheque?.chequeNumber || '—'}</td>
                       <td data-label="Cheque Date" className="mid">{cheque ? formatDate(cheque.chequeDate) : '—'}</td>
                       <td data-label="Description">{describe(entry, txn)}</td>
-                      <td data-label={account ? 'Deposits' : 'Debit'} className="num mono pos">{entry.debit ? formatMoney(entry.debit, cur) : '—'}</td>
-                      <td data-label={account ? 'Withdrawals' : 'Credit'} className="num mono neg">{entry.credit ? formatMoney(entry.credit, cur) : '—'}</td>
+                      <td data-label={showCash ? 'Cash In' : account ? 'Deposits' : 'Debit'} className="num mono pos">{entry.debit ? formatMoney(entry.debit, cur) : '—'}</td>
+                      <td data-label={showCash ? 'Cash Out' : account ? 'Withdrawals' : 'Credit'} className="num mono neg">{entry.credit ? formatMoney(entry.credit, cur) : '—'}</td>
                       <td data-label="Balance" className={cx('num mono stmt-bal', running > 0 ? 'pos' : running < 0 ? 'neg' : '')}>
                         {party
                           ? running === 0

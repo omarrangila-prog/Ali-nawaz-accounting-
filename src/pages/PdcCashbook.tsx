@@ -245,6 +245,8 @@ export function PdcCashbook() {
    */
   const cards: Array<{
     key: SummaryFilter; label: string; value: number; tone?: string; hint?: string;
+    /** When set, the card navigates there instead of filtering the register. */
+    go?: string;
   }> = [
     {
       key: 'all',
@@ -252,6 +254,15 @@ export function PdcCashbook() {
       value: summary.totalCheques,
       tone: 'hero',
       hint: `${summary.totalChequeCount} outstanding`,
+    },
+    // Cash in hand, and one click to the account behind it.
+    {
+      key: 'all',
+      label: 'Cash in Hand',
+      value: summary.cashBalance,
+      tone: summary.cashBalance >= 0 ? 'pos' : 'neg',
+      hint: 'open the Cash Account',
+      go: '/ledger?cash=1',
     },
     { key: 'expenses', label: 'Expenses', value: summary.totalExpenses, tone: 'neg' },
     { key: 'receivable', label: 'Receivable', value: summary.totalReceivable, tone: 'pos' },
@@ -335,7 +346,7 @@ export function PdcCashbook() {
           <button
             key={`${c.label}-${ci}`}
             className={cx('pdc-card', c.tone, c.key !== 'all' && filters.card === c.key && 'active')}
-            onClick={() => c.key !== 'all' && setCard(c.key)}
+            onClick={() => (c.go ? navigate(c.go) : c.key !== 'all' && setCard(c.key))}
             title={c.hint}
           >
             <span className="pdc-card-label">{c.label}</span>
