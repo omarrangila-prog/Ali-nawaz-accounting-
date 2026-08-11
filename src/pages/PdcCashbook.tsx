@@ -524,6 +524,7 @@ export function PdcCashbook() {
           const row = register.find((r) => r.cheque?.id === chequeId);
           if (row) setDetail(row);
         }}
+        onToCash={(chequeId) => setChequeAction({ id: chequeId, action: 'to-cash' })}
       />
 
       {/* --- Transaction register (spec §3) --- */}

@@ -23,7 +23,7 @@ interface Props {
   /** Correct this entry — every captured field can be changed. */
   onEdit?: (row: RegisterRow) => void;
   onPrint: (row: RegisterRow) => void;
-  onChequeAction: (chequeId: string, action: 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | 'edit' | 'return') => void;
+  onChequeAction: (chequeId: string, action: 'deposit' | 'clear' | 'to-cash' | 'bounce' | 'cancel' | 'replace' | 'edit' | 'return') => void;
 }
 
 export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onChequeAction, onTransfer, onEdit }: Props) {
@@ -193,6 +193,18 @@ export function DetailsDrawer({ row, onClose, onReverse, onDelete, onPrint, onCh
                 )}
                 {(cheque.status === 'deposited' || cheque.status === 'presented') && (
                   <button className="btn btn-sm btn-green" onClick={() => onChequeAction(cheque.id, 'clear')}>Mark Cleared</button>
+                )}
+                {/* The party paid cash against the cheque instead of it being
+                    banked — its value goes straight to Cash in Hand. */}
+                {cheque.direction === 'received' &&
+                 (cheque.status === 'pending' || cheque.status === 'deposited') && (
+                  <button
+                    className="btn btn-sm btn-green"
+                    title="Move this cheque's value into Cash in Hand"
+                    onClick={() => onChequeAction(cheque.id, 'to-cash')}
+                  >
+                    Receive as Cash
+                  </button>
                 )}
                 {cheque.status !== 'cleared' && cheque.status !== 'cancelled' && cheque.status !== 'replaced' && (
                   <button className="btn btn-sm btn-danger" onClick={() => onChequeAction(cheque.id, 'bounce')}>Bounced</button>

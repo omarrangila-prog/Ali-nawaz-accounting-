@@ -19,13 +19,15 @@ interface Props {
   today: string;
   /** Open a cheque's details / actions. */
   onOpen: (chequeId: string) => void;
+  /** Take a received cheque straight into Cash in Hand. */
+  onToCash?: (chequeId: string) => void;
 }
 
 /** Cheques still in play — not settled, cancelled or replaced. */
 const isLive = (c: Cheque) =>
   c.status === 'pending' || c.status === 'deposited' || c.status === 'presented';
 
-export function ChequePanel({ today, onOpen }: Props) {
+export function ChequePanel({ today, onOpen, onToCash }: Props) {
   const store = usePdc();
   const data = store.dataset();
   const cur = data.settings.currency;
@@ -131,13 +133,26 @@ export function ChequePanel({ today, onOpen }: Props) {
                     </td>
                     <td data-label="Held By">{holderLabel(data, c.holder)}</td>
                     <td className="no-print actions-cell">
-                      <button
-                        className="btn btn-ghost btn-icon btn-sm"
-                        title="Open cheque"
-                        onClick={(e) => { e.stopPropagation(); onOpen(c.id); }}
-                      >
-                        <Icon name="eye" size={14} />
-                      </button>
+                      <div className="row" style={{ gap: 2, justifyContent: 'flex-end' }}>
+                        {/* Due and paid in cash — one click puts it in hand. */}
+                        {onToCash && c.direction === 'received' &&
+                         (c.status === 'pending' || c.status === 'deposited') && (
+                          <button
+                            className="btn btn-ghost btn-icon btn-sm"
+                            title="Receive as cash — move into Cash in Hand"
+                            onClick={(e) => { e.stopPropagation(); onToCash(c.id); }}
+                          >
+                            <Icon name="coins" size={14} />
+                          </button>
+                        )}
+                        <button
+                          className="btn btn-ghost btn-icon btn-sm"
+                          title="Open cheque"
+                          onClick={(e) => { e.stopPropagation(); onOpen(c.id); }}
+                        >
+                          <Icon name="eye" size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

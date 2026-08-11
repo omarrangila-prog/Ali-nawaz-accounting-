@@ -23,6 +23,7 @@ import type { ISODate } from '@/types';
 import {
   bankAcc,
   buildLines,
+  cashAcc,
   chequeAcc,
   nextReference,
   partyAcc,
@@ -388,6 +389,117 @@ export function buildChequeClear(
         fromHolder: cheque.holder,
         toHolder: updated.holder,
         bankAccountId: accountId,
+        txnId: txn.id,
+        reference: txn.reference,
+        description: desc,
+      }),
+    ],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Cheque → Cash in Hand
+// ---------------------------------------------------------------------------
+
+export interface ChequeToCashInput {
+  chequeId: string;
+  /** The day the money was actually taken in hand. */
+  date: ISODate;
+  description?: string;
+}
+
+/**
+ * Convert a cheque straight into CASH IN HAND.
+ *
+ * The everyday case this exists for: a cheque reaches its due date and the
+ * party hands over cash against it, or it is encashed over the counter rather
+ * than banked. The value leaves cheque custody and lands in cash — no bank
+ * account is involved at any point.
+ *
+ *   Dr Cash in Hand
+ *   Cr PDC Received (cheque custody)
+ *
+ * The party's balance is deliberately untouched: it was already settled when
+ * the cheque was received. Only WHERE the value sits changes, so converting
+ * must never make a settled party appear to owe money again.
+ *
+ * The cheque itself is kept — same id, same number, same movement history — and
+ * marked cleared, held by the business. One physical cheque stays one record.
+ */
+export function buildChequeToCash(
+  data: PdcDataSet,
+  input: ChequeToCashInput
+): WorkflowResult | { error: string } {
+  const cheque = data.cheques.find((c) => c.id === input.chequeId);
+  if (!cheque) return { error: 'Cheque not found.' };
+
+  // Only a cheque WE hold can become our cash. An issued cheque is money we
+  // owe someone else; it leaves our bank when they present it.
+  if (cheque.direction !== 'received') {
+    return {
+      error:
+        'Only a cheque you have received can be taken as cash. An issued cheque leaves your bank when the other party presents it.',
+    };
+  }
+  // Endorsed away: the value belongs to whoever holds it now.
+  if (cheque.status === 'transferred') {
+    return {
+      error:
+        'This cheque was endorsed to another party, so its value is no longer yours to take as cash. Reverse the endorsement first if it came back.',
+    };
+  }
+  /**
+   * Taking cash bypasses the bank entirely, so the normal deposit-then-clear
+   * rule does not apply — a cheque goes straight from our hands to cash without
+   * ever being paid in. Only these statuses can still become cash: anything
+   * else has already been settled, refused or written off.
+   */
+  const CONVERTIBLE = ['pending', 'deposited', 'presented'];
+  if (!CONVERTIBLE.includes(cheque.status)) {
+    return {
+      error:
+        cheque.status === 'cleared'
+          ? 'This cheque has already been cleared.'
+          : `A ${cheque.status} cheque cannot be taken as cash.`,
+    };
+  }
+
+  const amount = cheque.amount;
+  const txn = makeTxn(data, 'Cheque Cleared', input.date, amount, {
+    partyId: cheque.partyId,
+    chequeId: cheque.id,
+    // No bank account is set: this is cash in hand, not a deposit.
+    paymentMethod: 'cash',
+    description: input.description,
+  });
+  const desc =
+    input.description ||
+    `Cheque ${cheque.chequeNumber || '(no number)'} received as cash`;
+
+  const lines = buildLines(txn, [
+    { account: cashAcc(), debit: amount, description: desc, chequeId: cheque.id, relatedPartyId: cheque.partyId },
+    { account: chequeAcc(cheque.id, 'received'), credit: amount, description: desc, chequeId: cheque.id, mainLedger: 'PDC Received' },
+  ]);
+
+  const updated: Cheque = {
+    ...cheque,
+    status: 'cleared',
+    // Held as cash by the business — not sitting in any bank account.
+    holder: { kind: 'business' },
+    bankAccountId: undefined,
+    updatedAt: now(),
+  };
+
+  return {
+    txn,
+    lines,
+    cheque: updated,
+    movements: [
+      movement(cheque.id, input.date, 'Received as cash', {
+        fromStatus: cheque.status,
+        toStatus: 'cleared',
+        fromHolder: cheque.holder,
+        toHolder: updated.holder,
         txnId: txn.id,
         reference: txn.reference,
         description: desc,

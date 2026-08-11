@@ -15,6 +15,7 @@ import {
   buildChequeClear,
   buildChequeDeposit,
   buildChequeReturn,
+  buildChequeToCash,
   isDuplicateCheque,
   linkReplacement,
 } from '@/lib/chequeWorkflow';
@@ -24,7 +25,7 @@ import type { Cheque } from '@/types/pdc';
 import { todayISO, formatMoney } from '@/lib/utils';
 import { toast } from '@/store/toast';
 
-export type ChequeAction = 'deposit' | 'clear' | 'bounce' | 'cancel' | 'replace' | 'edit' | 'return' | null;
+export type ChequeAction = 'deposit' | 'clear' | 'to-cash' | 'bounce' | 'cancel' | 'replace' | 'edit' | 'return' | null;
 
 interface Props {
   action: ChequeAction;
@@ -122,6 +123,20 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
       return;
     }
 
+    // The party handed over cash against the cheque: its value moves out of
+    // cheque custody straight into Cash in Hand, touching no bank account.
+    if (action === 'to-cash') {
+      const res = buildChequeToCash(data, {
+        chequeId: cheque!.id, date, description: reason || undefined,
+      });
+      if ('error' in res) { toast.error(res.error); return; }
+      if (await store.commit(res, { action: 'cheque-clear' })) {
+        toast.success('Received as cash — Cash in Hand updated');
+        onClose();
+      }
+      return;
+    }
+
     if (action === 'bounce') {
       if (!reason.trim()) { toast.error('Enter the bounce reason.'); return; }
       const res = buildChequeBounce(data, { chequeId: cheque!.id, date, reason });
@@ -214,6 +229,7 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
   const titles: Record<NonNullable<ChequeAction>, string> = {
     deposit: 'Deposit Cheque',
     clear: 'Mark Cheque Cleared',
+    'to-cash': 'Receive as Cash',
     bounce: 'Mark Cheque Bounced',
     cancel: 'Cancel Cheque',
     replace: 'Link Replacement Cheque',
@@ -252,6 +268,26 @@ export function ChequeActionDialog({ action, cheque, onClose }: Props) {
               onChange={setBankAccountId}
             />
           </div>
+        )}
+        {action === 'to-cash' && (
+          <>
+            <div className="pdc-warn" style={{ marginTop: 0 }}>
+              The cheque's value moves out of Cheques in Hand and into
+              <strong> Cash in Hand</strong>. No bank account is involved, and the
+              party stays settled — they paid when they gave you the cheque.
+              The cheque keeps its number and full history.
+            </div>
+            <div className="field">
+              <label>Note <span className="faint">(optional)</span></label>
+              <input
+                className="input"
+                autoFocus
+                value={reason}
+                placeholder="e.g. collected in cash on due date"
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </div>
+          </>
         )}
         {(action === 'bounce' || action === 'return') && (
           <div className="field">
