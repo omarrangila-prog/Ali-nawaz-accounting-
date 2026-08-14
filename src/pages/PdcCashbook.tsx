@@ -106,6 +106,25 @@ export function PdcCashbook() {
     [data, today]
   );
 
+  /**
+   * Totals across the rows currently ON SCREEN, so narrowing to one party or
+   * one month totals that selection rather than the whole book.
+   *
+   * A reversed entry is excluded: it was cancelled out, and counting its
+   * quantity would overstate what actually moved.
+   */
+  const totals = useMemo(() => {
+    let qty = 0, amount = 0, debit = 0, credit = 0;
+    for (const r of shown) {
+      if (r.txn.reversed) continue;
+      if (r.txn.quantity !== undefined) qty += r.txn.quantity;
+      amount += r.txn.amount;
+      debit += r.debit;
+      credit += r.credit;
+    }
+    return { qty, amount, debit, credit };
+  }, [shown]);
+
   const openForm = (kind: PdcFormKind) => {
     setFormParty(selParty);
     setFormCheque('');
@@ -702,6 +721,34 @@ export function PdcCashbook() {
                   );
                 })}
               </tbody>
+              {/* Totals for exactly the rows on screen, so filtering to one
+                  party or one month totals THAT, not the whole book. */}
+              <tfoot>
+                <tr className="pdc-total-row">
+                  {tradeView ? (
+                    <>
+                      <td colSpan={2}>Total · {formatNumber(shown.length)} entr{shown.length === 1 ? 'y' : 'ies'}</td>
+                      <td className="num mono">{formatNumber(totals.qty)}</td>
+                      <td className="num mono"></td>
+                      <td></td>
+                      <td className="num mono">{formatMoney(totals.amount, cur)}</td>
+                      <td className="no-print"></td>
+                    </>
+                  ) : (
+                    <>
+                      <td colSpan={4}>Total · {formatNumber(shown.length)} entr{shown.length === 1 ? 'y' : 'ies'}</td>
+                      <td className="num mono">{formatNumber(totals.qty)}</td>
+                      <td className="num mono"></td>
+                      {/* Method, Description, From, To, Cheque #, Due Date, Bank */}
+                      <td colSpan={7}></td>
+                      <td className="num mono pos">{formatMoney(totals.debit, cur)}</td>
+                      <td className="num mono neg">{formatMoney(totals.credit, cur)}</td>
+                      <td colSpan={3}></td>
+                      <td className="no-print"></td>
+                    </>
+                  )}
+                </tr>
+              </tfoot>
             </table>
           </div>
         )}
