@@ -266,6 +266,8 @@ export function PdcCashbook() {
     key: SummaryFilter; label: string; value: number; tone?: string; hint?: string;
     /** When set, the card navigates there instead of filtering the register. */
     go?: string;
+    /** A plain count rather than a money figure (quantities are not currency). */
+    plain?: boolean;
   }> = [
     {
       key: 'all',
@@ -282,6 +284,17 @@ export function PdcCashbook() {
       tone: summary.cashBalance >= 0 ? 'pos' : 'neg',
       hint: 'open the Cash Account',
       go: '/ledger?cash=1',
+    },
+    // How much stock actually moved, across the rows currently shown.
+    {
+      key: 'all',
+      label: 'Total Quantity',
+      value: totals.qty,
+      tone: 'qty',
+      plain: true,
+      hint: shown.length === register.length
+        ? 'all entries'
+        : `${formatNumber(shown.length)} of ${formatNumber(register.length)} shown`,
     },
     { key: 'expenses', label: 'Expenses', value: summary.totalExpenses, tone: 'neg' },
     { key: 'receivable', label: 'Receivable', value: summary.totalReceivable, tone: 'pos' },
@@ -369,7 +382,9 @@ export function PdcCashbook() {
             title={c.hint}
           >
             <span className="pdc-card-label">{c.label}</span>
-            <span className="pdc-card-value mono">{formatMoney(c.value, cur)}</span>
+            <span className="pdc-card-value mono">
+              {c.plain ? formatNumber(c.value) : formatMoney(c.value, cur)}
+            </span>
             {c.hint && <span className="pdc-card-hint">{c.hint}</span>}
           </button>
         ))}

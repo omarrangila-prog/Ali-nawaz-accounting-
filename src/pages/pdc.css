@@ -104,6 +104,9 @@
 .pdc-card.pos .pdc-card-value { color: var(--green); }
 .pdc-card.neg .pdc-card-value { color: var(--red); }
 .pdc-card.warn .pdc-card-value { color: var(--orange); }
+/* Quantities are a count, not money — coloured distinctly from the currency
+   cards so the eye does not read the figure as an amount. */
+.pdc-card.qty .pdc-card-value { color: var(--blue); }
 
 /* --- Quick entry --- */
 .pdc-entry { margin-bottom: 12px; }
