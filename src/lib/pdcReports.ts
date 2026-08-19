@@ -7,7 +7,7 @@
  */
 
 import type jsPDF from 'jspdf';
-import type { Cheque, PdcDataSet, PdcTxnType } from '@/types/pdc';
+import type { Cheque, PdcDataSet, PdcTransaction, PdcTxnType } from '@/types/pdc';
 import { money, buildReportPdf } from './exportPdf';
 import {
   buildDesignedPdf,
@@ -286,6 +286,17 @@ function txnSection(
  * its running balance — so the chart and the register can never disagree about
  * what counts as money.
  */
+/**
+ * Did this entry actually happen?
+ *
+ * A REVERSED entry was cancelled, and the REVERSAL that cancelled it is only
+ * the correcting half — neither is a real sale, purchase or expense. Counting
+ * either would report business that never took place.
+ */
+function isLive(t: PdcTransaction): boolean {
+  return !t.reversed && t.type !== 'Reversal';
+}
+
 function dailyTrend(data: PdcDataSet, f: PdcReportFilters): Array<{ label: string; value: number }> {
   const by = new Map<string, number>();
   for (const t of data.transactions) {
@@ -598,7 +609,7 @@ export function buildPdcReport(
     case 'purchases': {
       const type = id === 'sales' ? 'Sale' : 'Purchase';
       const rows = data.transactions
-        .filter((t) => t.type === type && inRange(t.date, f) && (!f.partyId || t.partyId === f.partyId))
+        .filter((t) => isLive(t) && t.type === type && inRange(t.date, f) && (!f.partyId || t.partyId === f.partyId))
         .sort((a, b) => a.date.localeCompare(b.date));
 
       const total = rows.reduce((s, t) => s + t.amount, 0);
@@ -668,7 +679,7 @@ export function buildPdcReport(
 
     case 'expenses': {
       const rows = data.transactions
-        .filter((t) => (t.type === 'Expense' || t.type === 'Income') && inRange(t.date, f))
+        .filter((t) => isLive(t) && (t.type === 'Expense' || t.type === 'Income') && inRange(t.date, f))
         .sort((a, b) => a.date.localeCompare(b.date));
 
       const expTotal = rows.filter((t) => t.type === 'Expense').reduce((s, t) => s + t.amount, 0);
@@ -940,7 +951,7 @@ export function buildPdcReport(
 
     case 'bank-transfers': {
       const rows = data.transactions
-        .filter((t) => t.type === 'Bank Transfer' && inRange(t.date, f))
+        .filter((t) => isLive(t) && t.type === 'Bank Transfer' && inRange(t.date, f))
         .sort((a, b) => a.date.localeCompare(b.date));
       sections.push({
         title: 'Bank Transfers',

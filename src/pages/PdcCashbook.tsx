@@ -27,6 +27,7 @@ import {
   buildRegister,
   EMPTY_FILTERS,
   lowBalanceAccounts,
+  rowTotals,
   type RegisterFilters,
 } from '@/lib/pdcRegister';
 import { bankBalances } from '@/lib/pdcEngine';
@@ -108,22 +109,10 @@ export function PdcCashbook() {
 
   /**
    * Totals across the rows currently ON SCREEN, so narrowing to one party or
-   * one month totals that selection rather than the whole book.
-   *
-   * A reversed entry is excluded: it was cancelled out, and counting its
-   * quantity would overstate what actually moved.
+   * one month totals that selection rather than the whole book. Computed in
+   * pdcRegister so the same rule is tested and cannot drift from the screen.
    */
-  const totals = useMemo(() => {
-    let qty = 0, amount = 0, debit = 0, credit = 0;
-    for (const r of shown) {
-      if (r.txn.reversed) continue;
-      if (r.txn.quantity !== undefined) qty += r.txn.quantity;
-      amount += r.txn.amount;
-      debit += r.debit;
-      credit += r.credit;
-    }
-    return { qty, amount, debit, credit };
-  }, [shown]);
+  const totals = useMemo(() => rowTotals(shown), [shown]);
 
   const openForm = (kind: PdcFormKind) => {
     setFormParty(selParty);

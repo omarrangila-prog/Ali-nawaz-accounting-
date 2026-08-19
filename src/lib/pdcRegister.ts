@@ -25,9 +25,13 @@ import { round2 } from '@/lib/utils';
  * register's running balance column. A bank transfer nets to zero (money moves
  * between our own accounts), which is why it returns 0 despite being a money
  * type.
+ *
+ * A REVERSED entry is deliberately NOT skipped. Its reversal is a real posting
+ * with its own opposing lines, so the two already cancel; ignoring the original
+ * as well would apply the correction twice and leave the running balance
+ * showing minus the amount when the true figure is nil.
  */
 export function fundsDelta(data: PdcDataSet, txn: PdcTransaction): number {
-  if (txn.reversed) return 0;
   let delta = 0;
   for (const l of data.ledger) {
     if (l.txnId !== txn.id) continue;
@@ -162,6 +166,33 @@ export function buildRegister(data: PdcDataSet): RegisterRow[] {
   });
 
   return rows.reverse();
+}
+
+/**
+ * Totals for a set of register rows — what the Cash Book prints in its totals
+ * row and its Total Quantity card.
+ *
+ * Both sides of a cancellation are excluded: the REVERSED entry and the
+ * REVERSAL that undid it. Skipping only the reversed one would leave the
+ * reversal's own amount and quantity in the figures, so a cancelled sale would
+ * still appear to have sold something.
+ */
+export function rowTotals(rows: RegisterRow[]): {
+  qty: number; amount: number; debit: number; credit: number; count: number;
+} {
+  let qty = 0, amount = 0, debit = 0, credit = 0, count = 0;
+  for (const r of rows) {
+    if (r.txn.reversed || r.txn.type === 'Reversal') continue;
+    count++;
+    if (r.txn.quantity !== undefined) qty += r.txn.quantity;
+    amount += r.txn.amount;
+    debit += r.debit;
+    credit += r.credit;
+  }
+  return {
+    qty: round2(qty), amount: round2(amount),
+    debit: round2(debit), credit: round2(credit), count,
+  };
 }
 
 // ---------------------------------------------------------------------------
