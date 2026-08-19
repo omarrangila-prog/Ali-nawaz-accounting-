@@ -101,9 +101,9 @@ interface PdcStore {
   logAudit: (entry: Omit<PdcAuditLog, 'id' | 'at' | 'date' | 'user'>) => Promise<void>;
 
   /**
-   * Correct a posted transaction: reverse the original, then post the
-   * corrected version. Both stay in history and the audit trail records the
-   * change, so books are never silently rewritten.
+   * Correct a posted transaction IN PLACE — same entry, same reference, new
+   * figures. No reversing entry is created; the audit trail records what
+   * changed, from what, to what and why.
    */
   editTransaction: (txnId: string, corrected: Posting, reason?: string) => Promise<boolean>;
   /** Edit a cheque's own details (number, dates, drawer…) with an audit entry. */
@@ -860,45 +860,135 @@ export const usePdc = create<PdcStore>((set, get) => ({
     }
   },
 
+  /**
+   * Correct a posted transaction IN PLACE.
+   *
+   * The entry keeps its own id, its reference and its position in history — it
+   * is the same entry, now holding the right figures. Its old ledger lines are
+   * replaced by the corrected ones under that same id, so balances land exactly
+   * where they would had the entry always been right.
+   *
+   * No reversing entry is created. An edit is a correction of a mistake, not a
+   * second event, so the register shows one row rather than three and the
+   * totals count the amount once. The audit trail still records what changed,
+   * from what, to what and why, so nothing is lost.
+   */
   async editTransaction(txnId, corrected, reason) {
     const s = get();
-    if (!s.uidRef || s.saving) return false;
+    const workspace = s.uidRef;
+    if (!workspace || s.saving) return false;
+
     const original = s.transactions.find((t) => t.id === txnId);
     if (!original) {
       toast.error('Transaction not found.');
       return false;
     }
     if (original.reversed) {
-      toast.error('That entry was already reversed — edit the correcting entry instead.');
+      toast.error('That entry was reversed — edit the correcting entry instead.');
       return false;
     }
 
-    // Reverse first. If this fails nothing else is written, so the books are
-    // never left holding both the wrong figure and the corrected one.
-    const undone = await get().reverse(txnId, reason || `Edited: ${original.reference}`);
-    if (!undone) return false;
+    // The corrected posting was built as a brand-new entry. Re-point it at the
+    // original so the edit lands on that entry rather than creating another.
+    const txn: PdcTransaction = {
+      ...corrected.txn,
+      id: original.id,
+      reference: original.reference,
+      createdAt: original.createdAt,
+      updatedAt: now(),
+    };
 
-    const posted = await get().commit(corrected, {
-      action: 'edit',
-      reason: reason || `Correction of ${original.reference}`,
-    });
-    if (!posted) {
-      toast.error('Reversal saved but the correction failed — re-enter it to finish.');
+    // A cheque keeps ITS identity too, so its number and movement history
+    // survive an edit of the entry that created it.
+    const oldChequeId = original.chequeId;
+    let cheque = corrected.cheque;
+    if (cheque && oldChequeId) {
+      const prior = s.cheques.find((c) => c.id === oldChequeId);
+      cheque = {
+        ...cheque,
+        id: oldChequeId,
+        createdAt: prior?.createdAt ?? cheque.createdAt,
+        // Never silently un-clear a cheque that has already moved on.
+        status: prior && prior.status !== 'pending' ? prior.status : cheque.status,
+        holder: prior && prior.status !== 'pending' ? prior.holder : cheque.holder,
+      };
+    }
+    if (cheque) txn.chequeId = cheque.id;
+    else delete txn.chequeId;
+
+    const lines = corrected.lines.map((l) => ({
+      ...l,
+      txnId: txn.id,
+      chequeId: l.chequeId && oldChequeId && cheque ? cheque.id : l.chequeId,
+    }));
+
+    try {
+      if (lines.length > 0) assertBalanced(lines);
+    } catch (e) {
+      toast.error((e as Error).message);
       return false;
     }
 
-    await get().logAudit({
-      action: 'edit',
-      entity: 'transaction',
-      entityId: txnId,
-      txnId: corrected.txn.id,
-      before: { reference: original.reference, type: original.type, amount: original.amount },
-      after: { reference: corrected.txn.reference, type: corrected.txn.type, amount: corrected.txn.amount },
-      reason,
-      description: `${original.reference} corrected → ${corrected.txn.reference}`,
-    });
-    toast.success(`Corrected ${original.reference}`);
-    return true;
+    set({ saving: true });
+    try {
+      await get().logAudit({
+        action: 'edit',
+        entity: 'transaction',
+        entityId: txn.id,
+        txnId: txn.id,
+        before: {
+          reference: original.reference, type: original.type, amount: original.amount,
+          date: original.date, partyId: original.partyId, description: original.description,
+          quantity: original.quantity, rate: original.rate, itemName: original.itemName,
+        },
+        after: {
+          reference: txn.reference, type: txn.type, amount: txn.amount,
+          date: txn.date, partyId: txn.partyId, description: txn.description,
+          quantity: txn.quantity, rate: txn.rate, itemName: txn.itemName,
+        },
+        reason,
+        description: `${original.reference} edited`,
+      });
+
+      // Write the corrected lines BEFORE removing the old ones, so a failure
+      // midway leaves the entry over-stated rather than silently free of any
+      // money effect — an obvious wrong number beats an invisible one.
+      for (const line of lines) {
+        await upsertDoc(workspace, 'pdcLedger', line);
+      }
+      const keep = new Set(lines.map((l) => l.id));
+      for (const old of s.ledger.filter((l) => l.txnId === txnId && !keep.has(l.id))) {
+        await removeDoc(workspace, 'pdcLedger', old.id);
+      }
+
+      if (cheque) {
+        await upsertDoc(workspace, 'pdcCheques', cheque);
+      } else if (oldChequeId) {
+        // Switched away from a cheque: its record and history go with it.
+        for (const m of s.movements.filter((mv) => mv.chequeId === oldChequeId)) {
+          await removeDoc(workspace, 'pdcMovements', m.id);
+        }
+        await removeDoc(workspace, 'pdcCheques', oldChequeId);
+      }
+
+      // Movements only for a cheque created fresh by this edit; an existing
+      // cheque keeps the timeline it already has.
+      if (cheque && !oldChequeId) {
+        for (const m of corrected.movements) {
+          await upsertDoc(workspace, 'pdcMovements', { ...m, chequeId: cheque.id });
+        }
+      }
+
+      await upsertDoc(workspace, 'pdcTransactions', txn);
+
+      toast.success(`${original.reference} updated`);
+      return true;
+    } catch (e) {
+      toast.error(`Edit failed: ${(e as Error).message}`);
+      return false;
+    } finally {
+      set({ saving: false });
+    }
   },
 
   async updateChequeDetails(chequeId, patch, reason) {

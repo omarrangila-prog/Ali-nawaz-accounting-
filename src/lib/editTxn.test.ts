@@ -1,10 +1,10 @@
 /**
- * Editing a posted transaction.
+ * Editing a posted transaction IN PLACE.
  *
- * An edit is a reversal plus a correction, so the wrong figure and the right
- * one both stay in history. What matters is that the BALANCE ends up as if only
- * the corrected entry had ever been posted, and that the books stay balanced
- * throughout.
+ * The entry keeps its id and reference and simply holds the right figures
+ * afterwards. No reversing entry is created, so the register shows ONE row and
+ * the totals count the amount once — which is what makes an edit feel like a
+ * correction rather than a second transaction.
  */
 import { describe, it, expect } from 'vitest';
 import type { PdcDataSet } from '@/types/pdc';
@@ -14,8 +14,7 @@ import {
   ledgerIsBalanced, accountBalance, partyAcc, cashBalance, bankBalances,
   computeProfit, type Posting,
 } from './pdcEngine';
-import { buildPartyLedger } from './pdcRegister';
-import { buildReversal } from './chequeWorkflow';
+import { buildPartyLedger, buildRegister } from './pdcRegister';
 
 function seed(): PdcDataSet {
   return {
@@ -44,19 +43,40 @@ function apply(d: PdcDataSet, p: Posting | { error: string }): PdcDataSet {
   };
 }
 
-/** The store's edit: reverse the original, then post the correction. */
-function edit(d: PdcDataSet, txnId: string, corrected: Posting, on = '2026-08-10'): PdcDataSet {
-  const rev = buildReversal(d, txnId, on);
-  if ('error' in rev) throw new Error(rev.error);
-  let next = apply(d, { ...rev, movements: [] } as unknown as Posting);
-  // The original is marked reversed, exactly as the store records it.
-  next = {
-    ...next,
-    transactions: next.transactions.map((t) =>
-      t.id === txnId ? { ...t, reversed: true, reversedByTxnId: rev.txn.id } : t
-    ),
+/**
+ * The store's edit, in the same shape: the corrected posting is re-pointed at
+ * the ORIGINAL entry, its old ledger lines are dropped and the new ones written
+ * under that same id. Nothing new is appended to history.
+ */
+function edit(d: PdcDataSet, txnId: string, corrected: Posting): PdcDataSet {
+  const original = d.transactions.find((t) => t.id === txnId)!;
+  const oldChequeId = original.chequeId;
+
+  const txn = {
+    ...corrected.txn,
+    id: original.id,
+    reference: original.reference,
+    createdAt: original.createdAt,
   };
-  return apply(next, corrected);
+  let cheque = corrected.cheque;
+  if (cheque && oldChequeId) cheque = { ...cheque, id: oldChequeId };
+  if (cheque) txn.chequeId = cheque.id;
+  else delete txn.chequeId;
+
+  const lines = corrected.lines.map((l) => ({
+    ...l,
+    txnId: txn.id,
+    chequeId: l.chequeId && oldChequeId && cheque ? cheque.id : l.chequeId,
+  }));
+
+  return {
+    ...d,
+    transactions: d.transactions.map((t) => (t.id === txnId ? txn : t)),
+    ledger: [...d.ledger.filter((l) => l.txnId !== txnId), ...lines],
+    cheques: cheque
+      ? [...d.cheques.filter((c) => c.id !== cheque!.id), cheque]
+      : d.cheques.filter((c) => c.id !== oldChequeId),
+  };
 }
 
 const bal = (d: PdcDataSet, id: string) => accountBalance(d, partyAcc(id));
@@ -76,16 +96,35 @@ describe('editing an amount', () => {
     expect(ledgerIsBalanced(d)).toBe(true);
   });
 
-  it('keeps the original and the correction both visible in history', () => {
+  it('leaves ONE entry, not three — no reversal is created', () => {
     let d = seed();
     d = apply(d, buildSale(d, { partyId: 'A', amount: 100_000, date: '2026-08-01', settlement: 'credit' }));
     const id = d.transactions[0].id;
+    const ref = d.transactions[0].reference;
+
     d = edit(d, id, buildSale(d, { partyId: 'A', amount: 10_000, date: '2026-08-01', settlement: 'credit' }));
 
-    // Original, its reversal, and the correction — nothing is erased.
-    expect(d.transactions).toHaveLength(3);
-    expect(d.transactions.find((t) => t.id === id)!.reversed).toBe(true);
-    expect(d.transactions.some((t) => t.type === 'Reversal')).toBe(true);
+    expect(d.transactions).toHaveLength(1);
+    expect(d.transactions.some((t) => t.type === 'Reversal')).toBe(false);
+    // Same entry: same id, same reference, now holding the right figure.
+    expect(d.transactions[0].id).toBe(id);
+    expect(d.transactions[0].reference).toBe(ref);
+    expect(d.transactions[0].amount).toBe(10_000);
+    expect(d.transactions[0].reversed).toBeFalsy();
+  });
+
+  it('replaces the old ledger lines rather than adding to them', () => {
+    let d = seed();
+    d = apply(d, buildSale(d, { partyId: 'A', amount: 100_000, date: '2026-08-01', settlement: 'credit' }));
+    const id = d.transactions[0].id;
+    const before = d.ledger.length;
+
+    d = edit(d, id, buildSale(d, { partyId: 'A', amount: 10_000, date: '2026-08-01', settlement: 'credit' }));
+
+    // Same number of lines, all still under the original entry.
+    expect(d.ledger).toHaveLength(before);
+    expect(d.ledger.every((l) => l.txnId === id)).toBe(true);
+    expect(ledgerIsBalanced(d)).toBe(true);
   });
 });
 
@@ -184,8 +223,48 @@ describe('the statement after an edit', () => {
     const led = buildPartyLedger(d, 'A');
     expect(led.balance).toBe(10_000);
     expect(led.balance).toBe(bal(d, 'A'));
-    // Original, reversal and correction all appear — an audit trail, not a
-    // silent rewrite.
-    expect(led.rows).toHaveLength(3);
+    // ONE line on the statement, showing the corrected figure.
+    expect(led.rows).toHaveLength(1);
+    expect(led.rows[0].entry.debit).toBe(10_000);
+  });
+});
+
+describe('the register after an edit', () => {
+  it('shows one row, and the totals count the amount ONCE', () => {
+    let d = seed();
+    d = apply(d, buildSale(d, {
+      partyId: 'A', amount: 100_000, date: '2026-08-01', settlement: 'credit',
+      quantity: 100, rate: 1_000,
+    }));
+    const id = d.transactions[0].id;
+
+    d = edit(d, id, buildSale(d, {
+      partyId: 'A', amount: 10_000, date: '2026-08-01', settlement: 'credit',
+      quantity: 10, rate: 1_000,
+    }));
+
+    const reg = buildRegister(d);
+    expect(reg).toHaveLength(1);
+
+    // The totals the Cash Book shows: the corrected figures, counted once —
+    // NOT the original plus a reversal plus the correction.
+    const live = reg.filter((r) => !r.txn.reversed);
+    const amount = live.reduce((s, r) => s + r.txn.amount, 0);
+    const qty = live.reduce((s, r) => s + (r.txn.quantity ?? 0), 0);
+    expect(amount).toBe(10_000);
+    expect(qty).toBe(10);
+  });
+
+  it('raising an amount does not stack on top of the old one', () => {
+    let d = seed();
+    d = apply(d, buildSale(d, { partyId: 'A', amount: 5_000, date: '2026-08-01', settlement: 'credit' }));
+    const id = d.transactions[0].id;
+
+    d = edit(d, id, buildSale(d, { partyId: 'A', amount: 8_000, date: '2026-08-01', settlement: 'credit' }));
+
+    // 8,000 — not 5,000 + 8,000, and not 5,000 + 3,000.
+    expect(bal(d, 'A')).toBe(8_000);
+    expect(buildRegister(d)).toHaveLength(1);
+    expect(computeProfit(d).sales).toBe(8_000);
   });
 });

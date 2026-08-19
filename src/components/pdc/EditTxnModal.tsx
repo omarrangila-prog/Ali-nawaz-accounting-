@@ -1,9 +1,11 @@
 /**
  * Ali Nawaz PDC — edit any posted transaction.
  *
- * Editing never rewrites history silently. The store reverses the original and
- * posts the correction, so both entries stay visible and the audit trail records
- * what changed and why — the books are always explainable.
+ * The entry is corrected IN PLACE: it keeps its own reference and its position
+ * in history, and simply holds the right figures afterwards. No reversing entry
+ * is created, so the register shows one row rather than three and the totals
+ * count the amount once. The audit trail still records what changed, from what,
+ * to what and why, so the correction remains explainable.
  *
  * Every field that was captured on entry can be changed here: the party, the
  * amount, quantity and rate, the item, the date, the description, how it was
@@ -230,7 +232,7 @@ export function EditTxnModal({ row, onClose }: Props) {
     <Modal
       open
       title={`Edit ${txn.type}`}
-      subtitle={`${txn.reference} · the original is reversed and this correction posted, so both stay in history`}
+      subtitle={`${txn.reference} · corrected in place — the same entry, updated`}
       onClose={onClose}
       width={520}
       footer={
@@ -394,9 +396,9 @@ export function EditTxnModal({ row, onClose }: Props) {
       </div>
 
       <div className="pdc-warn" style={{ marginTop: 10 }}>
-        The original entry is reversed and this correction posted in its place.
-        Both remain in history, and every ledger, statement and report updates
-        together.
+        This entry is updated in place, keeping its reference {txn.reference}.
+        Every ledger, statement and report updates together, and the change is
+        recorded in the audit trail.
       </div>
     </Modal>
   );
