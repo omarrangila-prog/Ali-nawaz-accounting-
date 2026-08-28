@@ -16,7 +16,7 @@ import { DetailsDrawer } from '@/components/pdc/DetailsDrawer';
 import { EditTxnModal, canEdit } from '@/components/pdc/EditTxnModal';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import type { RegisterRow } from '@/types/pdc';
-import { bankAccountLabel, balanceLabel, holderLabel } from '@/lib/pdcEngine';
+import { bankAccountLabel, balanceLabel, holderLabel, partyBalances } from '@/lib/pdcEngine';
 import { formatMoney, formatDate, formatNumber, cx } from '@/lib/utils';
 import { pdcFileName } from '@/lib/pdcReports';
 import { buildPartyWorksheet, buildBankWorksheet, buildCashWorksheet } from '@/lib/pdcWorksheet';
@@ -37,6 +37,10 @@ export function PdcLedger() {
   const [accountId, setAccountId] = useState(params.get('account') ?? '');
   /** The Cash Account view — physical cash in hand, with nothing else in it. */
   const [showCash, setShowCash] = useState(params.get('cash') === '1');
+  /** Which side of the book to list: everyone, only debtors, or only creditors. */
+  const [side, setSide] = useState<'all' | 'receivable' | 'payable'>(
+    (params.get('side') as 'receivable' | 'payable') ?? 'all'
+  );
   const [detail, setDetail] = useState<RegisterRow | null>(null);
   const [toEdit, setToEdit] = useState<RegisterRow | null>(null);
   const [toDelete, setToDelete] = useState<string | null>(null);
@@ -48,10 +52,53 @@ export function PdcLedger() {
     if (partyId) next.set('party', partyId);
     if (accountId) next.set('account', accountId);
     if (showCash) next.set('cash', '1');
+    if (side !== 'all') next.set('side', side);
     setParams(next, { replace: true });
-  }, [partyId, accountId, showCash]);
+  }, [partyId, accountId, showCash, side]);
 
-  const partyOptions = data.parties.map((p) => ({ id: p.id, label: p.name }));
+  /**
+   * Split the parties by what they actually mean: someone who owes YOU, or
+   * someone you owe. Seeing both mixed together is what makes it easy to read a
+   * payable as a receivable, so the choice is made explicit at the top.
+   */
+  const balances = useMemo(() => partyBalances(data), [data]);
+
+  const partyRows = useMemo(
+    () =>
+      data.parties
+        .map((p) => ({ party: p, balance: balances.get(p.id) ?? 0 }))
+        .sort((a, b) => a.party.name.localeCompare(b.party.name)),
+    [data.parties, balances]
+  );
+
+  const counts = useMemo(() => ({
+    all: partyRows.length,
+    receivable: partyRows.filter((r) => r.balance > 0).length,
+    payable: partyRows.filter((r) => r.balance < 0).length,
+    settled: partyRows.filter((r) => r.balance === 0).length,
+  }), [partyRows]);
+
+  /** Total owed to you, and total you owe — the headline for the chosen side. */
+  const sideTotals = useMemo(() => ({
+    receivable: partyRows.reduce((s, r) => s + (r.balance > 0 ? r.balance : 0), 0),
+    payable: partyRows.reduce((s, r) => s + (r.balance < 0 ? -r.balance : 0), 0),
+  }), [partyRows]);
+
+  const shownParties = useMemo(() => {
+    if (side === 'receivable') return partyRows.filter((r) => r.balance > 0);
+    if (side === 'payable') return partyRows.filter((r) => r.balance < 0);
+    return partyRows;
+  }, [partyRows, side]);
+
+  // The balance rides along in the dropdown, so which side a party is on is
+  // visible while choosing rather than only after opening the ledger.
+  const partyOptions = shownParties.map(({ party, balance }) => ({
+    id: party.id,
+    label: party.name,
+    sub: balance === 0
+      ? 'settled'
+      : `${formatMoney(Math.abs(balance), cur)} ${balance > 0 ? 'receivable' : 'payable'}`,
+  }));
   const accountOptions = data.bankAccounts.map((a) => ({
     id: a.id,
     label: bankAccountLabel(data.banks, data.bankAccounts, a.id),
@@ -151,9 +198,49 @@ export function PdcLedger() {
       <PageHeader title="Ledger" subtitle="Party and bank account ledgers with running balances" />
 
       <div className="card" style={{ marginBottom: 12 }}>
+        {/* Choose the side of the book FIRST, so a payable is never mistaken
+            for a receivable while picking a party. */}
+        <div className="quick-filters no-print" style={{ marginBottom: 10 }}>
+          {([
+            { id: 'all' as const, label: `All Parties (${counts.all})`, hint: '' },
+            {
+              id: 'receivable' as const,
+              label: `Receivable (${counts.receivable})`,
+              hint: formatMoney(sideTotals.receivable, cur),
+            },
+            {
+              id: 'payable' as const,
+              label: `Payable (${counts.payable})`,
+              hint: formatMoney(sideTotals.payable, cur),
+            },
+          ]).map((c) => (
+            <button
+              key={c.id}
+              className={cx('chip', side === c.id && 'chip-done')}
+              title={c.hint ? `Total ${c.hint}` : 'Every party, whichever side they are on'}
+              onClick={() => {
+                setSide(c.id);
+                // A party from the other side would otherwise stay open and
+                // contradict the filter just chosen.
+                const still = c.id === 'all'
+                  || (c.id === 'receivable' && (balances.get(partyId) ?? 0) > 0)
+                  || (c.id === 'payable' && (balances.get(partyId) ?? 0) < 0);
+                if (partyId && !still) setPartyId('');
+              }}
+            >
+              {c.label}
+              {c.hint && <span className="faint" style={{ marginLeft: 6 }}>{c.hint}</span>}
+            </button>
+          ))}
+        </div>
+
         <div className="pdc-search-row">
           <div className="field" style={{ flex: 1, minWidth: 200 }}>
-            <label>Party Ledger</label>
+            <label>
+              {side === 'receivable' ? 'Receivable Parties'
+                : side === 'payable' ? 'Payable Parties'
+                : 'Party Ledger'}
+            </label>
             <Combo
               value={partyId}
               options={[{ id: '', label: 'Select a party…' }, ...partyOptions]}
@@ -164,11 +251,15 @@ export function PdcLedger() {
                 where to fix it. */}
             {partyOptions.length === 0 && (
               <div className="faint" style={{ fontSize: 11.5, marginTop: 4 }}>
-                No parties yet —{' '}
-                <button className="link-btn" onClick={() => navigate('/parties')}>
-                  add one
-                </button>
-                .
+                {/* An empty list means something different depending on the
+                    filter — say which, rather than looking broken. */}
+                {side === 'receivable' ? 'No party currently owes you anything.'
+                  : side === 'payable' ? 'You do not owe any party at the moment.'
+                  : <>No parties yet —{' '}
+                      <button className="link-btn" onClick={() => navigate('/parties')}>
+                        add one
+                      </button>.
+                    </>}
               </div>
             )}
           </div>
