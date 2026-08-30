@@ -136,3 +136,57 @@ describe('receivable and payable lists', () => {
     expect(s.totalPayable).toBe(pay);
   });
 });
+
+/**
+ * The list must always show the CURRENT outstanding position: a party settled
+ * a moment ago should be gone from it, without anything being marked by hand.
+ */
+describe('the list reflects the current position', () => {
+  it('a party drops off the Receivable list the moment they pay in full', () => {
+    let d = seed();
+    d = apply(d, buildSale(d, { partyId: 'CUST', amount: 60_000, date: '2026-08-01', settlement: 'credit' }));
+    expect(split(d).receivable.map((r) => r.party.id)).toContain('CUST');
+
+    d = apply(d, buildCashReceived(d, { partyId: 'CUST', amount: 60_000, date: '2026-08-02', paymentMethod: 'cash' }));
+
+    const s = split(d);
+    expect(s.receivable.map((r) => r.party.id)).not.toContain('CUST');
+    expect(s.payable.map((r) => r.party.id)).not.toContain('CUST');
+    expect(s.settled.map((r) => r.party.id)).toContain('CUST');
+    expect(s.totalReceivable).toBe(0);
+  });
+
+  it('a part payment leaves only the remainder outstanding', () => {
+    let d = seed();
+    d = apply(d, buildSale(d, { partyId: 'CUST', amount: 60_000, date: '2026-08-01', settlement: 'credit' }));
+    d = apply(d, buildCashReceived(d, { partyId: 'CUST', amount: 25_000, date: '2026-08-02', paymentMethod: 'cash' }));
+
+    const s = split(d);
+    expect(s.receivable.find((r) => r.party.id === 'CUST')!.balance).toBe(35_000);
+    expect(s.totalReceivable).toBe(35_000);
+  });
+
+  it('a supplier drops off Payable once paid', () => {
+    let d = seed();
+    d = apply(d, buildPurchase(d, { partyId: 'SUPP', amount: 45_000, date: '2026-08-01', settlement: 'credit' }));
+    expect(split(d).payable.map((r) => r.party.id)).toContain('SUPP');
+
+    d = apply(d, buildCashPaid(d, { partyId: 'SUPP', amount: 45_000, date: '2026-08-02', paymentMethod: 'cash' }));
+
+    const s = split(d);
+    expect(s.payable.map((r) => r.party.id)).not.toContain('SUPP');
+    expect(s.totalPayable).toBe(0);
+  });
+
+  it('the listed total always equals the sum of the rows listed', () => {
+    let d = seed();
+    d = apply(d, buildSale(d, { partyId: 'CUST', amount: 60_000, date: '2026-08-01', settlement: 'credit' }));
+    d = apply(d, buildSale(d, { partyId: 'NIL', amount: 15_000, date: '2026-08-02', settlement: 'credit' }));
+    d = apply(d, buildPurchase(d, { partyId: 'SUPP', amount: 45_000, date: '2026-08-03', settlement: 'credit' }));
+
+    const s = split(d);
+    // What the header prints is the sum of the visible rows, nothing else.
+    expect(s.receivable.reduce((t, r) => t + Math.abs(r.balance), 0)).toBe(s.totalReceivable);
+    expect(s.payable.reduce((t, r) => t + Math.abs(r.balance), 0)).toBe(s.totalPayable);
+  });
+});

@@ -41,6 +41,8 @@ export function PdcLedger() {
   const [side, setSide] = useState<'all' | 'receivable' | 'payable'>(
     (params.get('side') as 'receivable' | 'payable') ?? 'all'
   );
+  /** Narrows the party list by name — with dozens of parties, scanning is slow. */
+  const [partySearch, setPartySearch] = useState('');
   const [detail, setDetail] = useState<RegisterRow | null>(null);
   const [toEdit, setToEdit] = useState<RegisterRow | null>(null);
   const [toDelete, setToDelete] = useState<string | null>(null);
@@ -85,10 +87,13 @@ export function PdcLedger() {
   }), [partyRows]);
 
   const shownParties = useMemo(() => {
-    if (side === 'receivable') return partyRows.filter((r) => r.balance > 0);
-    if (side === 'payable') return partyRows.filter((r) => r.balance < 0);
-    return partyRows;
-  }, [partyRows, side]);
+    const bySide =
+      side === 'receivable' ? partyRows.filter((r) => r.balance > 0)
+        : side === 'payable' ? partyRows.filter((r) => r.balance < 0)
+        : partyRows;
+    const q = partySearch.trim().toLowerCase();
+    return q ? bySide.filter((r) => r.party.name.toLowerCase().includes(q)) : bySide;
+  }, [partyRows, side, partySearch]);
 
   // The balance rides along in the dropdown, so which side a party is on is
   // visible while choosing rather than only after opening the ledger.
@@ -310,6 +315,99 @@ export function PdcLedger() {
           )}
         </div>
       </div>
+
+      {/* The parties on the chosen side, listed and clickable. A dropdown hides
+          them behind a click; the daily job here is reading down the
+          outstanding list, so it is shown outright. */}
+      {!showCash && !accountId && (
+        <div className="card" style={{ marginBottom: 12 }}>
+          <div className="pdc-register-head">
+            <div className="stmt-title" style={{ margin: 0 }}>
+              {side === 'receivable' ? 'Receivable Parties'
+                : side === 'payable' ? 'Payable Parties'
+                : 'All Parties'}
+              {' · '}{formatNumber(shownParties.length)}
+            </div>
+            {/* The total of what is LISTED, so it always agrees with the rows
+                above it — a full-side total beside a searched list would not. */}
+            {side !== 'all' && (
+              <div className="mono" style={{ fontWeight: 700 }}>
+                {formatMoney(
+                  shownParties.reduce((s, r) => s + Math.abs(r.balance), 0),
+                  cur
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="pdc-search-box no-print" style={{ margin: '8px 0' }}>
+            <Icon name="search" size={16} />
+            <input
+              className="input"
+              placeholder="Search party name…"
+              value={partySearch}
+              onChange={(e) => setPartySearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Escape') setPartySearch(''); }}
+            />
+          </div>
+
+          {shownParties.length === 0 ? (
+            <div className="empty">
+              {partySearch.trim()
+                ? `No party matches "${partySearch.trim()}" on this list.`
+                : side === 'receivable' ? 'No party currently owes you anything — everything is collected.'
+                : side === 'payable' ? 'You do not owe any party at the moment — everything is paid.'
+                : 'No parties yet.'}
+            </div>
+          ) : (
+            <div className="table-wrap" style={{ maxHeight: 320 }}>
+              <table className="grid stack-sm">
+                <thead>
+                  <tr>
+                    <th>Party</th>
+                    <th className="num">Outstanding</th>
+                    <th className="mid">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shownParties.map(({ party, balance }) => (
+                    <tr
+                      key={party.id}
+                      className={cx('row-link', partyId === party.id && 'row-selected')}
+                      style={{ cursor: 'pointer' }}
+                      title={`Open ${party.name}'s ledger`}
+                      onClick={() => { setPartyId(party.id); setAccountId(''); setShowCash(false); }}
+                    >
+                      <td data-label="Party"><span className="link-text">{party.name}</span></td>
+                      <td data-label="Outstanding" className={cx('num mono', balance > 0 ? 'pos' : balance < 0 ? 'neg' : '')}>
+                        {balance === 0 ? '—' : formatMoney(Math.abs(balance), cur)}
+                      </td>
+                      <td data-label="Status" className="mid">
+                        {/* Derived from the live balance, so a party that has
+                            been settled stops showing as owing the moment the
+                            payment is recorded. */}
+                        <span className={cx('pdc-status',
+                          balance > 0 ? 'st-cleared' : balance < 0 ? 'st-bounced' : 'st-cancelled')}>
+                          {balanceLabel(balance)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Settled parties are absent from both sides by design — say so, so
+              a shrinking list reads as progress rather than missing data. */}
+          {side !== 'all' && counts.settled > 0 && (
+            <div className="faint" style={{ fontSize: 11.5, marginTop: 8 }}>
+              {formatNumber(counts.settled)} settled part{counts.settled === 1 ? 'y is' : 'ies are'} hidden
+              — they have nothing outstanding.
+            </div>
+          )}
+        </div>
+      )}
 
       {!ledger ? (
         <div className="card">
