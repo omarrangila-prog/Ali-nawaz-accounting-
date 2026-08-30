@@ -43,6 +43,8 @@ export function PdcParties() {
       : 'parties'
   );
   const [search, setSearch] = useState('');
+  /** Which side of the book to list, matching the Party Ledger page. */
+  const [side, setSide] = useState<'all' | 'receivable' | 'payable'>('all');
   const [partyModal, setPartyModal] = useState<PdcParty | 'new' | null>(null);
   const [bankModal, setBankModal] = useState<Bank | 'new' | null>(null);
   const [accountModal, setAccountModal] = useState<BankAccount | 'new' | null>(null);
@@ -72,12 +74,33 @@ export function PdcParties() {
     toast.success(`Added ${added} bank${added === 1 ? '' : 's'}`);
   };
 
+  /**
+   * Same split as the Party Ledger: who owes YOU, and who you owe. Derived from
+   * the live balance, so a settled party leaves its side on its own.
+   */
+  const sideCounts = useMemo(() => {
+    const rows = data.parties.map((p) => balances.get(p.id) ?? 0);
+    return {
+      all: rows.length,
+      receivable: rows.filter((b) => b > 0).length,
+      payable: rows.filter((b) => b < 0).length,
+      settled: rows.filter((b) => b === 0).length,
+      totalReceivable: rows.reduce((s, b) => s + (b > 0 ? b : 0), 0),
+      totalPayable: rows.reduce((s, b) => s + (b < 0 ? -b : 0), 0),
+    };
+  }, [data.parties, balances]);
+
   const parties = useMemo(() => {
     const q = search.trim().toLowerCase();
     return data.parties
-      .filter((p) => !q || p.name.toLowerCase().includes(q))
+      .filter((p) => {
+        const b = balances.get(p.id) ?? 0;
+        if (side === 'receivable' && b <= 0) return false;
+        if (side === 'payable' && b >= 0) return false;
+        return !q || p.name.toLowerCase().includes(q);
+      })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [data.parties, search]);
+  }, [data.parties, search, side, balances]);
 
   return (
     <div className="pdc-page">
@@ -219,8 +242,50 @@ export function PdcParties() {
         </div>
       ) : tab === 'parties' ? (
         <div className="card">
+          {/* Same split as the Party Ledger page, so the two read alike. */}
+          <div className="quick-filters no-print" style={{ marginBottom: 10 }}>
+            {([
+              { id: 'all' as const, label: `All Parties (${sideCounts.all})`, total: 0 },
+              { id: 'receivable' as const, label: `Receivable (${sideCounts.receivable})`, total: sideCounts.totalReceivable },
+              { id: 'payable' as const, label: `Payable (${sideCounts.payable})`, total: sideCounts.totalPayable },
+            ]).map((c) => (
+              <button
+                key={c.id}
+                className={cx('chip', side === c.id && 'chip-done')}
+                onClick={() => setSide(c.id)}
+              >
+                {c.label}
+                {c.id !== 'all' && (
+                  <span className="faint" style={{ marginLeft: 6 }}>{formatMoney(c.total, cur)}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* The total of the rows LISTED, so it still agrees after a search. */}
+          {side !== 'all' && parties.length > 0 && (
+            <div className="pdc-register-head" style={{ marginBottom: 6 }}>
+              <div className="stmt-title" style={{ margin: 0 }}>
+                {side === 'receivable' ? 'Receivable Parties' : 'Payable Parties'} · {parties.length}
+              </div>
+              <div className="mono" style={{ fontWeight: 700 }}>
+                {formatMoney(
+                  parties.reduce((t, p) => t + Math.abs(balances.get(p.id) ?? 0), 0),
+                  cur
+                )}
+              </div>
+            </div>
+          )}
+
           {parties.length === 0 ? (
-            <div className="empty">No parties yet. Add one to start recording cheques and payments.</div>
+            <div className="empty">
+              {/* Say WHY the list is empty — the reason differs per filter. */}
+              {search.trim()
+                ? `No party matches "${search.trim()}" on this list.`
+                : side === 'receivable' ? 'No party currently owes you anything — everything is collected.'
+                : side === 'payable' ? 'You do not owe any party at the moment — everything is paid.'
+                : 'No parties yet. Add one to start recording cheques and payments.'}
+            </div>
           ) : (
             <div className="table-wrap">
               <table className="grid stack-sm">
@@ -278,6 +343,15 @@ export function PdcParties() {
                   })}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Settled parties are absent from both sides by design — say so, so
+              a shrinking list reads as progress rather than missing data. */}
+          {side !== 'all' && sideCounts.settled > 0 && (
+            <div className="faint" style={{ fontSize: 11.5, marginTop: 8 }}>
+              {sideCounts.settled} settled part{sideCounts.settled === 1 ? 'y is' : 'ies are'} hidden
+              — they have nothing outstanding.
             </div>
           )}
         </div>
