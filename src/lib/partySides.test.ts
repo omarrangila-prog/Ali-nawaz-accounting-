@@ -9,8 +9,8 @@ import { describe, it, expect } from 'vitest';
 import type { PdcDataSet } from '@/types/pdc';
 import { DEFAULT_PDC_SETTINGS } from '@/types/pdc';
 import {
-  buildSale, buildPurchase, buildCashReceived, buildCashPaid,
-  partyBalances, type Posting,
+  buildSale, buildPurchase, buildCashReceived, buildCashPaid, buildCreditAdjustment,
+  partyBalances, cashBalance, computeProfit, ledgerIsBalanced, type Posting,
 } from './pdcEngine';
 
 function seed(): PdcDataSet {
@@ -188,5 +188,70 @@ describe('the list reflects the current position', () => {
     // What the header prints is the sum of the visible rows, nothing else.
     expect(s.receivable.reduce((t, r) => t + Math.abs(r.balance), 0)).toBe(s.totalReceivable);
     expect(s.payable.reduce((t, r) => t + Math.abs(r.balance), 0)).toBe(s.totalPayable);
+  });
+});
+
+/**
+ * Recording a PAYABLE directly — an obligation with no money moving.
+ *
+ * This is the entry that was missing. Without it the only way to put a party on
+ * the payable side was a Purchase (which also books a cost) or a negative
+ * opening balance, so users reached for Pay instead — and Pay does the
+ * opposite, because handing money over REDUCES what you owe.
+ */
+describe('recording a payable directly', () => {
+  it('puts the party on the payable side without moving money', () => {
+    let d = seed();
+    d = apply(d, buildCreditAdjustment(d, {
+      partyId: 'SUPP', amount: 80_000, date: '2026-09-01', description: 'goods owed',
+    }));
+
+    const s = split(d);
+    expect(s.payable.map((r) => r.party.id)).toContain('SUPP');
+    expect(s.receivable.map((r) => r.party.id)).not.toContain('SUPP');
+    expect(s.totalPayable).toBe(80_000);
+    // No money moved, and profit is untouched.
+    expect(cashBalance(d)).toBe(0);
+    expect(computeProfit(d).purchases).toBe(0);
+    expect(computeProfit(d).expenses).toBe(0);
+    expect(ledgerIsBalanced(d)).toBe(true);
+  });
+
+  it('paying it afterwards settles the party and reduces cash', () => {
+    let d = seed();
+    d = apply(d, buildCreditAdjustment(d, { partyId: 'SUPP', amount: 80_000, date: '2026-09-01' }));
+    d = apply(d, buildCashPaid(d, {
+      partyId: 'SUPP', amount: 80_000, date: '2026-09-02', paymentMethod: 'cash',
+    }));
+
+    const s = split(d);
+    expect(s.payable.map((r) => r.party.id)).not.toContain('SUPP');
+    expect(s.settled.map((r) => r.party.id)).toContain('SUPP');
+    expect(cashBalance(d)).toBe(-80_000);   // the money genuinely left
+    expect(ledgerIsBalanced(d)).toBe(true);
+  });
+
+  it('PAY on its own makes the party RECEIVABLE — an advance, which is correct', () => {
+    // This is the behaviour that looked wrong: paying someone who owed you
+    // nothing means they now owe YOU. It is not a bug, so it is pinned here.
+    let d = seed();
+    d = apply(d, buildCashPaid(d, {
+      partyId: 'SUPP', amount: 50_000, date: '2026-09-01', paymentMethod: 'cash',
+    }));
+
+    const s = split(d);
+    expect(s.receivable.map((r) => r.party.id)).toContain('SUPP');
+    expect(s.totalReceivable).toBe(50_000);
+    expect(cashBalance(d)).toBe(-50_000);
+  });
+
+  it('a payable and a receivable on the same party net off', () => {
+    let d = seed();
+    d = apply(d, buildSale(d, { partyId: 'CUST', amount: 100_000, date: '2026-09-01', settlement: 'credit' }));
+    d = apply(d, buildCreditAdjustment(d, { partyId: 'CUST', amount: 30_000, date: '2026-09-02' }));
+
+    const s = split(d);
+    expect(s.receivable.find((r) => r.party.id === 'CUST')!.balance).toBe(70_000);
+    expect(s.payable).toHaveLength(0);
   });
 });

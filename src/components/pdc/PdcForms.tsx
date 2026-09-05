@@ -63,8 +63,8 @@ const TITLES: Record<NonNullable<PdcFormKind>, string> = {
   'pdc-issued': 'PDC Issued',
   'cash-received': 'Receive',
   'cash-paid': 'Pay',
-  debit: 'Debit Entry',
-  credit: 'Credit Entry',
+  debit: 'Record a Receivable',
+  credit: 'Record a Payable',
   'party-transfer': 'Party-to-Party Transfer',
   'cheque-transfer': 'Cheque Transfer',
   'bank-transfer': 'Bank Transfer',
@@ -75,14 +75,14 @@ const SUBTITLES: Record<NonNullable<PdcFormKind>, string> = {
   purchase: 'F2 · goods or services bought',
   expense: 'money spent on running costs',
   income: 'money earned that is not a sale',
-  'pdc-received': 'F5 · cheque received from a party',
-  'pdc-issued': 'F6 · cheque issued to a party',
+  'pdc-received': 'cheque received from a party',
+  'pdc-issued': 'cheque issued to a party',
   'cash-received': 'F3 · money received — cash or cheque',
   'cash-paid': 'F4 · money paid — cash or cheque',
-  debit: 'increases what the party owes you',
-  credit: 'increases what you owe the party',
+  debit: 'this party OWES you — no money moves yet',
+  credit: 'F6 · you OWE this party — no money moves yet',
   'party-transfer': 'move a balance between parties',
-  'cheque-transfer': 'F7 · endorse a received cheque to another party',
+  'cheque-transfer': 'endorse a received cheque to another party',
   'bank-transfer': 'move money between your own accounts',
 };
 
@@ -967,6 +967,12 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       return settlement === 'credit'
         ? `You will owe ${who} this amount. Counts as a purchase cost.`
         : `Money comes out of ${where}. Counts as a purchase cost.`;
+    }
+    if (kind === 'credit') {
+      return `Records that you OWE ${who}. No cash or bank is touched and profit is unaffected — this only puts the amount on their account. Use Pay when you actually hand the money over.`;
+    }
+    if (kind === 'debit') {
+      return `Records that ${who} OWES you. No cash or bank is touched and profit is unaffected. Use Receive when the money actually arrives.`;
     }
     if (kind === 'expense') return `Money comes out of ${where} and reduces profit.`;
     if (kind === 'income') return `Money goes into ${where} and increases profit.`;
