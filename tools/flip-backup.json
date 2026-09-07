@@ -1,0 +1,4903 @@
+{
+  "takenAt": "2026-09-07T13:53:30.296Z",
+  "transactions": [
+    {
+      "id": "MSOCWOWJGLKP4LY6",
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 8,
+      "description": "BHAL 1725597 furqan baloch ka kathe se",
+      "amount": 70000,
+      "date": "2026-08-10",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "reference": "CPV-000001",
+      "updatedAt": 1786434384403,
+      "createdAt": 1786434384403
+    },
+    {
+      "id": "MSOCY7A6HLEQHX1L",
+      "type": "Cash Paid",
+      "description": "meezan 0257354 furqan baloch ka kathe se",
+      "year": 2026,
+      "month": 8,
+      "reference": "CPV-000002",
+      "updatedAt": 1786434454878,
+      "createdAt": 1786434454878,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-10",
+      "amount": 1500000
+    },
+    {
+      "id": "MSORBFRHWJJGPXEF",
+      "date": "2026-08-11",
+      "partyId": "MSOR9T3YLR92FJ8M",
+      "amount": 1200000,
+      "description": "UBL haji Munir Adil ka kathe se ",
+      "reference": "CPV-000004",
+      "updatedAt": 1786458587021,
+      "type": "Cash Paid",
+      "month": 8,
+      "year": 2026,
+      "createdAt": 1786458587021
+    },
+    {
+      "id": "MSQ8E5XYO0SRT3A3",
+      "createdAt": 1786547733910,
+      "reference": "CPV-000005",
+      "updatedAt": 1786547733910,
+      "amount": 90000,
+      "year": 2026,
+      "type": "Cash Paid",
+      "month": 8,
+      "description": "BHAL 1725667 from haji gaffar",
+      "date": "2026-08-12",
+      "partyId": "MSN6JNH9J7M4NOL7"
+    },
+    {
+      "id": "MSQ8FFMFO1EMA5RL",
+      "year": 2026,
+      "createdAt": 1786547793111,
+      "description": "BHAL 1725676 from haji gaffar ",
+      "type": "Cash Paid",
+      "updatedAt": 1786547793111,
+      "reference": "CPV-000006",
+      "month": 8,
+      "partyId": "MSQ8EUV2U9UL1KCB",
+      "amount": 1200000,
+      "date": "2026-08-12"
+    },
+    {
+      "id": "MSQ8GNCY8IFO7J2O",
+      "description": "BHAL 1725667 from haji Munir Adil ",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-12",
+      "updatedAt": 1786547849794,
+      "reference": "CPV-000007",
+      "createdAt": 1786547849794,
+      "year": 2026,
+      "month": 8,
+      "type": "Cash Paid",
+      "amount": 747500
+    },
+    {
+      "id": "MSQ8HFBM1KPM1LL9",
+      "date": "2026-08-12",
+      "amount": 1500000,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1786547886034,
+      "month": 8,
+      "updatedAt": 1786547886034,
+      "reference": "CPV-000008",
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "BHAL 1725674 from haji Munir Adil "
+    },
+    {
+      "id": "MSQ8I33ZAZ8SHAU9",
+      "month": 8,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "description": "BHAL 1725675 from haji Munir Adil ",
+      "type": "Cash Paid",
+      "year": 2026,
+      "amount": 1500000,
+      "createdAt": 1786547916863,
+      "date": "2026-08-12",
+      "updatedAt": 1786547916863,
+      "reference": "CPV-000009"
+    },
+    {
+      "id": "MSXPIYIYLXYN2AJN",
+      "updatedAt": 1786999774282,
+      "reference": "CPV-000010",
+      "amount": 1900000,
+      "year": 2026,
+      "type": "Cash Paid",
+      "createdAt": 1786999774282,
+      "month": 8,
+      "partyId": "MSXPI1ZVNBZY5AQZ",
+      "description": "from waseem gareeb nawaz BAHL slip num 1726152",
+      "date": "2026-08-17"
+    },
+    {
+      "id": "MSXPKD1HR6PGYPZ5",
+      "year": 2026,
+      "description": "from waseem gareeb nawaz BHAL slip 1726153",
+      "type": "Cash Paid",
+      "createdAt": 1786999839749,
+      "date": "2026-08-17",
+      "updatedAt": 1786999839749,
+      "reference": "CPV-000011",
+      "month": 8,
+      "partyId": "MSXPI1ZVNBZY5AQZ",
+      "amount": 1550000
+    },
+    {
+      "id": "MSXPMU2D8509E1WL",
+      "date": "2026-08-17",
+      "amount": 1000000,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "description": "from haji ysair meezan slip num 0259738",
+      "month": 8,
+      "type": "Cash Paid",
+      "year": 2026,
+      "reference": "CPV-000012",
+      "updatedAt": 1786999955125,
+      "createdAt": 1786999955125
+    },
+    {
+      "id": "MSXPOCCSOHJVJ7K4",
+      "reference": "CPV-000013",
+      "updatedAt": 1787000025484,
+      "description": "from haji abdul meezan slip 0259586",
+      "createdAt": 1787000025484,
+      "month": 8,
+      "date": "2026-08-17",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "amount": 400000,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MSXPV1FUUZB5NP9F",
+      "amount": 50000,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "month": 8,
+      "date": "2026-08-17",
+      "updatedAt": 1787000337930,
+      "reference": "CPV-000014",
+      "createdAt": 1787000337930,
+      "type": "Cash Paid",
+      "description": "from haji yasir meezan slip num 0259586",
+      "year": 2026
+    },
+    {
+      "id": "MSXPWAJBXIVMZH27",
+      "type": "Cash Paid",
+      "month": 8,
+      "year": 2026,
+      "amount": 250000,
+      "date": "2026-08-17",
+      "description": "from haji yasir BHAL slip num 1726153",
+      "partyId": "MSXPI1ZVNBZY5AQZ",
+      "updatedAt": 1787000396375,
+      "reference": "CPV-000015",
+      "createdAt": 1787000396375
+    },
+    {
+      "id": "MSYSLEJ6XITGJU9Z",
+      "reference": "CPV-000017",
+      "updatedAt": 1787065393362,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "description": "from Haji abdul BHAL slip 1726510",
+      "createdAt": 1787065393362,
+      "date": "2026-08-18",
+      "month": 8,
+      "year": 2026,
+      "type": "Cash Paid",
+      "amount": 1420000
+    },
+    {
+      "id": "MSYSOX9Q4GX31BJD",
+      "date": "2026-08-18",
+      "reference": "CPV-000018",
+      "updatedAt": 1787065557614,
+      "amount": 480000,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1787065557614,
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 8,
+      "description": "from Shah poor rangeen party BAHL slip 1726510"
+    },
+    {
+      "id": "MSYSQTD7S6SGO49U",
+      "month": 8,
+      "amount": 1900000,
+      "reference": "CPV-000019",
+      "updatedAt": 1787065645867,
+      "type": "Cash Paid",
+      "description": "from Shah poor rangeen party BHAL slip 1726606",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "year": 2026,
+      "createdAt": 1787065645867,
+      "date": "2026-08-18"
+    },
+    {
+      "id": "MSYSSDDY04Q69H7I",
+      "year": 2026,
+      "description": "from Haji abdul BAHL slip 1726616",
+      "type": "Cash Paid",
+      "createdAt": 1787065718470,
+      "updatedAt": 1787065718470,
+      "reference": "CPV-000020",
+      "date": "2026-08-18",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "month": 8,
+      "amount": 1900000
+    },
+    {
+      "id": "MSYSTFN3RJBQ9XVE",
+      "month": 8,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "year": 2026,
+      "type": "Cash Paid",
+      "amount": 1900000,
+      "description": "from haji abdul BAHL slip 1726511",
+      "updatedAt": 1787065768047,
+      "reference": "CPV-000021",
+      "createdAt": 1787065768047,
+      "date": "2026-08-18"
+    },
+    {
+      "id": "MSYT1QXK18P5PL7X",
+      "date": "2026-08-18",
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "description": "from Haji abdul BAHL slip 1726607",
+      "amount": 999000,
+      "updatedAt": 1787066155927,
+      "reference": "CPV-000022",
+      "createdAt": 1787066155927,
+      "type": "Cash Paid",
+      "month": 8,
+      "year": 2026
+    },
+    {
+      "id": "MSYT2NWVW408A9CB",
+      "date": "2026-08-18",
+      "amount": 1000000,
+      "createdAt": 1787066198671,
+      "description": "from samad BAHL slip 1726617",
+      "reference": "CPV-000023",
+      "updatedAt": 1787066198671,
+      "type": "Cash Paid",
+      "month": 8,
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "year": 2026
+    },
+    {
+      "id": "MSYT4FI85L1ZMKYT",
+      "type": "Cash Paid",
+      "amount": 1500000,
+      "year": 2026,
+      "month": 8,
+      "updatedAt": 1787066281088,
+      "reference": "CPV-000024",
+      "description": "from haji munir adil BAHL slip 1726689",
+      "createdAt": 1787066281088,
+      "date": "2026-08-18",
+      "partyId": "MSYT3HN2F6VID489"
+    },
+    {
+      "id": "MT07T2VQWMACRNA7",
+      "description": "From haji Abdul HBL slip 39374212",
+      "year": 2026,
+      "amount": 500000,
+      "type": "Cash Paid",
+      "month": 8,
+      "createdAt": 1787151411926,
+      "reference": "CPV-000025",
+      "updatedAt": 1787151411926,
+      "date": "2026-08-19",
+      "partyId": "MT07RUO25O04INY8"
+    },
+    {
+      "id": "MT07U9QJDVSB7APQ",
+      "month": 8,
+      "amount": 500000,
+      "type": "Cash Paid",
+      "description": "from haji yasir BAHL slip 1726825",
+      "year": 2026,
+      "reference": "CPV-000026",
+      "updatedAt": 1787151467467,
+      "createdAt": 1787151467467,
+      "date": "2026-08-19",
+      "partyId": "MSN6JNH9J7M4NOL7"
+    },
+    {
+      "id": "MT07W77P9782KYKW",
+      "type": "Cash Paid",
+      "month": 8,
+      "year": 2026,
+      "updatedAt": 1787151557509,
+      "reference": "CPV-000027",
+      "createdAt": 1787151557509,
+      "amount": 1436500,
+      "date": "2026-08-19",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "description": "from Amin tension sardar Meezan slip 0259149"
+    },
+    {
+      "id": "MT07XPI3GNJMBID9",
+      "description": "from Haji yasir BAHL slip 1726726",
+      "year": 2026,
+      "amount": 1165000,
+      "type": "Cash Paid",
+      "month": 8,
+      "createdAt": 1787151627867,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-19",
+      "updatedAt": 1787151627867,
+      "reference": "CPV-000028"
+    },
+    {
+      "id": "MT07YN3E6PVR5XYI",
+      "createdAt": 1787151671402,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-19",
+      "updatedAt": 1787151671402,
+      "reference": "CPV-000029",
+      "amount": 298500,
+      "description": "from Haji Abdul BAHL slip 1726726",
+      "year": 2026,
+      "month": 8,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MT07ZO6S7FIMANTH",
+      "date": "2026-08-19",
+      "description": "from Amin tension sardar BAHL slip 1726627",
+      "createdAt": 1787151719476,
+      "reference": "CPV-000030",
+      "updatedAt": 1787151719476,
+      "type": "Cash Paid",
+      "year": 2026,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "amount": 1000000,
+      "month": 8
+    },
+    {
+      "id": "MT080U0K43HMRQSU",
+      "amount": 1000000,
+      "year": 2026,
+      "createdAt": 1787151773684,
+      "type": "Cash Paid",
+      "reference": "CPV-000031",
+      "updatedAt": 1787151773684,
+      "month": 8,
+      "description": "from Amin tension sardar BAHL slip 1726628",
+      "date": "2026-08-19",
+      "partyId": "MSN6JNH9J7M4NOL7"
+    },
+    {
+      "id": "MT0822QZM4Y7D84U",
+      "amount": 1500000,
+      "month": 8,
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "year": 2026,
+      "type": "Cash Paid",
+      "description": "from haji  Munir adil BAHL slip 1726625",
+      "updatedAt": 1787151831659,
+      "reference": "CPV-000032",
+      "date": "2026-08-19",
+      "createdAt": 1787151831659
+    },
+    {
+      "id": "MT1N3A3S9J1W9NVF",
+      "amount": 500000,
+      "month": 8,
+      "description": "from haji gaffar UBL 7011020850",
+      "year": 2026,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1787237548264,
+      "updatedAt": 1787237548264,
+      "reference": "CPV-000033",
+      "type": "Cash Paid",
+      "date": "2026-08-20"
+    },
+    {
+      "id": "MT1N48C1X7TWXH39",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-20",
+      "createdAt": 1787237592625,
+      "description": "from haji yasir dua hotel UBL 7011020850",
+      "month": 8,
+      "updatedAt": 1787237592625,
+      "reference": "CPV-000034",
+      "type": "Cash Paid",
+      "amount": 500000,
+      "year": 2026
+    },
+    {
+      "id": "MT1N4XNZS7AMKK9I",
+      "createdAt": 1787237625455,
+      "reference": "CPV-000035",
+      "updatedAt": 1787237625455,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 8,
+      "date": "2026-08-20",
+      "amount": 900000,
+      "description": "from mallik party UBL 7011020850"
+    },
+    {
+      "id": "MT1N5RC190ZJLRRQ",
+      "date": "2026-08-20",
+      "description": "from Amin sardar BAHL 1726900",
+      "amount": 1500000,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "month": 8,
+      "createdAt": 1787237663905,
+      "type": "Cash Paid",
+      "year": 2026,
+      "updatedAt": 1787237663905,
+      "reference": "CPV-000036"
+    },
+    {
+      "id": "MT1N6EP17LH6B4GR",
+      "date": "2026-08-20",
+      "amount": 42200,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "description": "from Amin sardar BAHL 1726900",
+      "month": 8,
+      "updatedAt": 1787237694181,
+      "reference": "CPV-000037",
+      "type": "Cash Paid",
+      "createdAt": 1787237694181,
+      "year": 2026
+    },
+    {
+      "id": "MT1N97D5T9SF55DM",
+      "description": "from haji Gaffar BAHL 1726944",
+      "date": "2026-08-20",
+      "createdAt": 1787237824649,
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "updatedAt": 1787237824649,
+      "reference": "CPV-000038",
+      "amount": 1000000,
+      "year": 2026,
+      "type": "Cash Paid",
+      "month": 8
+    },
+    {
+      "id": "MT1NAAWHCITL36J0",
+      "description": "from Haji Gaffar BAHL 1727066",
+      "year": 2026,
+      "type": "Cash Paid",
+      "updatedAt": 1787237875889,
+      "reference": "CPV-000039",
+      "month": 8,
+      "createdAt": 1787237875889,
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "amount": 364000,
+      "date": "2026-08-20"
+    },
+    {
+      "id": "MT1NB6CNP91ZR5K4",
+      "month": 8,
+      "amount": 500000,
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "from haji Gaffar BAHL 1726945",
+      "date": "2026-08-20",
+      "createdAt": 1787237916647,
+      "partyId": "MT1M5XNHELMFGPLT",
+      "reference": "CPV-000040",
+      "updatedAt": 1787237916647
+    },
+    {
+      "id": "MT2YHYDG5CY392WD",
+      "updatedAt": 1787584575592,
+      "reference": "CPV-000041",
+      "createdAt": 1787317174852,
+      "type": "Cash Paid",
+      "amount": 900000,
+      "year": 2026,
+      "month": 8,
+      "description": "from haji Munir Adil replace UBL Cheq BAHL slip 1727227",
+      "date": "2026-08-21",
+      "partyId": "MSYT3HN2F6VID489"
+    },
+    {
+      "id": "MT2YJF2NMRD1073V",
+      "createdAt": 1787317243151,
+      "month": 8,
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "updatedAt": 1787584615319,
+      "reference": "CPV-000042",
+      "year": 2026,
+      "type": "Cash Paid",
+      "description": "from haji Munir adil Replace Js and UBL cheq BAHL slip 1727234",
+      "amount": 1441000,
+      "date": "2026-08-21"
+    },
+    {
+      "id": "MT2YLHAXDC4J6T7K",
+      "month": 8,
+      "createdAt": 1787317339353,
+      "reference": "CPV-000043",
+      "updatedAt": 1787317339353,
+      "type": "Cash Paid",
+      "year": 2026,
+      "amount": 538000,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-21",
+      "description": "From Shah poor rangeen party UBL 7016636120"
+    },
+    {
+      "id": "MT2YMLTWL2M75BL4",
+      "month": 8,
+      "amount": 500000,
+      "description": "from haji yasir dua hotel UBL 7016636120",
+      "type": "Cash Paid",
+      "reference": "CPV-000044",
+      "updatedAt": 1787317391876,
+      "createdAt": 1787317391876,
+      "year": 2026,
+      "date": "2026-08-21",
+      "partyId": "MSN6JNH9J7M4NOL7"
+    },
+    {
+      "id": "MT4DG5AX0UZA0XRF",
+      "date": "2026-08-22",
+      "createdAt": 1787402750937,
+      "amount": 500000,
+      "reference": "CPV-000046",
+      "updatedAt": 1787402750937,
+      "year": 2026,
+      "type": "Cash Paid",
+      "description": "from haji tahseen meezan 0255582",
+      "partyId": "MT4DEXR1OPLB3VHD",
+      "month": 8
+    },
+    {
+      "id": "MT4DH8ZW0CX4J2FG",
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "from haji tahseen UBL 7019337367",
+      "amount": 220000,
+      "updatedAt": 1787402802380,
+      "reference": "CPV-000047",
+      "createdAt": 1787402802380,
+      "date": "2026-08-22",
+      "month": 8,
+      "partyId": "MT4DEXR1OPLB3VHD"
+    },
+    {
+      "id": "MT4DITYHQBB4TXGU",
+      "description": "from haji tahseen BAHL 1727353",
+      "type": "Cash Paid",
+      "amount": 230000,
+      "year": 2026,
+      "month": 8,
+      "updatedAt": 1787402876201,
+      "reference": "CPV-000048",
+      "date": "2026-08-22",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1787402876201
+    },
+    {
+      "id": "MT7CVWVCHG8DB21N",
+      "updatedAt": 1787583205416,
+      "reference": "CPV-000049",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-24",
+      "createdAt": 1787583205416,
+      "amount": 66000,
+      "year": 2026,
+      "month": 8,
+      "description": "from haji munir BAHL 1723052",
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MT7CXOV508O5A2KT",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "reference": "CPV-000050",
+      "updatedAt": 1787583288353,
+      "createdAt": 1787583288353,
+      "date": "2026-08-24",
+      "description": "from haji Tahseen BAHL 1723052",
+      "month": 8,
+      "amount": 52000,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MT7CZPN5U52IUTV6",
+      "reference": "CPV-000051",
+      "updatedAt": 1787583382673,
+      "createdAt": 1787583382673,
+      "date": "2026-08-24",
+      "amount": 180000,
+      "description": "From Gulam nazar BAHL 1723052",
+      "year": 2026,
+      "month": 8,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MT7D0RLKK1GOFEDE",
+      "date": "2026-08-24",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1787583431864,
+      "description": "From Shar zaman BAHL 1723052",
+      "updatedAt": 1787583431864,
+      "reference": "CPV-000052",
+      "year": 2026,
+      "type": "Cash Paid",
+      "amount": 328000,
+      "month": 8
+    },
+    {
+      "id": "MT7D2BDZUHP7CRU4",
+      "date": "2026-08-24",
+      "amount": 100000,
+      "partyId": "MT7D1Q9ZC21M31XS",
+      "month": 8,
+      "type": "Cash Paid",
+      "description": "From gulam Nazar BAHL 1727254",
+      "year": 2026,
+      "reference": "CPV-000053",
+      "updatedAt": 1787583504167,
+      "createdAt": 1787583504167
+    },
+    {
+      "id": "MT7D42ATC61LXQB2",
+      "type": "Cash Paid",
+      "createdAt": 1787583585701,
+      "description": "From gulam nazar BAHL 1727363",
+      "updatedAt": 1787583585701,
+      "reference": "CPV-000054",
+      "year": 2026,
+      "date": "2026-08-24",
+      "month": 8,
+      "partyId": "MT7D3ECLVQUM17LO",
+      "amount": 100000
+    },
+    {
+      "id": "MT7D7NH774RQZPZ8",
+      "month": 8,
+      "partyId": "MT2YPGZSOXVERRZP",
+      "year": 2026,
+      "type": "Cash Paid",
+      "amount": 440000,
+      "description": "From haji Munir Adil",
+      "reference": "CPV-000055",
+      "updatedAt": 1787583753115,
+      "createdAt": 1787583753115,
+      "date": "2026-08-24"
+    },
+    {
+      "id": "MT8CGY6U6N6HSO0G",
+      "amount": 2500000,
+      "description": "From Haji Tahseen Naveed ",
+      "year": 2026,
+      "type": "Cash Paid",
+      "month": 8,
+      "createdAt": 1787642973462,
+      "date": "2026-08-20",
+      "reference": "CPV-000056",
+      "updatedAt": 1787642973462,
+      "partyId": "MT2YPGZSOXVERRZP"
+    },
+    {
+      "id": "MT8ZPFS13PFJ6QDN",
+      "date": "2026-08-25",
+      "month": 8,
+      "type": "Cash Paid",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "amount": 500000,
+      "description": "From Haji Gaffar Al falah 10842911",
+      "year": 2026,
+      "reference": "CPV-000057",
+      "updatedAt": 1787682000673,
+      "createdAt": 1787682000673
+    },
+    {
+      "id": "MTBPXMMF9EWGOWRY",
+      "year": 2026,
+      "createdAt": 1787846985159,
+      "description": "From Samad Meezan 0258403",
+      "type": "Cash Paid",
+      "reference": "CPV-000058",
+      "updatedAt": 1787846985159,
+      "month": 8,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "amount": 3000000,
+      "date": "2026-08-27"
+    },
+    {
+      "id": "MTBPYK8C7VFSSYW6",
+      "amount": 325500,
+      "createdAt": 1787847028716,
+      "month": 8,
+      "reference": "CPV-000059",
+      "updatedAt": 1787847028716,
+      "year": 2026,
+      "type": "Cash Paid",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "description": "From sardar amin tension Meezan 0258403",
+      "date": "2026-08-27"
+    },
+    {
+      "id": "MTBPZTPYIAK4JRLR",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "updatedAt": 1787847087670,
+      "reference": "CPV-000060",
+      "createdAt": 1787847087670,
+      "description": "From sharzaman Al falah 10842878",
+      "date": "2026-08-27",
+      "month": 8,
+      "amount": 900000,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MTBQ11FDIFP4NC0S",
+      "reference": "CPV-000061",
+      "updatedAt": 1787847144313,
+      "description": "From Gulam nazar BAHL 1724920",
+      "date": "2026-08-27",
+      "amount": 1000000,
+      "createdAt": 1787847144313,
+      "month": 8,
+      "type": "Cash Paid",
+      "year": 2026,
+      "partyId": "MSN6JNH9J7M4NOL7"
+    },
+    {
+      "id": "MTBQ29K8QYRLRB4Y",
+      "date": "2026-08-27",
+      "createdAt": 1787847201512,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "updatedAt": 1787847201512,
+      "reference": "CPV-000062",
+      "amount": 173500,
+      "month": 8,
+      "type": "Cash Paid",
+      "description": "From Sharzaman BAHL 1724920",
+      "year": 2026
+    },
+    {
+      "id": "MTBQ3FJGISBIVAU4",
+      "date": "2026-08-27",
+      "reference": "CPV-000063",
+      "updatedAt": 1787847255916,
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "amount": 2484000,
+      "createdAt": 1787847255916,
+      "year": 2026,
+      "type": "Cash Paid",
+      "description": "From Aslam chodri Al falah 10914943",
+      "month": 8
+    },
+    {
+      "id": "MTBQ4M04BHMUALSP",
+      "date": "2026-08-27",
+      "createdAt": 1787847310948,
+      "updatedAt": 1787847310948,
+      "reference": "CPV-000064",
+      "month": 8,
+      "description": "From haji yasir UBL 7040049753",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "type": "Cash Paid",
+      "amount": 670000,
+      "year": 2026
+    },
+    {
+      "id": "MTBQ5NRDG2P6EW17",
+      "type": "Cash Paid",
+      "amount": 1130000,
+      "createdAt": 1787847359881,
+      "description": "From haji yasir UBL 7040049750",
+      "updatedAt": 1787847359881,
+      "reference": "CPV-000065",
+      "partyId": "MTBQ4XKSBAPSRVZA",
+      "year": 2026,
+      "month": 8,
+      "date": "2026-08-27"
+    },
+    {
+      "id": "MTD1XF5MMGQQR35R",
+      "description": "From amin tension sardar Meezan bank 0258560",
+      "year": 2026,
+      "createdAt": 1787927597050,
+      "type": "Cash Paid",
+      "reference": "CPV-000066",
+      "updatedAt": 1787927597050,
+      "amount": 900000,
+      "date": "2026-08-28",
+      "month": 8,
+      "partyId": "MSN6JNH9J7M4NOL7"
+    },
+    {
+      "id": "MTD203DAYC13NW3M",
+      "year": 2026,
+      "description": "From Arab fayyab UBL 7046306467",
+      "amount": 800000,
+      "type": "Cash Paid",
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "updatedAt": 1787927721742,
+      "reference": "CPV-000067",
+      "month": 8,
+      "createdAt": 1787927721742,
+      "date": "2026-08-28"
+    },
+    {
+      "id": "MTEJAP5B428QVOQ8",
+      "reference": "CPV-000068",
+      "updatedAt": 1788017236175,
+      "date": "2026-08-29",
+      "createdAt": 1788017236175,
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "month": 8,
+      "type": "Cash Paid",
+      "year": 2026,
+      "amount": 400000,
+      "description": "From  Arab Meero BAHL 1724781"
+    },
+    {
+      "id": "MTEJBRMW54XT9ZX3",
+      "reference": "CPV-000069",
+      "updatedAt": 1788017286056,
+      "year": 2026,
+      "createdAt": 1788017286056,
+      "type": "Cash Paid",
+      "month": 8,
+      "description": "From Shar zaman Meezan 0258668",
+      "amount": 450000,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-29"
+    },
+    {
+      "id": "MTHFCSNOO3YBZCL4",
+      "description": "Meezan 0258884",
+      "year": 2026,
+      "amount": 500000,
+      "type": "Cash Paid",
+      "month": 8,
+      "createdAt": 1788192014100,
+      "updatedAt": 1788192014100,
+      "reference": "CPV-000070",
+      "date": "2026-08-31",
+      "partyId": "MSYT3HN2F6VID489"
+    },
+    {
+      "id": "MTHG83E5NRK61YHI",
+      "amount": 343500,
+      "date": "2026-08-31",
+      "description": "",
+      "month": 8,
+      "year": 2026,
+      "createdAt": 1788193474349,
+      "type": "Cash Paid",
+      "updatedAt": 1788193474349,
+      "reference": "CPV-000071",
+      "partyId": "MSN6JNH9J7M4NOL7"
+    },
+    {
+      "id": "MTHG929FXG12XITI",
+      "reference": "CPV-000072",
+      "updatedAt": 1788193519539,
+      "type": "Cash Paid",
+      "amount": 500000,
+      "year": 2026,
+      "createdAt": 1788193519539,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "month": 8,
+      "description": "From sardar amin tension BAHL 1722857",
+      "date": "2026-08-31"
+    },
+    {
+      "id": "MTHGA9BWLXT6UYIE",
+      "reference": "CPV-000073",
+      "updatedAt": 1788193575356,
+      "date": "2026-08-31",
+      "createdAt": 1788193575356,
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "month": 8,
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "From Aslam chodri BAHL 1722863",
+      "amount": 612500
+    },
+    {
+      "id": "MTHGBNLD39CAGZXP",
+      "year": 2026,
+      "amount": 150000,
+      "type": "Cash Paid",
+      "month": 8,
+      "partyId": "MTHGB4WDOXCPTINY",
+      "description": "From Shar zaman 1722369",
+      "createdAt": 1788193640497,
+      "updatedAt": 1788193640497,
+      "reference": "CPV-000074",
+      "date": "2026-08-31"
+    },
+    {
+      "id": "MTHGCNFAJ15JTGL7",
+      "createdAt": 1788193686934,
+      "month": 8,
+      "updatedAt": 1788193686934,
+      "reference": "CPV-000075",
+      "year": 2026,
+      "description": "From haji munir Meezan app",
+      "type": "Cash Paid",
+      "partyId": "MSYT3HN2F6VID489",
+      "amount": 60000,
+      "date": "2026-08-31"
+    },
+    {
+      "id": "MTHGDZHZK532NO9U",
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "month": 8,
+      "date": "2026-08-31",
+      "createdAt": 1788193749239,
+      "updatedAt": 1788193749239,
+      "reference": "CPV-000076",
+      "amount": 900000,
+      "type": "Cash Paid",
+      "description": "From sardar amin tension Meezan 0264019",
+      "year": 2026
+    },
+    {
+      "id": "MTHGFNDBQNNLDZO9",
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 8,
+      "createdAt": 1788193826831,
+      "reference": "CPV-000077",
+      "updatedAt": 1788193826831,
+      "amount": 450000,
+      "date": "2026-08-31",
+      "description": "Set ka laye mob leya From haji munir",
+      "partyId": "MTHGEWV7E8T0FEM8"
+    },
+    {
+      "id": "MTIU4AMV22R3V2D6",
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 9,
+      "amount": 1187500,
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "date": "2026-09-01",
+      "description": "From haji Abdul UBL 083",
+      "createdAt": 1788277277911,
+      "reference": "CPV-000078",
+      "updatedAt": 1788277277911
+    },
+    {
+      "id": "MTIU56YA2QM2HRFB",
+      "amount": 1000000,
+      "year": 2026,
+      "type": "Cash Paid",
+      "month": 9,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1788277319794,
+      "updatedAt": 1788277319794,
+      "reference": "CPV-000079",
+      "date": "2026-09-01",
+      "description": "From haji abdul UBL 617"
+    },
+    {
+      "id": "MTIU5PYTMPGJNUWI",
+      "createdAt": 1788277344437,
+      "type": "Cash Paid",
+      "reference": "CPV-000080",
+      "updatedAt": 1788277344437,
+      "year": 2026,
+      "amount": 1000000,
+      "date": "2026-09-01",
+      "month": 9,
+      "description": "From samad UBL 941",
+      "partyId": "MSN6JNH9J7M4NOL7"
+    },
+    {
+      "id": "MTIU6L6P5670QJEX",
+      "createdAt": 1788277384897,
+      "reference": "CPV-000081",
+      "updatedAt": 1788277384897,
+      "month": 9,
+      "date": "2026-09-01",
+      "description": "From samad UBL 940",
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "amount": 215000,
+      "year": 2026,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTIU78R8H14XSXCS",
+      "updatedAt": 1788277415444,
+      "reference": "CPV-000082",
+      "month": 9,
+      "date": "2026-09-01",
+      "description": "From Aslam chodri UBL 940",
+      "createdAt": 1788277415444,
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "amount": 130300,
+      "year": 2026,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTIU81TDVRRDYY0U",
+      "createdAt": 1788277453105,
+      "month": 9,
+      "updatedAt": 1788277453105,
+      "reference": "CPV-000083",
+      "year": 2026,
+      "type": "Cash Paid",
+      "description": "From samad UBL 513",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "amount": 700000,
+      "date": "2026-09-01"
+    },
+    {
+      "id": "MTIU8ODCE1VUTU7P",
+      "year": 2026,
+      "type": "Cash Paid",
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "createdAt": 1788277482336,
+      "description": "From samad UBL 511",
+      "reference": "CPV-000084",
+      "updatedAt": 1788277482336,
+      "date": "2026-09-01",
+      "month": 9,
+      "amount": 700000
+    },
+    {
+      "id": "MTIU9YL76ZZX5HQL",
+      "date": "2026-09-01",
+      "description": "from samad meezan 0264336",
+      "amount": 35000,
+      "year": 2026,
+      "type": "Cash Paid",
+      "createdAt": 1788277542235,
+      "partyId": "MTIU9I5FUFGAU3RX",
+      "updatedAt": 1788277542235,
+      "reference": "CPV-000085",
+      "month": 9
+    },
+    {
+      "id": "MTIUASEUJPLYJJHA",
+      "date": "2026-09-01",
+      "amount": 1000000,
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "month": 9,
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "From haji abdul Meezan 0264329",
+      "createdAt": 1788277580886,
+      "updatedAt": 1788277580886,
+      "reference": "CPV-000086"
+    },
+    {
+      "id": "MTIUC5CFXH4ZK5E3",
+      "year": 2026,
+      "amount": 500000,
+      "month": 9,
+      "description": "From Aslam chodri HBL 62961289",
+      "type": "Cash Paid",
+      "date": "2026-09-01",
+      "updatedAt": 1788277644303,
+      "reference": "CPV-000087",
+      "partyId": "MSN6Z1SX648SBF89",
+      "createdAt": 1788277644303
+    },
+    {
+      "id": "MTIUEWEF2EE26BZZ",
+      "date": "2026-09-01",
+      "description": "from haji yasir Al falah 10885942",
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "amount": 500000,
+      "reference": "CPV-000088",
+      "updatedAt": 1788277772679,
+      "type": "Cash Paid",
+      "year": 2026,
+      "createdAt": 1788277772679,
+      "month": 9
+    },
+    {
+      "id": "MTK5T8Q6Q1XPAUG2",
+      "date": "2026-09-02",
+      "description": "From haji yasir BAHL 1722673",
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "month": 9,
+      "type": "Cash Paid",
+      "createdAt": 1788357383790,
+      "year": 2026,
+      "reference": "CPV-000089",
+      "updatedAt": 1788357383790,
+      "amount": 330000
+    },
+    {
+      "id": "MTK5UEFJJ4WH8YKM",
+      "date": "2026-09-02",
+      "description": "From haji yasir BAHL 1722640",
+      "type": "Cash Paid",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "year": 2026,
+      "updatedAt": 1788357437839,
+      "reference": "CPV-000090",
+      "amount": 800000,
+      "month": 9,
+      "createdAt": 1788357437839
+    },
+    {
+      "id": "MTK5VD2ZG0C2MTZJ",
+      "type": "Cash Paid",
+      "amount": 700000,
+      "month": 9,
+      "year": 2026,
+      "description": "From Abdullah wapri Meezan 0264469",
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "date": "2026-09-02",
+      "updatedAt": 1788357482747,
+      "reference": "CPV-000091",
+      "createdAt": 1788357482747
+    },
+    {
+      "id": "MTK5X61EN0K3O7DG",
+      "year": 2026,
+      "type": "Cash Paid",
+      "amount": 37500,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "description": "From haji abdul Meezan 0264444",
+      "date": "2026-09-02",
+      "month": 9,
+      "createdAt": 1788357566930,
+      "reference": "CPV-000093",
+      "updatedAt": 1788357566930
+    },
+    {
+      "id": "MTK5XTZ1Y8MHEN7Q",
+      "amount": 59000,
+      "date": "2026-09-02",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "description": "From sherzan Meezan 0264444",
+      "month": 9,
+      "year": 2026,
+      "createdAt": 1788357597949,
+      "reference": "CPV-000094",
+      "updatedAt": 1788357597949,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTK6BV8WGCI6077O",
+      "amount": 1665000,
+      "month": 9,
+      "year": 2026,
+      "type": "Cash Paid",
+      "updatedAt": 1788358252784,
+      "reference": "CPV-000095",
+      "partyId": "MTK6AID2JKY5ENWL",
+      "description": "haji munir ka kathe laye",
+      "date": "2026-09-02",
+      "createdAt": 1788358252784
+    },
+    {
+      "id": "MTK6D446ZQBTGY49",
+      "date": "2026-09-02",
+      "amount": 58000,
+      "description": "haji munir ka kathe se cash fishry me daye",
+      "createdAt": 1788358310934,
+      "reference": "CPV-000096",
+      "updatedAt": 1788358310934,
+      "month": 9,
+      "type": "Cash Paid",
+      "partyId": "MTITAYSQ9KW7FUCV",
+      "year": 2026
+    },
+    {
+      "id": "MTK6FFXPVCCLZ07Y",
+      "description": "From haji munir 0264444",
+      "updatedAt": 1788360220240,
+      "reference": "CPV-000097",
+      "type": "Cash Paid",
+      "amount": 247000,
+      "year": 2026,
+      "createdAt": 1788358419565,
+      "month": 9,
+      "date": "2026-09-02",
+      "partyId": "MSN6JNH9J7M4NOL7"
+    },
+    {
+      "id": "MTK8OM114BA3I1NJ",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "description": "From Abdullah /meezan 0264470",
+      "updatedAt": 1788362206597,
+      "reference": "CPV-000098",
+      "month": 9,
+      "createdAt": 1788362206597,
+      "date": "2026-09-02",
+      "amount": 1600000,
+      "year": 2026,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTLOAGH2UATZCMLC",
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "month": 9,
+      "date": "2026-09-03",
+      "reference": "CPV-000099",
+      "updatedAt": 1788448886246,
+      "createdAt": 1788448886246,
+      "description": "From haji naseer BAHL 1724390",
+      "amount": 800000,
+      "year": 2026,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTLP0P573LR55UNY",
+      "updatedAt": 1788450110539,
+      "reference": "CPV-000100",
+      "createdAt": 1788450110539,
+      "date": "2026-09-03",
+      "partyId": "MTLOZV23AJFCJNBV",
+      "month": 9,
+      "year": 2026,
+      "type": "Cash Paid",
+      "description": "From haji naseer BAHL App 2828",
+      "amount": 150000
+    },
+    {
+      "id": "MTOFEFR5SOTFDKH9",
+      "year": 2026,
+      "type": "Cash Paid",
+      "createdAt": 1788615353921,
+      "description": "From haji naseer BAHL1724277",
+      "date": "2026-09-05",
+      "updatedAt": 1788615353921,
+      "reference": "CPV-000101",
+      "partyId": "MTOFDQ282NZSKFVG",
+      "month": 9,
+      "amount": 200000
+    },
+    {
+      "id": "MTOFFMAI5I4Y1IJF",
+      "month": 9,
+      "amount": 400000,
+      "partyId": "MTHGB4WDOXCPTINY",
+      "year": 2026,
+      "type": "Cash Paid",
+      "description": "From haji naseer BAHL 1724253",
+      "createdAt": 1788615409050,
+      "updatedAt": 1788615409050,
+      "reference": "CPV-000102",
+      "date": "2026-09-05"
+    },
+    {
+      "id": "MTOFGPYJAUPILFYY",
+      "amount": 1500000,
+      "date": "2026-09-05",
+      "partyId": "MSYSZ5FWSFKCVXYK",
+      "month": 9,
+      "year": 2026,
+      "createdAt": 1788615460459,
+      "reference": "CPV-000103",
+      "updatedAt": 1788615460459,
+      "type": "Cash Paid",
+      "description": "From haji naseer BAHL 1724279"
+    },
+    {
+      "id": "MTOFHOFYTCYYWFC1",
+      "createdAt": 1788615505150,
+      "month": 9,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "reference": "CPV-000104",
+      "updatedAt": 1788615505150,
+      "type": "Cash Paid",
+      "year": 2026,
+      "amount": 1693500,
+      "date": "2026-09-05",
+      "description": "From haji naseer BAHL 1724278"
+    },
+    {
+      "id": "MTOFISBVVAKKOB0P",
+      "description": "From haji naseer BAHL 1724225",
+      "amount": 350000,
+      "month": 9,
+      "date": "2026-09-05",
+      "year": 2026,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "updatedAt": 1788615556843,
+      "reference": "CPV-000105",
+      "type": "Cash Paid",
+      "createdAt": 1788615556843
+    },
+    {
+      "id": "MTOFSX4BQB3NK1HJ",
+      "year": 2026,
+      "reference": "CPV-000106",
+      "updatedAt": 1788616029611,
+      "amount": 42000,
+      "partyId": "MSN6JNH9J7M4NOL7",
+      "type": "Cash Paid",
+      "createdAt": 1788616029611,
+      "description": "From haji naseer Meezan 0263183",
+      "month": 9,
+      "date": "2026-09-05"
+    }
+  ],
+  "ledgerLines": [
+    {
+      "id": "MSOCWOWLBGI6ZG4H",
+      "txnId": "MSOCWOWJGLKP4LY6",
+      "debit": 70000,
+      "month": 8,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "date": "2026-08-10",
+      "credit": 0,
+      "description": "BHAL 1725597 furqan baloch ka kathe se",
+      "year": 2026,
+      "type": "Cash Paid",
+      "createdAt": 1786434384405,
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MSOCWOWMBH1NCUJA",
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "BHAL 1725597 furqan baloch ka kathe se",
+      "credit": 70000,
+      "month": 8,
+      "debit": 0,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "txnId": "MSOCWOWJGLKP4LY6",
+      "date": "2026-08-10",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "mainLedger": "Cash",
+      "createdAt": 1786434384406
+    },
+    {
+      "id": "MSOCY7A775H4V5DE",
+      "createdAt": 1786434454879,
+      "txnId": "MSOCY7A6HLEQHX1L",
+      "debit": 0,
+      "month": 8,
+      "credit": 1500000,
+      "mainLedger": "Cash",
+      "year": 2026,
+      "type": "Cash Paid",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "date": "2026-08-10",
+      "description": "meezan 0257354 furqan baloch ka kathe se"
+    },
+    {
+      "id": "MSOCY7A7W98F6QP7",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "type": "Cash Paid",
+      "month": 8,
+      "year": 2026,
+      "credit": 0,
+      "description": "meezan 0257354 furqan baloch ka kathe se",
+      "debit": 1500000,
+      "createdAt": 1786434454879,
+      "txnId": "MSOCY7A6HLEQHX1L",
+      "date": "2026-08-10",
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MSORBFRH7RAOYSQC",
+      "description": "UBL haji Munir Adil ka kathe se ",
+      "account": {
+        "kind": "party",
+        "id": "MSOR9T3YLR92FJ8M"
+      },
+      "createdAt": 1786458587021,
+      "type": "Cash Paid",
+      "credit": 0,
+      "year": 2026,
+      "month": 8,
+      "mainLedger": "Parties",
+      "date": "2026-08-11",
+      "txnId": "MSORBFRHWJJGPXEF",
+      "debit": 1200000
+    },
+    {
+      "id": "MSORBFRHJ0XQK3J7",
+      "debit": 0,
+      "txnId": "MSORBFRHWJJGPXEF",
+      "month": 8,
+      "year": 2026,
+      "credit": 1200000,
+      "type": "Cash Paid",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "relatedPartyId": "MSOR9T3YLR92FJ8M",
+      "date": "2026-08-11",
+      "description": "UBL haji Munir Adil ka kathe se ",
+      "mainLedger": "Cash",
+      "createdAt": 1786458587021
+    },
+    {
+      "id": "MSQ8E5XYC743CWHV",
+      "year": 2026,
+      "type": "Cash Paid",
+      "credit": 90000,
+      "mainLedger": "Cash",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1786547733910,
+      "description": "BHAL 1725667 from haji gaffar",
+      "date": "2026-08-12",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "month": 8,
+      "debit": 0,
+      "txnId": "MSQ8E5XYO0SRT3A3"
+    },
+    {
+      "id": "MSQ8E5XYGPCIY92H",
+      "description": "BHAL 1725667 from haji gaffar",
+      "mainLedger": "Parties",
+      "date": "2026-08-12",
+      "createdAt": 1786547733910,
+      "txnId": "MSQ8E5XYO0SRT3A3",
+      "debit": 90000,
+      "type": "Cash Paid",
+      "month": 8,
+      "credit": 0,
+      "year": 2026,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      }
+    },
+    {
+      "id": "MSQ8FFMFN66F0DNB",
+      "createdAt": 1786547793111,
+      "relatedPartyId": "MSQ8EUV2U9UL1KCB",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "mainLedger": "Cash",
+      "type": "Cash Paid",
+      "credit": 1200000,
+      "description": "BHAL 1725676 from haji gaffar ",
+      "year": 2026,
+      "date": "2026-08-12",
+      "txnId": "MSQ8FFMFO1EMA5RL",
+      "debit": 0,
+      "month": 8
+    },
+    {
+      "id": "MSQ8FFMFUG2JJ3UN",
+      "description": "BHAL 1725676 from haji gaffar ",
+      "account": {
+        "id": "MSQ8EUV2U9UL1KCB",
+        "kind": "party"
+      },
+      "year": 2026,
+      "type": "Cash Paid",
+      "credit": 0,
+      "month": 8,
+      "mainLedger": "Parties",
+      "debit": 1200000,
+      "txnId": "MSQ8FFMFO1EMA5RL",
+      "createdAt": 1786547793111,
+      "date": "2026-08-12"
+    },
+    {
+      "id": "MSQ8GNCYD68ZVH0X",
+      "credit": 0,
+      "description": "BHAL 1725667 from haji Munir Adil ",
+      "mainLedger": "Parties",
+      "txnId": "MSQ8GNCY8IFO7J2O",
+      "createdAt": 1786547849794,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "debit": 747500,
+      "date": "2026-08-12",
+      "month": 8,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MSQ8GNCYFB1LLDM1",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "description": "BHAL 1725667 from haji Munir Adil ",
+      "createdAt": 1786547849794,
+      "year": 2026,
+      "type": "Cash Paid",
+      "mainLedger": "Cash",
+      "date": "2026-08-12",
+      "credit": 747500,
+      "debit": 0,
+      "txnId": "MSQ8GNCY8IFO7J2O",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "month": 8
+    },
+    {
+      "id": "MSQ8HFBNITU3VJ7I",
+      "credit": 1500000,
+      "createdAt": 1786547886035,
+      "type": "Cash Paid",
+      "description": "BHAL 1725674 from haji Munir Adil ",
+      "debit": 0,
+      "txnId": "MSQ8HFBM1KPM1LL9",
+      "year": 2026,
+      "mainLedger": "Cash",
+      "month": 8,
+      "date": "2026-08-12",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      }
+    },
+    {
+      "id": "MSQ8HFBNRJFEKIHX",
+      "date": "2026-08-12",
+      "description": "BHAL 1725674 from haji Munir Adil ",
+      "credit": 0,
+      "mainLedger": "Parties",
+      "createdAt": 1786547886035,
+      "debit": 1500000,
+      "year": 2026,
+      "type": "Cash Paid",
+      "txnId": "MSQ8HFBM1KPM1LL9",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "month": 8
+    },
+    {
+      "id": "MSQ8I3403ZKM7WDN",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-12",
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "BHAL 1725675 from haji Munir Adil ",
+      "createdAt": 1786547916864,
+      "month": 8,
+      "txnId": "MSQ8I33ZAZ8SHAU9",
+      "credit": 1500000,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "debit": 0,
+      "mainLedger": "Cash"
+    },
+    {
+      "id": "MSQ8I340MCTRQTAE",
+      "date": "2026-08-12",
+      "debit": 1500000,
+      "txnId": "MSQ8I33ZAZ8SHAU9",
+      "description": "BHAL 1725675 from haji Munir Adil ",
+      "month": 8,
+      "type": "Cash Paid",
+      "credit": 0,
+      "year": 2026,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "createdAt": 1786547916864,
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MSXPIYIZMGGF6ROO",
+      "month": 8,
+      "txnId": "MSXPIYIYLXYN2AJN",
+      "account": {
+        "id": "MSXPI1ZVNBZY5AQZ",
+        "kind": "party"
+      },
+      "year": 2026,
+      "debit": 1900000,
+      "mainLedger": "Parties",
+      "description": "from waseem gareeb nawaz BAHL slip num 1726152",
+      "type": "Cash Paid",
+      "credit": 0,
+      "createdAt": 1786999774283,
+      "date": "2026-08-17"
+    },
+    {
+      "id": "MSXPIYIZWMVR10CZ",
+      "description": "from waseem gareeb nawaz BAHL slip num 1726152",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "date": "2026-08-17",
+      "txnId": "MSXPIYIYLXYN2AJN",
+      "debit": 0,
+      "credit": 1900000,
+      "month": 8,
+      "relatedPartyId": "MSXPI1ZVNBZY5AQZ",
+      "mainLedger": "Cash",
+      "year": 2026,
+      "createdAt": 1786999774283,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MSXPKD1IHEY7OICJ",
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 8,
+      "description": "from waseem gareeb nawaz BHAL slip 1726153",
+      "createdAt": 1786999839750,
+      "mainLedger": "Parties",
+      "txnId": "MSXPKD1HR6PGYPZ5",
+      "date": "2026-08-17",
+      "account": {
+        "kind": "party",
+        "id": "MSXPI1ZVNBZY5AQZ"
+      },
+      "credit": 0,
+      "debit": 1550000
+    },
+    {
+      "id": "MSXPKD1IXHSBGEEQ",
+      "credit": 1550000,
+      "relatedPartyId": "MSXPI1ZVNBZY5AQZ",
+      "year": 2026,
+      "description": "from waseem gareeb nawaz BHAL slip 1726153",
+      "type": "Cash Paid",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "mainLedger": "Cash",
+      "createdAt": 1786999839750,
+      "month": 8,
+      "txnId": "MSXPKD1HR6PGYPZ5",
+      "debit": 0,
+      "date": "2026-08-17"
+    },
+    {
+      "id": "MSXPMU2EAPFQF0IG",
+      "description": "from haji ysair meezan slip num 0259738",
+      "year": 2026,
+      "type": "Cash Paid",
+      "credit": 0,
+      "createdAt": 1786999955126,
+      "date": "2026-08-17",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "mainLedger": "Parties",
+      "month": 8,
+      "debit": 1000000,
+      "txnId": "MSXPMU2D8509E1WL"
+    },
+    {
+      "id": "MSXPMU2EJID49BNL",
+      "credit": 1000000,
+      "debit": 0,
+      "createdAt": 1786999955126,
+      "txnId": "MSXPMU2D8509E1WL",
+      "month": 8,
+      "type": "Cash Paid",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "year": 2026,
+      "description": "from haji ysair meezan slip num 0259738",
+      "date": "2026-08-17",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "mainLedger": "Cash"
+    },
+    {
+      "id": "MSXPOCCS1O0B3PVV",
+      "description": "from haji abdul meezan slip 0259586",
+      "date": "2026-08-17",
+      "credit": 0,
+      "mainLedger": "Parties",
+      "debit": 400000,
+      "year": 2026,
+      "txnId": "MSXPOCCSOHJVJ7K4",
+      "createdAt": 1787000025484,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "type": "Cash Paid",
+      "month": 8
+    },
+    {
+      "id": "MSXPOCCSPHTKFDM7",
+      "debit": 0,
+      "txnId": "MSXPOCCSOHJVJ7K4",
+      "month": 8,
+      "year": 2026,
+      "credit": 400000,
+      "type": "Cash Paid",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "createdAt": 1787000025484,
+      "description": "from haji abdul meezan slip 0259586",
+      "date": "2026-08-17",
+      "mainLedger": "Cash",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7"
+    },
+    {
+      "id": "MSXPV1FU9J50B889",
+      "description": "from haji yasir meezan slip num 0259586",
+      "credit": 50000,
+      "year": 2026,
+      "type": "Cash Paid",
+      "date": "2026-08-17",
+      "mainLedger": "Cash",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "debit": 0,
+      "txnId": "MSXPV1FUUZB5NP9F",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "createdAt": 1787000337930,
+      "month": 8
+    },
+    {
+      "id": "MSXPV1FUZGPE87M3",
+      "year": 2026,
+      "mainLedger": "Parties",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "type": "Cash Paid",
+      "createdAt": 1787000337930,
+      "credit": 0,
+      "description": "from haji yasir meezan slip num 0259586",
+      "date": "2026-08-17",
+      "month": 8,
+      "debit": 50000,
+      "txnId": "MSXPV1FUUZB5NP9F"
+    },
+    {
+      "id": "MSXPWAJC7H5REJRQ",
+      "type": "Cash Paid",
+      "year": 2026,
+      "date": "2026-08-17",
+      "createdAt": 1787000396376,
+      "description": "from haji yasir BHAL slip num 1726153",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "debit": 0,
+      "txnId": "MSXPWAJBXIVMZH27",
+      "credit": 250000,
+      "relatedPartyId": "MSXPI1ZVNBZY5AQZ",
+      "month": 8,
+      "mainLedger": "Cash"
+    },
+    {
+      "id": "MSXPWAJCSMY3TL4O",
+      "credit": 0,
+      "txnId": "MSXPWAJBXIVMZH27",
+      "debit": 250000,
+      "month": 8,
+      "mainLedger": "Parties",
+      "date": "2026-08-17",
+      "account": {
+        "id": "MSXPI1ZVNBZY5AQZ",
+        "kind": "party"
+      },
+      "createdAt": 1787000396376,
+      "type": "Cash Paid",
+      "description": "from haji yasir BHAL slip num 1726153",
+      "year": 2026
+    },
+    {
+      "id": "MSYSLEJ7FSCRMAAN",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "month": 8,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "debit": 0,
+      "txnId": "MSYSLEJ6XITGJU9Z",
+      "date": "2026-08-18",
+      "description": "from Haji abdul BHAL slip 1726510",
+      "type": "Cash Paid",
+      "mainLedger": "Cash",
+      "credit": 1420000,
+      "year": 2026,
+      "createdAt": 1787065393363
+    },
+    {
+      "id": "MSYSLEJ7SPDX5IAI",
+      "description": "from Haji abdul BHAL slip 1726510",
+      "date": "2026-08-18",
+      "mainLedger": "Parties",
+      "createdAt": 1787065393363,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "type": "Cash Paid",
+      "debit": 1420000,
+      "year": 2026,
+      "txnId": "MSYSLEJ6XITGJU9Z",
+      "credit": 0,
+      "month": 8
+    },
+    {
+      "id": "MSYSOX9REURG2VH4",
+      "type": "Cash Paid",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "year": 2026,
+      "createdAt": 1787065557615,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "credit": 480000,
+      "month": 8,
+      "date": "2026-08-18",
+      "mainLedger": "Cash",
+      "txnId": "MSYSOX9Q4GX31BJD",
+      "description": "from Shah poor rangeen party BAHL slip 1726510",
+      "debit": 0
+    },
+    {
+      "id": "MSYSOX9RVCL4ZFVD",
+      "year": 2026,
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "createdAt": 1787065557615,
+      "credit": 0,
+      "description": "from Shah poor rangeen party BAHL slip 1726510",
+      "date": "2026-08-18",
+      "month": 8,
+      "debit": 480000,
+      "txnId": "MSYSOX9Q4GX31BJD"
+    },
+    {
+      "id": "MSYSQTD836R3L8IL",
+      "year": 2026,
+      "mainLedger": "Cash",
+      "type": "Cash Paid",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "description": "from Shah poor rangeen party BHAL slip 1726606",
+      "month": 8,
+      "credit": 1900000,
+      "txnId": "MSYSQTD7S6SGO49U",
+      "debit": 0,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "createdAt": 1787065645868,
+      "date": "2026-08-18"
+    },
+    {
+      "id": "MSYSQTD8DWL6N3JC",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "date": "2026-08-18",
+      "credit": 0,
+      "debit": 1900000,
+      "txnId": "MSYSQTD7S6SGO49U",
+      "description": "from Shah poor rangeen party BHAL slip 1726606",
+      "month": 8,
+      "mainLedger": "Parties",
+      "createdAt": 1787065645868,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MSYSSDDZ2UVRU7UZ",
+      "year": 2026,
+      "mainLedger": "Parties",
+      "createdAt": 1787065718471,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "type": "Cash Paid",
+      "description": "from Haji abdul BAHL slip 1726616",
+      "month": 8,
+      "txnId": "MSYSSDDY04Q69H7I",
+      "credit": 0,
+      "debit": 1900000,
+      "date": "2026-08-18"
+    },
+    {
+      "id": "MSYSSDDZB091WZGK",
+      "createdAt": 1787065718471,
+      "date": "2026-08-18",
+      "mainLedger": "Cash",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "description": "from Haji abdul BAHL slip 1726616",
+      "txnId": "MSYSSDDY04Q69H7I",
+      "debit": 0,
+      "month": 8,
+      "credit": 1900000,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MSYSTFN3H55GX12B",
+      "date": "2026-08-18",
+      "description": "from haji abdul BAHL slip 1726511",
+      "mainLedger": "Parties",
+      "credit": 0,
+      "type": "Cash Paid",
+      "debit": 1900000,
+      "year": 2026,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "txnId": "MSYSTFN3RJBQ9XVE",
+      "createdAt": 1787065768047,
+      "month": 8
+    },
+    {
+      "id": "MSYSTFN3MGFCQJK1",
+      "type": "Cash Paid",
+      "year": 2026,
+      "credit": 1900000,
+      "month": 8,
+      "mainLedger": "Cash",
+      "debit": 0,
+      "txnId": "MSYSTFN3RJBQ9XVE",
+      "createdAt": 1787065768047,
+      "date": "2026-08-18",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "description": "from haji abdul BAHL slip 1726511"
+    },
+    {
+      "id": "MSYT1QXLFCGM12Z2",
+      "mainLedger": "Parties",
+      "credit": 0,
+      "description": "from Haji abdul BAHL slip 1726607",
+      "date": "2026-08-18",
+      "txnId": "MSYT1QXK18P5PL7X",
+      "createdAt": 1787066155929,
+      "debit": 999000,
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      },
+      "year": 2026,
+      "month": 8,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MSYT1QXLICW6T3CG",
+      "mainLedger": "Cash",
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 8,
+      "credit": 999000,
+      "debit": 0,
+      "txnId": "MSYT1QXK18P5PL7X",
+      "description": "from Haji abdul BAHL slip 1726607",
+      "createdAt": 1787066155929,
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "date": "2026-08-18"
+    },
+    {
+      "id": "MSYT2NWV5V1QAIYP",
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "description": "from samad BAHL slip 1726617",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "type": "Cash Paid",
+      "year": 2026,
+      "credit": 1000000,
+      "month": 8,
+      "txnId": "MSYT2NWVW408A9CB",
+      "debit": 0,
+      "mainLedger": "Cash",
+      "createdAt": 1787066198671,
+      "date": "2026-08-18"
+    },
+    {
+      "id": "MSYT2NWVN6H7CNM7",
+      "description": "from samad BAHL slip 1726617",
+      "date": "2026-08-18",
+      "mainLedger": "Parties",
+      "createdAt": 1787066198671,
+      "account": {
+        "id": "MSYSZ5FWSFKCVXYK",
+        "kind": "party"
+      },
+      "debit": 1000000,
+      "type": "Cash Paid",
+      "year": 2026,
+      "txnId": "MSYT2NWVW408A9CB",
+      "credit": 0,
+      "month": 8
+    },
+    {
+      "id": "MSYT4FI85WWT0OM8",
+      "date": "2026-08-18",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "description": "from haji munir adil BAHL slip 1726689",
+      "credit": 1500000,
+      "relatedPartyId": "MSYT3HN2F6VID489",
+      "createdAt": 1787066281088,
+      "mainLedger": "Cash",
+      "txnId": "MSYT4FI85L1ZMKYT",
+      "debit": 0,
+      "month": 8,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MSYT4FI8NLFX4W6C",
+      "year": 2026,
+      "type": "Cash Paid",
+      "createdAt": 1787066281088,
+      "mainLedger": "Parties",
+      "account": {
+        "id": "MSYT3HN2F6VID489",
+        "kind": "party"
+      },
+      "date": "2026-08-18",
+      "month": 8,
+      "description": "from haji munir adil BAHL slip 1726689",
+      "debit": 1500000,
+      "txnId": "MSYT4FI85L1ZMKYT",
+      "credit": 0
+    },
+    {
+      "id": "MT07T2VRDULK91Q3",
+      "date": "2026-08-19",
+      "debit": 500000,
+      "txnId": "MT07T2VQWMACRNA7",
+      "createdAt": 1787151411927,
+      "account": {
+        "kind": "party",
+        "id": "MT07RUO25O04INY8"
+      },
+      "mainLedger": "Parties",
+      "month": 8,
+      "credit": 0,
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "From haji Abdul HBL slip 39374212"
+    },
+    {
+      "id": "MT07T2VRVDVORGH7",
+      "month": 8,
+      "mainLedger": "Cash",
+      "txnId": "MT07T2VQWMACRNA7",
+      "year": 2026,
+      "description": "From haji Abdul HBL slip 39374212",
+      "debit": 0,
+      "createdAt": 1787151411927,
+      "type": "Cash Paid",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "relatedPartyId": "MT07RUO25O04INY8",
+      "credit": 500000,
+      "date": "2026-08-19"
+    },
+    {
+      "id": "MT07U9QJ0GCVI065",
+      "mainLedger": "Parties",
+      "year": 2026,
+      "credit": 0,
+      "createdAt": 1787151467467,
+      "type": "Cash Paid",
+      "month": 8,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "description": "from haji yasir BAHL slip 1726825",
+      "txnId": "MT07U9QJDVSB7APQ",
+      "debit": 500000,
+      "date": "2026-08-19"
+    },
+    {
+      "id": "MT07U9QJVD4X7NOV",
+      "date": "2026-08-19",
+      "debit": 0,
+      "txnId": "MT07U9QJDVSB7APQ",
+      "description": "from haji yasir BAHL slip 1726825",
+      "month": 8,
+      "createdAt": 1787151467467,
+      "credit": 500000,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "type": "Cash Paid",
+      "mainLedger": "Cash",
+      "year": 2026,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7"
+    },
+    {
+      "id": "MT07W77PNY4XCD5G",
+      "mainLedger": "Cash",
+      "date": "2026-08-19",
+      "credit": 1436500,
+      "description": "from Amin tension sardar Meezan slip 0259149",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1787151557509,
+      "year": 2026,
+      "debit": 0,
+      "txnId": "MT07W77P9782KYKW",
+      "type": "Cash Paid",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "month": 8
+    },
+    {
+      "id": "MT07W77PYQOCFPHY",
+      "mainLedger": "Parties",
+      "date": "2026-08-19",
+      "description": "from Amin tension sardar Meezan slip 0259149",
+      "txnId": "MT07W77P9782KYKW",
+      "createdAt": 1787151557509,
+      "debit": 1436500,
+      "month": 8,
+      "credit": 0,
+      "type": "Cash Paid",
+      "year": 2026,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      }
+    },
+    {
+      "id": "MT07XPI391C4K7MP",
+      "date": "2026-08-19",
+      "description": "from Haji yasir BAHL slip 1726726",
+      "txnId": "MT07XPI3GNJMBID9",
+      "mainLedger": "Parties",
+      "debit": 1165000,
+      "month": 8,
+      "createdAt": 1787151627867,
+      "credit": 0,
+      "type": "Cash Paid",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "year": 2026
+    },
+    {
+      "id": "MT07XPI3JSIII636",
+      "description": "from Haji yasir BAHL slip 1726726",
+      "type": "Cash Paid",
+      "year": 2026,
+      "credit": 1165000,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "month": 8,
+      "mainLedger": "Cash",
+      "debit": 0,
+      "createdAt": 1787151627867,
+      "txnId": "MT07XPI3GNJMBID9",
+      "date": "2026-08-19",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      }
+    },
+    {
+      "id": "MT07YN3EJMMDJPSC",
+      "description": "from Haji Abdul BAHL slip 1726726",
+      "mainLedger": "Cash",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-19",
+      "credit": 298500,
+      "txnId": "MT07YN3E6PVR5XYI",
+      "createdAt": 1787151671402,
+      "debit": 0,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "year": 2026,
+      "month": 8,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MT07YN3EPDDCFKE2",
+      "mainLedger": "Parties",
+      "txnId": "MT07YN3E6PVR5XYI",
+      "debit": 298500,
+      "date": "2026-08-19",
+      "month": 8,
+      "createdAt": 1787151671402,
+      "credit": 0,
+      "description": "from Haji Abdul BAHL slip 1726726",
+      "type": "Cash Paid",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "year": 2026
+    },
+    {
+      "id": "MT07ZO6TRMS9PAHD",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "mainLedger": "Parties",
+      "credit": 0,
+      "date": "2026-08-19",
+      "createdAt": 1787151719477,
+      "txnId": "MT07ZO6S7FIMANTH",
+      "description": "from Amin tension sardar BAHL slip 1726627",
+      "debit": 1000000,
+      "month": 8,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MT07ZO6TT1QXCU4V",
+      "date": "2026-08-19",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "debit": 0,
+      "txnId": "MT07ZO6S7FIMANTH",
+      "createdAt": 1787151719477,
+      "month": 8,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "description": "from Amin tension sardar BAHL slip 1726627",
+      "credit": 1000000,
+      "mainLedger": "Cash",
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MT080U0LHAKK7T61",
+      "description": "from Amin tension sardar BAHL slip 1726628",
+      "mainLedger": "Parties",
+      "debit": 1000000,
+      "date": "2026-08-19",
+      "credit": 0,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "createdAt": 1787151773685,
+      "txnId": "MT080U0K43HMRQSU",
+      "month": 8,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MT080U0LIPSU9ID4",
+      "description": "from Amin tension sardar BAHL slip 1726628",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "credit": 1000000,
+      "year": 2026,
+      "type": "Cash Paid",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "date": "2026-08-19",
+      "txnId": "MT080U0K43HMRQSU",
+      "debit": 0,
+      "month": 8,
+      "mainLedger": "Cash",
+      "createdAt": 1787151773685
+    },
+    {
+      "id": "MT0822QZCBQIIVHQ",
+      "date": "2026-08-19",
+      "createdAt": 1787151831659,
+      "txnId": "MT0822QZM4Y7D84U",
+      "mainLedger": "Parties",
+      "debit": 1500000,
+      "month": 8,
+      "credit": 0,
+      "type": "Cash Paid",
+      "description": "from haji  Munir adil BAHL slip 1726625",
+      "year": 2026,
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      }
+    },
+    {
+      "id": "MT0822QZY8I4YDS3",
+      "month": 8,
+      "txnId": "MT0822QZM4Y7D84U",
+      "credit": 1500000,
+      "debit": 0,
+      "date": "2026-08-19",
+      "year": 2026,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "type": "Cash Paid",
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "createdAt": 1787151831659,
+      "description": "from haji  Munir adil BAHL slip 1726625",
+      "mainLedger": "Cash"
+    },
+    {
+      "id": "MT1N3A3S9JIBWZ21",
+      "debit": 500000,
+      "txnId": "MT1N3A3S9J1W9NVF",
+      "date": "2026-08-20",
+      "description": "from haji gaffar UBL 7011020850",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "mainLedger": "Parties",
+      "month": 8,
+      "year": 2026,
+      "credit": 0,
+      "type": "Cash Paid",
+      "createdAt": 1787237548264
+    },
+    {
+      "id": "MT1N3A3SWP2Z8NOS",
+      "description": "from haji gaffar UBL 7011020850",
+      "mainLedger": "Cash",
+      "date": "2026-08-20",
+      "credit": 500000,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "createdAt": 1787237548264,
+      "type": "Cash Paid",
+      "month": 8,
+      "year": 2026,
+      "debit": 0,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "txnId": "MT1N3A3S9J1W9NVF"
+    },
+    {
+      "id": "MT1N48C2NMJ5JZDJ",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "credit": 500000,
+      "date": "2026-08-20",
+      "month": 8,
+      "createdAt": 1787237592626,
+      "txnId": "MT1N48C1X7TWXH39",
+      "year": 2026,
+      "type": "Cash Paid",
+      "debit": 0,
+      "description": "from haji yasir dua hotel UBL 7011020850",
+      "mainLedger": "Cash"
+    },
+    {
+      "id": "MT1N48C2TSX1NQWJ",
+      "date": "2026-08-20",
+      "createdAt": 1787237592626,
+      "description": "from haji yasir dua hotel UBL 7011020850",
+      "debit": 500000,
+      "mainLedger": "Parties",
+      "year": 2026,
+      "type": "Cash Paid",
+      "txnId": "MT1N48C1X7TWXH39",
+      "credit": 0,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "month": 8
+    },
+    {
+      "id": "MT1N4XNZ5VIGZ4FY",
+      "date": "2026-08-20",
+      "txnId": "MT1N4XNZS7AMKK9I",
+      "mainLedger": "Parties",
+      "debit": 900000,
+      "credit": 0,
+      "month": 8,
+      "type": "Cash Paid",
+      "description": "from mallik party UBL 7011020850",
+      "createdAt": 1787237625455,
+      "year": 2026,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      }
+    },
+    {
+      "id": "MT1N4XNZMKKQLVD8",
+      "description": "from mallik party UBL 7011020850",
+      "date": "2026-08-20",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "credit": 900000,
+      "createdAt": 1787237625455,
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 8,
+      "mainLedger": "Cash",
+      "debit": 0,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "txnId": "MT1N4XNZS7AMKK9I"
+    },
+    {
+      "id": "MT1N5RC26R3BNBXT",
+      "credit": 0,
+      "date": "2026-08-20",
+      "createdAt": 1787237663906,
+      "txnId": "MT1N5RC190ZJLRRQ",
+      "debit": 1500000,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "month": 8,
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "year": 2026,
+      "description": "from Amin sardar BAHL 1726900"
+    },
+    {
+      "id": "MT1N5RC2R58KZVT1",
+      "date": "2026-08-20",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1787237663906,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "type": "Cash Paid",
+      "debit": 0,
+      "year": 2026,
+      "txnId": "MT1N5RC190ZJLRRQ",
+      "mainLedger": "Cash",
+      "credit": 1500000,
+      "description": "from Amin sardar BAHL 1726900",
+      "month": 8
+    },
+    {
+      "id": "MT1N6EP2JU5YRXUN",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "createdAt": 1787237694182,
+      "credit": 42200,
+      "type": "Cash Paid",
+      "year": 2026,
+      "mainLedger": "Cash",
+      "date": "2026-08-20",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "txnId": "MT1N6EP17LH6B4GR",
+      "debit": 0,
+      "month": 8,
+      "description": "from Amin sardar BAHL 1726900"
+    },
+    {
+      "id": "MT1N6EP2OU119Z3L",
+      "txnId": "MT1N6EP17LH6B4GR",
+      "credit": 0,
+      "description": "from Amin sardar BAHL 1726900",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "debit": 42200,
+      "month": 8,
+      "date": "2026-08-20",
+      "createdAt": 1787237694182,
+      "mainLedger": "Parties",
+      "year": 2026,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MT1N97D6A6IKGWNZ",
+      "txnId": "MT1N97D5T9SF55DM",
+      "description": "from haji Gaffar BAHL 1726944",
+      "createdAt": 1787237824650,
+      "debit": 1000000,
+      "month": 8,
+      "date": "2026-08-20",
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      },
+      "credit": 0,
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "year": 2026
+    },
+    {
+      "id": "MT1N97D6GMMDO84Q",
+      "year": 2026,
+      "type": "Cash Paid",
+      "description": "from haji Gaffar BAHL 1726944",
+      "credit": 1000000,
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "createdAt": 1787237824650,
+      "mainLedger": "Cash",
+      "date": "2026-08-20",
+      "month": 8,
+      "debit": 0,
+      "txnId": "MT1N97D5T9SF55DM"
+    },
+    {
+      "id": "MT1NAAWH7MLL6R2N",
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      },
+      "month": 8,
+      "credit": 0,
+      "mainLedger": "Parties",
+      "txnId": "MT1NAAWHCITL36J0",
+      "year": 2026,
+      "createdAt": 1787237875889,
+      "debit": 364000,
+      "type": "Cash Paid",
+      "description": "from Haji Gaffar BAHL 1727066",
+      "date": "2026-08-20"
+    },
+    {
+      "id": "MT1NAAWHAAZ8DX7M",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "credit": 364000,
+      "createdAt": 1787237875889,
+      "mainLedger": "Cash",
+      "year": 2026,
+      "type": "Cash Paid",
+      "description": "from Haji Gaffar BAHL 1727066",
+      "date": "2026-08-20",
+      "txnId": "MT1NAAWHCITL36J0",
+      "debit": 0,
+      "month": 8,
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK"
+    },
+    {
+      "id": "MT1NB6COA16HLJFS",
+      "type": "Cash Paid",
+      "year": 2026,
+      "createdAt": 1787237916648,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "mainLedger": "Cash",
+      "description": "from haji Gaffar BAHL 1726945",
+      "month": 8,
+      "txnId": "MT1NB6CNP91ZR5K4",
+      "debit": 0,
+      "relatedPartyId": "MT1M5XNHELMFGPLT",
+      "credit": 500000,
+      "date": "2026-08-20"
+    },
+    {
+      "id": "MT1NB6COSIZC8XEP",
+      "debit": 500000,
+      "account": {
+        "id": "MT1M5XNHELMFGPLT",
+        "kind": "party"
+      },
+      "credit": 0,
+      "txnId": "MT1NB6CNP91ZR5K4",
+      "date": "2026-08-20",
+      "description": "from haji Gaffar BAHL 1726945",
+      "month": 8,
+      "year": 2026,
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "createdAt": 1787237916648
+    },
+    {
+      "id": "MT2YLHAX3D2PT5KP",
+      "year": 2026,
+      "mainLedger": "Parties",
+      "type": "Cash Paid",
+      "description": "From Shah poor rangeen party UBL 7016636120",
+      "date": "2026-08-21",
+      "createdAt": 1787317339353,
+      "month": 8,
+      "debit": 538000,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "txnId": "MT2YLHAXDC4J6T7K",
+      "credit": 0
+    },
+    {
+      "id": "MT2YLHAXUFTAOOCA",
+      "month": 8,
+      "credit": 538000,
+      "debit": 0,
+      "mainLedger": "Cash",
+      "txnId": "MT2YLHAXDC4J6T7K",
+      "createdAt": 1787317339353,
+      "date": "2026-08-21",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "From Shah poor rangeen party UBL 7016636120"
+    },
+    {
+      "id": "MT2YMLTX2I44BLYO",
+      "type": "Cash Paid",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "mainLedger": "Parties",
+      "year": 2026,
+      "credit": 0,
+      "date": "2026-08-21",
+      "description": "from haji yasir dua hotel UBL 7016636120",
+      "month": 8,
+      "createdAt": 1787317391877,
+      "debit": 500000,
+      "txnId": "MT2YMLTWL2M75BL4"
+    },
+    {
+      "id": "MT2YMLTXBV3F68M5",
+      "createdAt": 1787317391877,
+      "credit": 500000,
+      "date": "2026-08-21",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "description": "from haji yasir dua hotel UBL 7016636120",
+      "mainLedger": "Cash",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "txnId": "MT2YMLTWL2M75BL4",
+      "debit": 0,
+      "year": 2026,
+      "month": 8,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MT4DG5AX1OO4WOEV",
+      "createdAt": 1787402750937,
+      "account": {
+        "id": "MT4DEXR1OPLB3VHD",
+        "kind": "party"
+      },
+      "year": 2026,
+      "credit": 0,
+      "description": "from haji tahseen meezan 0255582",
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "month": 8,
+      "txnId": "MT4DG5AX0UZA0XRF",
+      "debit": 500000,
+      "date": "2026-08-22"
+    },
+    {
+      "id": "MT4DG5AX926Z3XLU",
+      "month": 8,
+      "credit": 500000,
+      "type": "Cash Paid",
+      "txnId": "MT4DG5AX0UZA0XRF",
+      "year": 2026,
+      "debit": 0,
+      "relatedPartyId": "MT4DEXR1OPLB3VHD",
+      "description": "from haji tahseen meezan 0255582",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "createdAt": 1787402750937,
+      "mainLedger": "Cash",
+      "date": "2026-08-22"
+    },
+    {
+      "id": "MT4DH8ZXOCMSUET8",
+      "credit": 220000,
+      "relatedPartyId": "MT4DEXR1OPLB3VHD",
+      "date": "2026-08-22",
+      "year": 2026,
+      "type": "Cash Paid",
+      "createdAt": 1787402802381,
+      "mainLedger": "Cash",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "month": 8,
+      "description": "from haji tahseen UBL 7019337367",
+      "debit": 0,
+      "txnId": "MT4DH8ZW0CX4J2FG"
+    },
+    {
+      "id": "MT4DH8ZXYRX38Z8I",
+      "date": "2026-08-22",
+      "account": {
+        "kind": "party",
+        "id": "MT4DEXR1OPLB3VHD"
+      },
+      "createdAt": 1787402802381,
+      "txnId": "MT4DH8ZW0CX4J2FG",
+      "debit": 220000,
+      "mainLedger": "Parties",
+      "credit": 0,
+      "month": 8,
+      "type": "Cash Paid",
+      "description": "from haji tahseen UBL 7019337367",
+      "year": 2026
+    },
+    {
+      "id": "MT4DITYI14ISRNQR",
+      "description": "from haji tahseen BAHL 1727353",
+      "date": "2026-08-22",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "mainLedger": "Parties",
+      "txnId": "MT4DITYHQBB4TXGU",
+      "createdAt": 1787402876202,
+      "debit": 230000,
+      "credit": 0,
+      "month": 8,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MT4DITYIMIAYCYGZ",
+      "year": 2026,
+      "type": "Cash Paid",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "mainLedger": "Cash",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "month": 8,
+      "debit": 0,
+      "createdAt": 1787402876202,
+      "txnId": "MT4DITYHQBB4TXGU",
+      "description": "from haji tahseen BAHL 1727353",
+      "date": "2026-08-22",
+      "credit": 230000
+    },
+    {
+      "id": "MT7CVWVDNPNUFRWX",
+      "date": "2026-08-24",
+      "credit": 66000,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "type": "Cash Paid",
+      "year": 2026,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "month": 8,
+      "createdAt": 1787583205417,
+      "description": "from haji munir BAHL 1723052",
+      "txnId": "MT7CVWVCHG8DB21N",
+      "mainLedger": "Cash",
+      "debit": 0
+    },
+    {
+      "id": "MT7CVWVDQ7FIWPI5",
+      "year": 2026,
+      "type": "Cash Paid",
+      "month": 8,
+      "createdAt": 1787583205417,
+      "debit": 66000,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "txnId": "MT7CVWVCHG8DB21N",
+      "date": "2026-08-24",
+      "credit": 0,
+      "mainLedger": "Parties",
+      "description": "from haji munir BAHL 1723052"
+    },
+    {
+      "id": "MT7CXOV6R28MHRAH",
+      "debit": 0,
+      "txnId": "MT7CXOV508O5A2KT",
+      "date": "2026-08-24",
+      "description": "from haji Tahseen BAHL 1723052",
+      "mainLedger": "Cash",
+      "month": 8,
+      "credit": 52000,
+      "createdAt": 1787583288354,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "year": 2026,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MT7CXOV6RZV9V1LS",
+      "year": 2026,
+      "type": "Cash Paid",
+      "description": "from haji Tahseen BAHL 1723052",
+      "credit": 0,
+      "month": 8,
+      "debit": 52000,
+      "txnId": "MT7CXOV508O5A2KT",
+      "createdAt": 1787583288354,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "date": "2026-08-24",
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MT7CZPN5JFURMQ1S",
+      "createdAt": 1787583382673,
+      "month": 8,
+      "debit": 0,
+      "txnId": "MT7CZPN5U52IUTV6",
+      "date": "2026-08-24",
+      "mainLedger": "Cash",
+      "description": "From Gulam nazar BAHL 1723052",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "type": "Cash Paid",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "credit": 180000,
+      "year": 2026
+    },
+    {
+      "id": "MT7CZPN5QE1NNA8R",
+      "createdAt": 1787583382673,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "year": 2026,
+      "credit": 0,
+      "description": "From Gulam nazar BAHL 1723052",
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "month": 8,
+      "txnId": "MT7CZPN5U52IUTV6",
+      "debit": 180000,
+      "date": "2026-08-24"
+    },
+    {
+      "id": "MT7D0RLLAWQ52ME2",
+      "txnId": "MT7D0RLKK1GOFEDE",
+      "credit": 0,
+      "description": "From Shar zaman BAHL 1723052",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "debit": 328000,
+      "month": 8,
+      "date": "2026-08-24",
+      "createdAt": 1787583431865,
+      "mainLedger": "Parties",
+      "year": 2026,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MT7D0RLLLX4ZW5K5",
+      "type": "Cash Paid",
+      "month": 8,
+      "year": 2026,
+      "credit": 328000,
+      "description": "From Shar zaman BAHL 1723052",
+      "debit": 0,
+      "txnId": "MT7D0RLKK1GOFEDE",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1787583431865,
+      "date": "2026-08-24",
+      "mainLedger": "Cash"
+    },
+    {
+      "id": "MT7D2BE0M41S0J35",
+      "month": 8,
+      "description": "From gulam Nazar BAHL 1727254",
+      "type": "Cash Paid",
+      "account": {
+        "kind": "party",
+        "id": "MT7D1Q9ZC21M31XS"
+      },
+      "createdAt": 1787583504168,
+      "txnId": "MT7D2BDZUHP7CRU4",
+      "year": 2026,
+      "debit": 100000,
+      "credit": 0,
+      "date": "2026-08-24",
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MT7D2BE0TMTLNCY2",
+      "createdAt": 1787583504168,
+      "txnId": "MT7D2BDZUHP7CRU4",
+      "debit": 0,
+      "date": "2026-08-24",
+      "month": 8,
+      "relatedPartyId": "MT7D1Q9ZC21M31XS",
+      "mainLedger": "Cash",
+      "credit": 100000,
+      "description": "From gulam Nazar BAHL 1727254",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MT7D42AURFHGT08N",
+      "description": "From gulam nazar BAHL 1727363",
+      "date": "2026-08-24",
+      "mainLedger": "Parties",
+      "createdAt": 1787583585702,
+      "account": {
+        "kind": "party",
+        "id": "MT7D3ECLVQUM17LO"
+      },
+      "debit": 100000,
+      "type": "Cash Paid",
+      "year": 2026,
+      "txnId": "MT7D42ATC61LXQB2",
+      "credit": 0,
+      "month": 8
+    },
+    {
+      "id": "MT7D42AUSFZ0NT9E",
+      "description": "From gulam nazar BAHL 1727363",
+      "month": 8,
+      "txnId": "MT7D42ATC61LXQB2",
+      "debit": 0,
+      "mainLedger": "Cash",
+      "credit": 100000,
+      "date": "2026-08-24",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "year": 2026,
+      "type": "Cash Paid",
+      "createdAt": 1787583585702,
+      "relatedPartyId": "MT7D3ECLVQUM17LO"
+    },
+    {
+      "id": "MT7D7NH864RMRVNP",
+      "txnId": "MT7D7NH774RQZPZ8",
+      "credit": 0,
+      "account": {
+        "kind": "party",
+        "id": "MT2YPGZSOXVERRZP"
+      },
+      "debit": 440000,
+      "description": "From haji Munir Adil",
+      "month": 8,
+      "date": "2026-08-24",
+      "year": 2026,
+      "type": "Cash Paid",
+      "createdAt": 1787583753116,
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MT7D7NH8NJ3SLAO1",
+      "type": "Cash Paid",
+      "relatedPartyId": "MT2YPGZSOXVERRZP",
+      "createdAt": 1787583753116,
+      "year": 2026,
+      "credit": 440000,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "date": "2026-08-24",
+      "description": "From haji Munir Adil",
+      "debit": 0,
+      "txnId": "MT7D7NH774RQZPZ8",
+      "month": 8,
+      "mainLedger": "Cash"
+    },
+    {
+      "id": "MT7DPA3SF8WQUUDX",
+      "year": 2026,
+      "type": "Cash Paid",
+      "createdAt": 1787584575592,
+      "mainLedger": "Cash",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "relatedPartyId": "MSYT3HN2F6VID489",
+      "month": 8,
+      "debit": 0,
+      "txnId": "MT2YHYDG5CY392WD",
+      "description": "from haji Munir Adil replace UBL Cheq BAHL slip 1727227",
+      "date": "2026-08-21",
+      "credit": 900000
+    },
+    {
+      "id": "MT7DPA3SJYPF1GFD",
+      "type": "Cash Paid",
+      "month": 8,
+      "year": 2026,
+      "createdAt": 1787584575592,
+      "credit": 0,
+      "debit": 900000,
+      "txnId": "MT2YHYDG5CY392WD",
+      "account": {
+        "id": "MSYT3HN2F6VID489",
+        "kind": "party"
+      },
+      "date": "2026-08-21",
+      "mainLedger": "Parties",
+      "description": "from haji Munir Adil replace UBL Cheq BAHL slip 1727227"
+    },
+    {
+      "id": "MT7DQ4RAG8F1NPT5",
+      "mainLedger": "Parties",
+      "description": "from haji Munir adil Replace Js and UBL cheq BAHL slip 1727234",
+      "txnId": "MT2YJF2NMRD1073V",
+      "debit": 1441000,
+      "month": 8,
+      "date": "2026-08-21",
+      "createdAt": 1787584615318,
+      "credit": 0,
+      "type": "Cash Paid",
+      "account": {
+        "id": "MSYSZ5FWSFKCVXYK",
+        "kind": "party"
+      },
+      "year": 2026
+    },
+    {
+      "id": "MT7DQ4RAXC7ED6C4",
+      "date": "2026-08-21",
+      "createdAt": 1787584615318,
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "credit": 1441000,
+      "mainLedger": "Cash",
+      "txnId": "MT2YJF2NMRD1073V",
+      "description": "from haji Munir adil Replace Js and UBL cheq BAHL slip 1727234",
+      "debit": 0,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "year": 2026,
+      "month": 8,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MT8CGY6UYNKXIS5P",
+      "date": "2026-08-20",
+      "description": "From Haji Tahseen Naveed ",
+      "relatedPartyId": "MT2YPGZSOXVERRZP",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "debit": 0,
+      "type": "Cash Paid",
+      "year": 2026,
+      "mainLedger": "Cash",
+      "txnId": "MT8CGY6U6N6HSO0G",
+      "createdAt": 1787642973462,
+      "credit": 2500000,
+      "month": 8
+    },
+    {
+      "id": "MT8CGY6UYZ9ALYQ9",
+      "type": "Cash Paid",
+      "month": 8,
+      "year": 2026,
+      "account": {
+        "id": "MT2YPGZSOXVERRZP",
+        "kind": "party"
+      },
+      "debit": 2500000,
+      "createdAt": 1787642973462,
+      "txnId": "MT8CGY6U6N6HSO0G",
+      "date": "2026-08-20",
+      "credit": 0,
+      "mainLedger": "Parties",
+      "description": "From Haji Tahseen Naveed "
+    },
+    {
+      "id": "MT8ZPFS13VE38Z1P",
+      "createdAt": 1787682000674,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "year": 2026,
+      "description": "From Haji Gaffar Al falah 10842911",
+      "credit": 0,
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "month": 8,
+      "txnId": "MT8ZPFS13PFJ6QDN",
+      "debit": 500000,
+      "date": "2026-08-25"
+    },
+    {
+      "id": "MT8ZPFS2QIR5CYF4",
+      "year": 2026,
+      "type": "Cash Paid",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "month": 8,
+      "debit": 0,
+      "description": "From Haji Gaffar Al falah 10842911",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "txnId": "MT8ZPFS13PFJ6QDN",
+      "credit": 500000,
+      "mainLedger": "Cash",
+      "createdAt": 1787682000674,
+      "date": "2026-08-25"
+    },
+    {
+      "id": "MTBPXMMGM0VJ5LS1",
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 8,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "debit": 3000000,
+      "createdAt": 1787846985160,
+      "txnId": "MTBPXMMF9EWGOWRY",
+      "date": "2026-08-27",
+      "credit": 0,
+      "mainLedger": "Parties",
+      "description": "From Samad Meezan 0258403"
+    },
+    {
+      "id": "MTBPXMMGRZZZF7NK",
+      "debit": 0,
+      "description": "From Samad Meezan 0258403",
+      "txnId": "MTBPXMMF9EWGOWRY",
+      "createdAt": 1787846985160,
+      "month": 8,
+      "year": 2026,
+      "credit": 3000000,
+      "type": "Cash Paid",
+      "date": "2026-08-27",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "mainLedger": "Cash",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      }
+    },
+    {
+      "id": "MTBPYK8DDNTARGAX",
+      "description": "From sardar amin tension Meezan 0258403",
+      "date": "2026-08-27",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "txnId": "MTBPYK8C7VFSSYW6",
+      "debit": 325500,
+      "month": 8,
+      "credit": 0,
+      "type": "Cash Paid",
+      "year": 2026,
+      "createdAt": 1787847028717,
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MTBPYK8DOTWLU3MM",
+      "description": "From sardar amin tension Meezan 0258403",
+      "debit": 0,
+      "txnId": "MTBPYK8C7VFSSYW6",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "month": 8,
+      "createdAt": 1787847028717,
+      "year": 2026,
+      "type": "Cash Paid",
+      "mainLedger": "Cash",
+      "date": "2026-08-27",
+      "credit": 325500
+    },
+    {
+      "id": "MTBPZTPYB21JKZ60",
+      "mainLedger": "Parties",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "credit": 0,
+      "createdAt": 1787847087670,
+      "date": "2026-08-27",
+      "txnId": "MTBPZTPYIAK4JRLR",
+      "debit": 900000,
+      "year": 2026,
+      "month": 8,
+      "description": "From sharzaman Al falah 10842878",
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTBPZTPYC909NE0B",
+      "createdAt": 1787847087670,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "mainLedger": "Cash",
+      "year": 2026,
+      "type": "Cash Paid",
+      "description": "From sharzaman Al falah 10842878",
+      "date": "2026-08-27",
+      "credit": 900000,
+      "debit": 0,
+      "txnId": "MTBPZTPYIAK4JRLR",
+      "month": 8
+    },
+    {
+      "id": "MTBQ11FDSXLLZHT7",
+      "mainLedger": "Cash",
+      "month": 8,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "createdAt": 1787847144313,
+      "credit": 1000000,
+      "txnId": "MTBQ11FDIFP4NC0S",
+      "debit": 0,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-27",
+      "description": "From Gulam nazar BAHL 1724920",
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MTBQ11FDT5EP6MJI",
+      "mainLedger": "Parties",
+      "year": 2026,
+      "description": "From Gulam nazar BAHL 1724920",
+      "type": "Cash Paid",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "createdAt": 1787847144313,
+      "date": "2026-08-27",
+      "month": 8,
+      "debit": 1000000,
+      "txnId": "MTBQ11FDIFP4NC0S",
+      "credit": 0
+    },
+    {
+      "id": "MTBQ29K8I5L4QOYE",
+      "txnId": "MTBQ29K8QYRLRB4Y",
+      "debit": 0,
+      "month": 8,
+      "mainLedger": "Cash",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "type": "Cash Paid",
+      "year": 2026,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "credit": 173500,
+      "date": "2026-08-27",
+      "description": "From Sharzaman BAHL 1724920",
+      "createdAt": 1787847201512
+    },
+    {
+      "id": "MTBQ29K8XM9RC9RK",
+      "mainLedger": "Parties",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "description": "From Sharzaman BAHL 1724920",
+      "year": 2026,
+      "credit": 0,
+      "type": "Cash Paid",
+      "month": 8,
+      "txnId": "MTBQ29K8QYRLRB4Y",
+      "createdAt": 1787847201512,
+      "debit": 173500,
+      "date": "2026-08-27"
+    },
+    {
+      "id": "MTBQ3FJHB9JFH1ND",
+      "mainLedger": "Parties",
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      },
+      "year": 2026,
+      "credit": 0,
+      "type": "Cash Paid",
+      "month": 8,
+      "createdAt": 1787847255917,
+      "txnId": "MTBQ3FJGISBIVAU4",
+      "description": "From Aslam chodri Al falah 10914943",
+      "debit": 2484000,
+      "date": "2026-08-27"
+    },
+    {
+      "id": "MTBQ3FJHXBYCH5JO",
+      "date": "2026-08-27",
+      "createdAt": 1787847255917,
+      "description": "From Aslam chodri Al falah 10914943",
+      "txnId": "MTBQ3FJGISBIVAU4",
+      "credit": 2484000,
+      "debit": 0,
+      "month": 8,
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "mainLedger": "Cash",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "year": 2026,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTBQ4M054N2A556W",
+      "txnId": "MTBQ4M04BHMUALSP",
+      "credit": 0,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "description": "From haji yasir UBL 7040049753",
+      "debit": 670000,
+      "month": 8,
+      "date": "2026-08-27",
+      "createdAt": 1787847310949,
+      "mainLedger": "Parties",
+      "year": 2026,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTBQ4M05O3XJ4P3H",
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 8,
+      "mainLedger": "Cash",
+      "credit": 670000,
+      "debit": 0,
+      "txnId": "MTBQ4M04BHMUALSP",
+      "description": "From haji yasir UBL 7040049753",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1787847310949,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "date": "2026-08-27"
+    },
+    {
+      "id": "MTBQ5NREA70EDHH5",
+      "month": 8,
+      "credit": 1130000,
+      "txnId": "MTBQ5NRDG2P6EW17",
+      "mainLedger": "Cash",
+      "debit": 0,
+      "description": "From haji yasir UBL 7040049750",
+      "relatedPartyId": "MTBQ4XKSBAPSRVZA",
+      "date": "2026-08-27",
+      "createdAt": 1787847359882,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MTBQ5NREAM5CXJSJ",
+      "date": "2026-08-27",
+      "mainLedger": "Parties",
+      "account": {
+        "kind": "party",
+        "id": "MTBQ4XKSBAPSRVZA"
+      },
+      "debit": 1130000,
+      "type": "Cash Paid",
+      "createdAt": 1787847359882,
+      "year": 2026,
+      "txnId": "MTBQ5NRDG2P6EW17",
+      "credit": 0,
+      "month": 8,
+      "description": "From haji yasir UBL 7040049750"
+    },
+    {
+      "id": "MTD1XF5MNEQ9ADX7",
+      "mainLedger": "Parties",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "year": 2026,
+      "description": "From amin tension sardar Meezan bank 0258560",
+      "credit": 0,
+      "type": "Cash Paid",
+      "month": 8,
+      "txnId": "MTD1XF5MMGQQR35R",
+      "createdAt": 1787927597051,
+      "debit": 900000,
+      "date": "2026-08-28"
+    },
+    {
+      "id": "MTD1XF5N0SO3A7SF",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "description": "From amin tension sardar Meezan bank 0258560",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "date": "2026-08-28",
+      "month": 8,
+      "credit": 900000,
+      "txnId": "MTD1XF5MMGQQR35R",
+      "year": 2026,
+      "type": "Cash Paid",
+      "debit": 0,
+      "mainLedger": "Cash",
+      "createdAt": 1787927597051
+    },
+    {
+      "id": "MTD203DA3TIL41GX",
+      "type": "Cash Paid",
+      "year": 2026,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "createdAt": 1787927721742,
+      "description": "From Arab fayyab UBL 7046306467",
+      "date": "2026-08-28",
+      "month": 8,
+      "debit": 0,
+      "mainLedger": "Cash",
+      "credit": 800000,
+      "txnId": "MTD203DAYC13NW3M"
+    },
+    {
+      "id": "MTD203DA685J3YST",
+      "createdAt": 1787927721742,
+      "date": "2026-08-28",
+      "debit": 800000,
+      "txnId": "MTD203DAYC13NW3M",
+      "month": 8,
+      "mainLedger": "Parties",
+      "credit": 0,
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "From Arab fayyab UBL 7046306467",
+      "account": {
+        "id": "MSYSZ5FWSFKCVXYK",
+        "kind": "party"
+      }
+    },
+    {
+      "id": "MTEJAP5C3BZB2WQL",
+      "year": 2026,
+      "description": "From  Arab Meero BAHL 1724781",
+      "createdAt": 1788017236176,
+      "type": "Cash Paid",
+      "account": {
+        "id": "MSYSZ5FWSFKCVXYK",
+        "kind": "party"
+      },
+      "mainLedger": "Parties",
+      "month": 8,
+      "date": "2026-08-29",
+      "debit": 400000,
+      "txnId": "MTEJAP5B428QVOQ8",
+      "credit": 0
+    },
+    {
+      "id": "MTEJAP5DJK43OW0B",
+      "mainLedger": "Cash",
+      "createdAt": 1788017236177,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "date": "2026-08-29",
+      "credit": 400000,
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 8,
+      "description": "From  Arab Meero BAHL 1724781",
+      "txnId": "MTEJAP5B428QVOQ8",
+      "debit": 0
+    },
+    {
+      "id": "MTEJBRMX39ILG0NW",
+      "mainLedger": "Parties",
+      "date": "2026-08-29",
+      "createdAt": 1788017286057,
+      "credit": 0,
+      "debit": 450000,
+      "txnId": "MTEJBRMW54XT9ZX3",
+      "description": "From Shar zaman Meezan 0258668",
+      "month": 8,
+      "type": "Cash Paid",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "year": 2026
+    },
+    {
+      "id": "MTEJBRMX7PABN04A",
+      "txnId": "MTEJBRMW54XT9ZX3",
+      "createdAt": 1788017286057,
+      "debit": 0,
+      "mainLedger": "Cash",
+      "month": 8,
+      "year": 2026,
+      "description": "From Shar zaman Meezan 0258668",
+      "type": "Cash Paid",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-08-29",
+      "credit": 450000,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      }
+    },
+    {
+      "id": "MTHFCSNOGXG19LK0",
+      "createdAt": 1788192014100,
+      "year": 2026,
+      "credit": 0,
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "month": 8,
+      "account": {
+        "kind": "party",
+        "id": "MSYT3HN2F6VID489"
+      },
+      "txnId": "MTHFCSNOO3YBZCL4",
+      "date": "2026-08-31",
+      "debit": 500000,
+      "description": "Meezan 0258884"
+    },
+    {
+      "id": "MTHFCSNOI8930PVZ",
+      "createdAt": 1788192014100,
+      "date": "2026-08-31",
+      "relatedPartyId": "MSYT3HN2F6VID489",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "txnId": "MTHFCSNOO3YBZCL4",
+      "debit": 0,
+      "month": 8,
+      "description": "Meezan 0258884",
+      "credit": 500000,
+      "mainLedger": "Cash",
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MTHG83E5MJ5X656B",
+      "year": 2026,
+      "type": "Cash Paid",
+      "month": 8,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "txnId": "MTHG83E5NRK61YHI",
+      "debit": 0,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "description": "Cash paid",
+      "createdAt": 1788193474349,
+      "mainLedger": "Cash",
+      "credit": 343500,
+      "date": "2026-08-31"
+    },
+    {
+      "id": "MTHG83E5VZ07GXSU",
+      "type": "Cash Paid",
+      "description": "Cash paid",
+      "createdAt": 1788193474349,
+      "month": 8,
+      "year": 2026,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "debit": 343500,
+      "txnId": "MTHG83E5NRK61YHI",
+      "date": "2026-08-31",
+      "mainLedger": "Parties",
+      "credit": 0
+    },
+    {
+      "id": "MTHG929GJ1SEACXQ",
+      "date": "2026-08-31",
+      "mainLedger": "Parties",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "type": "Cash Paid",
+      "debit": 500000,
+      "year": 2026,
+      "createdAt": 1788193519540,
+      "txnId": "MTHG929FXG12XITI",
+      "credit": 0,
+      "month": 8,
+      "description": "From sardar amin tension BAHL 1722857"
+    },
+    {
+      "id": "MTHG929GU738UU75",
+      "createdAt": 1788193519540,
+      "year": 2026,
+      "type": "Cash Paid",
+      "month": 8,
+      "txnId": "MTHG929FXG12XITI",
+      "debit": 0,
+      "description": "From sardar amin tension BAHL 1722857",
+      "mainLedger": "Cash",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "credit": 500000,
+      "date": "2026-08-31",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      }
+    },
+    {
+      "id": "MTHGA9BXIPZB6KU2",
+      "createdAt": 1788193575357,
+      "mainLedger": "Cash",
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "From Aslam chodri BAHL 1722863",
+      "date": "2026-08-31",
+      "debit": 0,
+      "txnId": "MTHGA9BWLXT6UYIE",
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "month": 8,
+      "credit": 612500
+    },
+    {
+      "id": "MTHGA9BXZREL4BFL",
+      "month": 8,
+      "account": {
+        "id": "MSYSZ5FWSFKCVXYK",
+        "kind": "party"
+      },
+      "txnId": "MTHGA9BWLXT6UYIE",
+      "year": 2026,
+      "debit": 612500,
+      "type": "Cash Paid",
+      "credit": 0,
+      "createdAt": 1788193575357,
+      "date": "2026-08-31",
+      "description": "From Aslam chodri BAHL 1722863",
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MTHGBNLEQHHETHKX",
+      "description": "From Shar zaman 1722369",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "credit": 150000,
+      "txnId": "MTHGBNLD39CAGZXP",
+      "debit": 0,
+      "type": "Cash Paid",
+      "month": 8,
+      "year": 2026,
+      "relatedPartyId": "MTHGB4WDOXCPTINY",
+      "date": "2026-08-31",
+      "createdAt": 1788193640498,
+      "mainLedger": "Cash"
+    },
+    {
+      "id": "MTHGBNLES0ONQOOT",
+      "createdAt": 1788193640498,
+      "credit": 0,
+      "date": "2026-08-31",
+      "mainLedger": "Parties",
+      "txnId": "MTHGBNLD39CAGZXP",
+      "debit": 150000,
+      "account": {
+        "kind": "party",
+        "id": "MTHGB4WDOXCPTINY"
+      },
+      "month": 8,
+      "type": "Cash Paid",
+      "description": "From Shar zaman 1722369",
+      "year": 2026
+    },
+    {
+      "id": "MTHGCNFBQHMZCG9D",
+      "year": 2026,
+      "month": 8,
+      "type": "Cash Paid",
+      "debit": 0,
+      "txnId": "MTHGCNFAJ15JTGL7",
+      "credit": 60000,
+      "relatedPartyId": "MSYT3HN2F6VID489",
+      "createdAt": 1788193686935,
+      "description": "From haji munir Meezan app",
+      "mainLedger": "Cash",
+      "date": "2026-08-31",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      }
+    },
+    {
+      "id": "MTHGCNFBSAAGFJBV",
+      "type": "Cash Paid",
+      "description": "From haji munir Meezan app",
+      "year": 2026,
+      "credit": 0,
+      "date": "2026-08-31",
+      "account": {
+        "id": "MSYT3HN2F6VID489",
+        "kind": "party"
+      },
+      "month": 8,
+      "createdAt": 1788193686935,
+      "debit": 60000,
+      "txnId": "MTHGCNFAJ15JTGL7",
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MTHGDZHZ67NGUTUY",
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 8,
+      "credit": 900000,
+      "mainLedger": "Cash",
+      "debit": 0,
+      "createdAt": 1788193749239,
+      "txnId": "MTHGDZHZK532NO9U",
+      "description": "From sardar amin tension Meezan 0264019",
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "date": "2026-08-31"
+    },
+    {
+      "id": "MTHGDZHZW94QPWZ9",
+      "txnId": "MTHGDZHZK532NO9U",
+      "credit": 0,
+      "account": {
+        "id": "MSYSZ5FWSFKCVXYK",
+        "kind": "party"
+      },
+      "debit": 900000,
+      "createdAt": 1788193749239,
+      "month": 8,
+      "description": "From sardar amin tension Meezan 0264019",
+      "date": "2026-08-31",
+      "year": 2026,
+      "mainLedger": "Parties",
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTHGFNDCGUUTAOE7",
+      "year": 2026,
+      "type": "Cash Paid",
+      "credit": 450000,
+      "createdAt": 1788193826832,
+      "description": "Set ka laye mob leya From haji munir",
+      "month": 8,
+      "debit": 0,
+      "txnId": "MTHGFNDBQNNLDZO9",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "relatedPartyId": "MTHGEWV7E8T0FEM8",
+      "date": "2026-08-31",
+      "mainLedger": "Cash"
+    },
+    {
+      "id": "MTHGFNDCVJMCB0QV",
+      "description": "Set ka laye mob leya From haji munir",
+      "mainLedger": "Parties",
+      "credit": 0,
+      "date": "2026-08-31",
+      "createdAt": 1788193826832,
+      "txnId": "MTHGFNDBQNNLDZO9",
+      "debit": 450000,
+      "account": {
+        "kind": "party",
+        "id": "MTHGEWV7E8T0FEM8"
+      },
+      "month": 8,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MTIU4AMV3I46BY2H",
+      "date": "2026-09-01",
+      "credit": 1187500,
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "description": "From haji Abdul UBL 083",
+      "createdAt": 1788277277911,
+      "mainLedger": "Cash",
+      "year": 2026,
+      "debit": 0,
+      "txnId": "MTIU4AMV22R3V2D6",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "type": "Cash Paid",
+      "month": 9
+    },
+    {
+      "id": "MTIU4AMV4KHXIC9F",
+      "date": "2026-09-01",
+      "debit": 1187500,
+      "txnId": "MTIU4AMV22R3V2D6",
+      "month": 9,
+      "type": "Cash Paid",
+      "credit": 0,
+      "year": 2026,
+      "description": "From haji Abdul UBL 083",
+      "createdAt": 1788277277911,
+      "mainLedger": "Parties",
+      "account": {
+        "id": "MSYSZ5FWSFKCVXYK",
+        "kind": "party"
+      }
+    },
+    {
+      "id": "MTIU56YADS8C3UI5",
+      "year": 2026,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "type": "Cash Paid",
+      "description": "From haji abdul UBL 617",
+      "credit": 0,
+      "createdAt": 1788277319794,
+      "date": "2026-09-01",
+      "month": 9,
+      "mainLedger": "Parties",
+      "debit": 1000000,
+      "txnId": "MTIU56YA2QM2HRFB"
+    },
+    {
+      "id": "MTIU56YAJUFCSYOW",
+      "description": "From haji abdul UBL 617",
+      "createdAt": 1788277319794,
+      "mainLedger": "Cash",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "date": "2026-09-01",
+      "year": 2026,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "type": "Cash Paid",
+      "credit": 1000000,
+      "month": 9,
+      "debit": 0,
+      "txnId": "MTIU56YA2QM2HRFB"
+    },
+    {
+      "id": "MTIU5PYTUJHX5IZF",
+      "txnId": "MTIU5PYTMPGJNUWI",
+      "credit": 0,
+      "debit": 1000000,
+      "month": 9,
+      "date": "2026-09-01",
+      "mainLedger": "Parties",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "createdAt": 1788277344437,
+      "description": "From samad UBL 941",
+      "year": 2026,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTIU5PYTZAK8DK0D",
+      "date": "2026-09-01",
+      "debit": 0,
+      "txnId": "MTIU5PYTMPGJNUWI",
+      "createdAt": 1788277344437,
+      "mainLedger": "Cash",
+      "credit": 1000000,
+      "month": 9,
+      "year": 2026,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "description": "From samad UBL 941",
+      "type": "Cash Paid",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      }
+    },
+    {
+      "id": "MTIU6L6Q1C977Z7T",
+      "month": 9,
+      "mainLedger": "Cash",
+      "txnId": "MTIU6L6P5670QJEX",
+      "year": 2026,
+      "debit": 0,
+      "createdAt": 1788277384898,
+      "type": "Cash Paid",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "description": "From samad UBL 940",
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "credit": 215000,
+      "date": "2026-09-01"
+    },
+    {
+      "id": "MTIU6L6QAVNAUA16",
+      "year": 2026,
+      "credit": 0,
+      "type": "Cash Paid",
+      "month": 9,
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      },
+      "mainLedger": "Parties",
+      "txnId": "MTIU6L6P5670QJEX",
+      "description": "From samad UBL 940",
+      "createdAt": 1788277384898,
+      "date": "2026-09-01",
+      "debit": 215000
+    },
+    {
+      "id": "MTIU78R971QE9QR7",
+      "date": "2026-09-01",
+      "mainLedger": "Parties",
+      "createdAt": 1788277415445,
+      "txnId": "MTIU78R8H14XSXCS",
+      "debit": 130300,
+      "month": 9,
+      "credit": 0,
+      "type": "Cash Paid",
+      "year": 2026,
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      },
+      "description": "From Aslam chodri UBL 940"
+    },
+    {
+      "id": "MTIU78R9E285PTSQ",
+      "date": "2026-09-01",
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "mainLedger": "Cash",
+      "txnId": "MTIU78R8H14XSXCS",
+      "debit": 0,
+      "credit": 130300,
+      "month": 9,
+      "description": "From Aslam chodri UBL 940",
+      "type": "Cash Paid",
+      "year": 2026,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "createdAt": 1788277415445
+    },
+    {
+      "id": "MTIU81TD02EOPAHN",
+      "year": 2026,
+      "type": "Cash Paid",
+      "createdAt": 1788277453105,
+      "credit": 700000,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "mainLedger": "Cash",
+      "description": "From samad UBL 513",
+      "date": "2026-09-01",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "month": 9,
+      "debit": 0,
+      "txnId": "MTIU81TDVRRDYY0U"
+    },
+    {
+      "id": "MTIU81TDC5NVQH33",
+      "txnId": "MTIU81TDVRRDYY0U",
+      "debit": 700000,
+      "date": "2026-09-01",
+      "mainLedger": "Parties",
+      "month": 9,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "credit": 0,
+      "createdAt": 1788277453105,
+      "type": "Cash Paid",
+      "description": "From samad UBL 513",
+      "year": 2026
+    },
+    {
+      "id": "MTIU8ODC7Y7Z7XJC",
+      "date": "2026-09-01",
+      "mainLedger": "Parties",
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      },
+      "credit": 0,
+      "description": "From samad UBL 511",
+      "type": "Cash Paid",
+      "debit": 700000,
+      "year": 2026,
+      "txnId": "MTIU8ODCE1VUTU7P",
+      "createdAt": 1788277482336,
+      "month": 9
+    },
+    {
+      "id": "MTIU8ODCNA2UZ7CO",
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "mainLedger": "Cash",
+      "type": "Cash Paid",
+      "year": 2026,
+      "date": "2026-09-01",
+      "txnId": "MTIU8ODCE1VUTU7P",
+      "description": "From samad UBL 511",
+      "debit": 0,
+      "createdAt": 1788277482337,
+      "month": 9,
+      "credit": 700000,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      }
+    },
+    {
+      "id": "MTIU9YL802D7DCUB",
+      "year": 2026,
+      "type": "Cash Paid",
+      "date": "2026-09-01",
+      "createdAt": 1788277542236,
+      "month": 9,
+      "debit": 35000,
+      "description": "from samad meezan 0264336",
+      "account": {
+        "kind": "party",
+        "id": "MTIU9I5FUFGAU3RX"
+      },
+      "txnId": "MTIU9YL76ZZX5HQL",
+      "credit": 0,
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MTIU9YL8T1I0FNZT",
+      "credit": 35000,
+      "txnId": "MTIU9YL76ZZX5HQL",
+      "debit": 0,
+      "month": 9,
+      "description": "from samad meezan 0264336",
+      "createdAt": 1788277542236,
+      "type": "Cash Paid",
+      "year": 2026,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "date": "2026-09-01",
+      "mainLedger": "Cash",
+      "relatedPartyId": "MTIU9I5FUFGAU3RX"
+    },
+    {
+      "id": "MTIUASEU23YYHLDD",
+      "year": 2026,
+      "type": "Cash Paid",
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "createdAt": 1788277580886,
+      "month": 9,
+      "debit": 0,
+      "txnId": "MTIUASEUJPLYJJHA",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "credit": 1000000,
+      "mainLedger": "Cash",
+      "description": "From haji abdul Meezan 0264329",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "MTIUASEU56XSHPHY",
+      "type": "Cash Paid",
+      "month": 9,
+      "year": 2026,
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      },
+      "debit": 1000000,
+      "txnId": "MTIUASEUJPLYJJHA",
+      "date": "2026-09-01",
+      "description": "From haji abdul Meezan 0264329",
+      "createdAt": 1788277580886,
+      "credit": 0,
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MTIUC5CG6Q94RH7U",
+      "mainLedger": "Parties",
+      "account": {
+        "id": "MSN6Z1SX648SBF89",
+        "kind": "party"
+      },
+      "description": "From Aslam chodri HBL 62961289",
+      "year": 2026,
+      "credit": 0,
+      "type": "Cash Paid",
+      "month": 9,
+      "txnId": "MTIUC5CFXH4ZK5E3",
+      "createdAt": 1788277644304,
+      "debit": 500000,
+      "date": "2026-09-01"
+    },
+    {
+      "id": "MTIUC5CGDSYBV27J",
+      "credit": 500000,
+      "date": "2026-09-01",
+      "description": "From Aslam chodri HBL 62961289",
+      "debit": 0,
+      "createdAt": 1788277644304,
+      "txnId": "MTIUC5CFXH4ZK5E3",
+      "mainLedger": "Cash",
+      "month": 9,
+      "year": 2026,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "type": "Cash Paid",
+      "relatedPartyId": "MSN6Z1SX648SBF89"
+    },
+    {
+      "id": "MTIUEWEG4K39CO7U",
+      "description": "from haji yasir Al falah 10885942",
+      "type": "Cash Paid",
+      "createdAt": 1788277772680,
+      "year": 2026,
+      "credit": 500000,
+      "date": "2026-09-01",
+      "debit": 0,
+      "txnId": "MTIUEWEF2EE26BZZ",
+      "mainLedger": "Cash",
+      "month": 9,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK"
+    },
+    {
+      "id": "MTIUEWEGSZCVJPKL",
+      "month": 9,
+      "account": {
+        "id": "MSYSZ5FWSFKCVXYK",
+        "kind": "party"
+      },
+      "type": "Cash Paid",
+      "description": "from haji yasir Al falah 10885942",
+      "txnId": "MTIUEWEF2EE26BZZ",
+      "year": 2026,
+      "debit": 500000,
+      "mainLedger": "Parties",
+      "credit": 0,
+      "createdAt": 1788277772680,
+      "date": "2026-09-01"
+    },
+    {
+      "id": "MTK5T8Q7MK5EOFDW",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "createdAt": 1788357383791,
+      "mainLedger": "Cash",
+      "description": "From haji yasir BAHL 1722673",
+      "type": "Cash Paid",
+      "debit": 0,
+      "year": 2026,
+      "txnId": "MTK5T8Q6Q1XPAUG2",
+      "month": 9,
+      "date": "2026-09-02",
+      "credit": 330000,
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK"
+    },
+    {
+      "id": "MTK5T8Q7TEQNRZHA",
+      "year": 2026,
+      "type": "Cash Paid",
+      "createdAt": 1788357383791,
+      "description": "From haji yasir BAHL 1722673",
+      "date": "2026-09-02",
+      "month": 9,
+      "debit": 330000,
+      "mainLedger": "Parties",
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      },
+      "txnId": "MTK5T8Q6Q1XPAUG2",
+      "credit": 0
+    },
+    {
+      "id": "MTK5UEFJAPP2OTYZ",
+      "credit": 800000,
+      "description": "From haji yasir BAHL 1722640",
+      "year": 2026,
+      "type": "Cash Paid",
+      "date": "2026-09-02",
+      "debit": 0,
+      "txnId": "MTK5UEFJJ4WH8YKM",
+      "createdAt": 1788357437839,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "mainLedger": "Cash",
+      "month": 9
+    },
+    {
+      "id": "MTK5UEFJDB9BI6PP",
+      "description": "From haji yasir BAHL 1722640",
+      "year": 2026,
+      "credit": 0,
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "createdAt": 1788357437839,
+      "month": 9,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "txnId": "MTK5UEFJJ4WH8YKM",
+      "date": "2026-09-02",
+      "debit": 800000
+    },
+    {
+      "id": "MTK5VD2Z00HWGAFQ",
+      "description": "From Abdullah wapri Meezan 0264469",
+      "year": 2026,
+      "credit": 0,
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "month": 9,
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      },
+      "txnId": "MTK5VD2ZG0C2MTZJ",
+      "debit": 700000,
+      "date": "2026-09-02",
+      "createdAt": 1788357482747
+    },
+    {
+      "id": "MTK5VD2ZM2RMOLV9",
+      "description": "From Abdullah wapri Meezan 0264469",
+      "credit": 700000,
+      "date": "2026-09-02",
+      "createdAt": 1788357482747,
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "mainLedger": "Cash",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "txnId": "MTK5VD2ZG0C2MTZJ",
+      "debit": 0,
+      "year": 2026,
+      "month": 9,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTK5X61F2QLJUULP",
+      "debit": 37500,
+      "txnId": "MTK5X61EN0K3O7DG",
+      "date": "2026-09-02",
+      "month": 9,
+      "createdAt": 1788357566931,
+      "year": 2026,
+      "description": "From haji abdul Meezan 0264444",
+      "mainLedger": "Parties",
+      "credit": 0,
+      "type": "Cash Paid",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      }
+    },
+    {
+      "id": "MTK5X61FL3WUF9Q3",
+      "date": "2026-09-02",
+      "createdAt": 1788357566931,
+      "mainLedger": "Cash",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "credit": 37500,
+      "description": "From haji abdul Meezan 0264444",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "debit": 0,
+      "txnId": "MTK5X61EN0K3O7DG",
+      "month": 9,
+      "type": "Cash Paid",
+      "year": 2026
+    },
+    {
+      "id": "MTK5XTZ28ZIUG3YT",
+      "mainLedger": "Cash",
+      "type": "Cash Paid",
+      "credit": 59000,
+      "year": 2026,
+      "month": 9,
+      "description": "From sherzan Meezan 0264444",
+      "txnId": "MTK5XTZ1Y8MHEN7Q",
+      "debit": 0,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "date": "2026-09-02",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "createdAt": 1788357597950
+    },
+    {
+      "id": "MTK5XTZ2JQUWSGWV",
+      "date": "2026-09-02",
+      "mainLedger": "Parties",
+      "debit": 59000,
+      "createdAt": 1788357597950,
+      "txnId": "MTK5XTZ1Y8MHEN7Q",
+      "month": 9,
+      "type": "Cash Paid",
+      "description": "From sherzan Meezan 0264444",
+      "credit": 0,
+      "year": 2026,
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      }
+    },
+    {
+      "id": "MTK6BV8X69ZVDX9N",
+      "mainLedger": "Parties",
+      "type": "Cash Paid",
+      "account": {
+        "id": "MTK6AID2JKY5ENWL",
+        "kind": "party"
+      },
+      "year": 2026,
+      "month": 9,
+      "date": "2026-09-02",
+      "description": "haji munir ka kathe laye",
+      "txnId": "MTK6BV8WGCI6077O",
+      "credit": 0,
+      "debit": 1665000,
+      "createdAt": 1788358252785
+    },
+    {
+      "id": "MTK6BV8XKU2F0V0J",
+      "mainLedger": "Cash",
+      "description": "haji munir ka kathe laye",
+      "date": "2026-09-02",
+      "txnId": "MTK6BV8WGCI6077O",
+      "debit": 0,
+      "month": 9,
+      "createdAt": 1788358252785,
+      "year": 2026,
+      "credit": 1665000,
+      "relatedPartyId": "MTK6AID2JKY5ENWL",
+      "type": "Cash Paid",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      }
+    },
+    {
+      "id": "MTK6D446IDQEV3H7",
+      "txnId": "MTK6D446ZQBTGY49",
+      "debit": 0,
+      "month": 9,
+      "type": "Cash Paid",
+      "year": 2026,
+      "mainLedger": "Cash",
+      "createdAt": 1788358310934,
+      "description": "haji munir ka kathe se cash fishry me daye",
+      "credit": 58000,
+      "date": "2026-09-02",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "relatedPartyId": "MTITAYSQ9KW7FUCV"
+    },
+    {
+      "id": "MTK6D446K0KQZYD2",
+      "createdAt": 1788358310934,
+      "date": "2026-09-02",
+      "account": {
+        "kind": "party",
+        "id": "MTITAYSQ9KW7FUCV"
+      },
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "debit": 58000,
+      "year": 2026,
+      "txnId": "MTK6D446ZQBTGY49",
+      "description": "haji munir ka kathe se cash fishry me daye",
+      "credit": 0,
+      "month": 9
+    },
+    {
+      "id": "MTK7I1CEJ5RPQLTM",
+      "description": "From haji munir 0264444",
+      "date": "2026-09-02",
+      "mainLedger": "Parties",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "type": "Cash Paid",
+      "debit": 247000,
+      "createdAt": 1788360220238,
+      "txnId": "MTK6FFXPVCCLZ07Y",
+      "year": 2026,
+      "credit": 0,
+      "month": 9
+    },
+    {
+      "id": "MTK7I1CEZ0FPCT51",
+      "createdAt": 1788360220238,
+      "date": "2026-09-02",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "description": "From haji munir 0264444",
+      "month": 9,
+      "mainLedger": "Cash",
+      "type": "Cash Paid",
+      "txnId": "MTK6FFXPVCCLZ07Y",
+      "year": 2026,
+      "debit": 0,
+      "credit": 247000,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      }
+    },
+    {
+      "id": "MTK8OM119L00OSRM",
+      "debit": 1600000,
+      "credit": 0,
+      "txnId": "MTK8OM114BA3I1NJ",
+      "date": "2026-09-02",
+      "description": "From Abdullah /meezan 0264470",
+      "month": 9,
+      "mainLedger": "Parties",
+      "year": 2026,
+      "createdAt": 1788362206597,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTK8OM11HXNBJ76W",
+      "debit": 0,
+      "txnId": "MTK8OM114BA3I1NJ",
+      "date": "2026-09-02",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "description": "From Abdullah /meezan 0264470",
+      "month": 9,
+      "mainLedger": "Cash",
+      "createdAt": 1788362206597,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "year": 2026,
+      "credit": 1600000,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTLOAGH2GMI37KBR",
+      "year": 2026,
+      "type": "Cash Paid",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "description": "From haji naseer BAHL 1724390",
+      "credit": 800000,
+      "mainLedger": "Cash",
+      "month": 9,
+      "txnId": "MTLOAGH2UATZCMLC",
+      "debit": 0,
+      "date": "2026-09-03",
+      "createdAt": 1788448886246
+    },
+    {
+      "id": "MTLOAGH2JQTNHGS2",
+      "createdAt": 1788448886246,
+      "date": "2026-09-03",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "description": "From haji naseer BAHL 1724390",
+      "txnId": "MTLOAGH2UATZCMLC",
+      "mainLedger": "Parties",
+      "debit": 800000,
+      "credit": 0,
+      "year": 2026,
+      "month": 9,
+      "type": "Cash Paid"
+    },
+    {
+      "id": "MTLP0P571RN4I1JV",
+      "credit": 150000,
+      "txnId": "MTLP0P573LR55UNY",
+      "debit": 0,
+      "month": 9,
+      "type": "Cash Paid",
+      "createdAt": 1788450110539,
+      "relatedPartyId": "MTLOZV23AJFCJNBV",
+      "mainLedger": "Cash",
+      "year": 2026,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "date": "2026-09-03",
+      "description": "From haji naseer BAHL App 2828"
+    },
+    {
+      "id": "MTLP0P57N9CW6J5X",
+      "year": 2026,
+      "type": "Cash Paid",
+      "month": 9,
+      "debit": 150000,
+      "account": {
+        "id": "MTLOZV23AJFCJNBV",
+        "kind": "party"
+      },
+      "description": "From haji naseer BAHL App 2828",
+      "txnId": "MTLP0P573LR55UNY",
+      "date": "2026-09-03",
+      "mainLedger": "Parties",
+      "credit": 0,
+      "createdAt": 1788450110539
+    },
+    {
+      "id": "MTOFEFR63KECXGUI",
+      "type": "Cash Paid",
+      "mainLedger": "Parties",
+      "account": {
+        "kind": "party",
+        "id": "MTOFDQ282NZSKFVG"
+      },
+      "year": 2026,
+      "credit": 0,
+      "date": "2026-09-05",
+      "description": "From haji naseer BAHL1724277",
+      "month": 9,
+      "debit": 200000,
+      "createdAt": 1788615353922,
+      "txnId": "MTOFEFR5SOTFDKH9"
+    },
+    {
+      "id": "MTOFEFR6VTGOXJWX",
+      "year": 2026,
+      "type": "Cash Paid",
+      "relatedPartyId": "MTOFDQ282NZSKFVG",
+      "credit": 200000,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "mainLedger": "Cash",
+      "description": "From haji naseer BAHL1724277",
+      "date": "2026-09-05",
+      "month": 9,
+      "debit": 0,
+      "txnId": "MTOFEFR5SOTFDKH9",
+      "createdAt": 1788615353922
+    },
+    {
+      "id": "MTOFFMAJ2AXIS0V4",
+      "mainLedger": "Cash",
+      "type": "Cash Paid",
+      "year": 2026,
+      "createdAt": 1788615409051,
+      "description": "From haji naseer BAHL 1724253",
+      "relatedPartyId": "MTHGB4WDOXCPTINY",
+      "month": 9,
+      "date": "2026-09-05",
+      "txnId": "MTOFFMAI5I4Y1IJF",
+      "credit": 400000,
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "debit": 0
+    },
+    {
+      "id": "MTOFFMAJFP89LYWW",
+      "description": "From haji naseer BAHL 1724253",
+      "mainLedger": "Parties",
+      "date": "2026-09-05",
+      "account": {
+        "id": "MTHGB4WDOXCPTINY",
+        "kind": "party"
+      },
+      "credit": 0,
+      "debit": 400000,
+      "year": 2026,
+      "type": "Cash Paid",
+      "txnId": "MTOFFMAI5I4Y1IJF",
+      "createdAt": 1788615409051,
+      "month": 9
+    },
+    {
+      "id": "MTOFGPYKNXRURHAI",
+      "type": "Cash Paid",
+      "month": 9,
+      "year": 2026,
+      "account": {
+        "kind": "party",
+        "id": "MSYSZ5FWSFKCVXYK"
+      },
+      "debit": 1500000,
+      "txnId": "MTOFGPYJAUPILFYY",
+      "date": "2026-09-05",
+      "description": "From haji naseer BAHL 1724279",
+      "createdAt": 1788615460460,
+      "credit": 0,
+      "mainLedger": "Parties"
+    },
+    {
+      "id": "MTOFGPYKSPHX8XYK",
+      "type": "Cash Paid",
+      "year": 2026,
+      "relatedPartyId": "MSYSZ5FWSFKCVXYK",
+      "description": "From haji naseer BAHL 1724279",
+      "credit": 1500000,
+      "date": "2026-09-05",
+      "debit": 0,
+      "mainLedger": "Cash",
+      "txnId": "MTOFGPYJAUPILFYY",
+      "createdAt": 1788615460460,
+      "month": 9,
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      }
+    },
+    {
+      "id": "MTOFHOFZKB599SAE",
+      "createdAt": 1788615505151,
+      "description": "From haji naseer BAHL 1724278",
+      "mainLedger": "Cash",
+      "month": 9,
+      "date": "2026-09-05",
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "debit": 0,
+      "txnId": "MTOFHOFYTCYYWFC1",
+      "credit": 1693500,
+      "year": 2026,
+      "type": "Cash Paid",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      }
+    },
+    {
+      "id": "MTOFHOFZUXCJ80BC",
+      "description": "From haji naseer BAHL 1724278",
+      "mainLedger": "Parties",
+      "type": "Cash Paid",
+      "year": 2026,
+      "month": 9,
+      "txnId": "MTOFHOFYTCYYWFC1",
+      "date": "2026-09-05",
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      },
+      "credit": 0,
+      "createdAt": 1788615505151,
+      "debit": 1693500
+    },
+    {
+      "id": "MTOFISBWL62WTNC5",
+      "mainLedger": "Parties",
+      "createdAt": 1788615556844,
+      "description": "From haji naseer BAHL 1724225",
+      "date": "2026-09-05",
+      "debit": 350000,
+      "year": 2026,
+      "txnId": "MTOFISBVVAKKOB0P",
+      "type": "Cash Paid",
+      "credit": 0,
+      "month": 9,
+      "account": {
+        "kind": "party",
+        "id": "MSN6JNH9J7M4NOL7"
+      }
+    },
+    {
+      "id": "MTOFISBWUSXLEDSD",
+      "mainLedger": "Cash",
+      "account": {
+        "kind": "cash",
+        "id": "CASH"
+      },
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "credit": 350000,
+      "month": 9,
+      "date": "2026-09-05",
+      "txnId": "MTOFISBVVAKKOB0P",
+      "debit": 0,
+      "type": "Cash Paid",
+      "year": 2026,
+      "description": "From haji naseer BAHL 1724225",
+      "createdAt": 1788615556844
+    },
+    {
+      "id": "MTOFSX4CBA7KMT2V",
+      "account": {
+        "id": "MSN6JNH9J7M4NOL7",
+        "kind": "party"
+      },
+      "type": "Cash Paid",
+      "credit": 0,
+      "year": 2026,
+      "description": "From haji naseer Meezan 0263183",
+      "mainLedger": "Parties",
+      "month": 9,
+      "date": "2026-09-05",
+      "txnId": "MTOFSX4BQB3NK1HJ",
+      "debit": 42000,
+      "createdAt": 1788616029612
+    },
+    {
+      "id": "MTOFSX4CBP7IZPQF",
+      "createdAt": 1788616029612,
+      "date": "2026-09-05",
+      "type": "Cash Paid",
+      "month": 9,
+      "year": 2026,
+      "relatedPartyId": "MSN6JNH9J7M4NOL7",
+      "account": {
+        "id": "CASH",
+        "kind": "cash"
+      },
+      "debit": 0,
+      "txnId": "MTOFSX4BQB3NK1HJ",
+      "description": "From haji naseer Meezan 0263183",
+      "mainLedger": "Cash",
+      "credit": 42000
+    }
+  ]
+}

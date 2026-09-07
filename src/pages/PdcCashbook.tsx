@@ -290,7 +290,9 @@ export function PdcCashbook() {
         : `${formatNumber(shown.length)} of ${formatNumber(register.length)} shown`,
     },
     { key: 'expenses', label: 'Expenses', value: summary.totalExpenses, tone: 'neg' },
-    { key: 'receivable', label: 'Receivable', value: summary.totalReceivable, tone: 'pos' },
+    { key: 'receivable', label: 'Receivable', value: summary.totalReceivable, tone: 'pos', hint: 'owed to you' },
+    // The other side of the book, beside its opposite so the two read together.
+    { key: 'payable', label: 'Payable', value: summary.totalPayable, tone: 'neg', hint: 'you owe' },
     {
       key: 'all',
       label: summary.netProfit >= 0 ? 'Profit' : 'Loss',
