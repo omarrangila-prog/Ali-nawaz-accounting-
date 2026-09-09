@@ -71,9 +71,6 @@ const ENTRY_GROUPS: Array<{ label: string; buttons: EntryButton[] }> = [
       { kind: 'cash-received', label: 'Receive', icon: 'arrow-down', key: 'F3', variant: 'in', title: 'Money received — cash or cheque' },
       { kind: 'cash-paid', label: 'Pay', icon: 'arrow-up', key: 'F4', variant: 'out', title: 'Money paid — cash or cheque' },
       { kind: 'expense', label: 'Expense', icon: 'receipt', key: 'F5', variant: 'accent-orange', title: 'Rent, salary, fuel and other running costs' },
-      // Records an obligation WITHOUT moving money: use it when you owe a party
-      // but it is not a purchase. Pay does the opposite — it hands money over.
-      { kind: 'credit', label: 'Payable', icon: 'payable', key: 'F6', variant: 'out', title: 'Record that you OWE a party — no money moves' },
     ],
   },
 ]
@@ -173,7 +170,6 @@ export function PdcCashbook() {
         F3: () => openForm('cash-received'),
         F4: () => openForm('cash-paid'),
         F5: () => openForm('expense'),
-        F6: () => openForm('credit'),
         F8: () => navigate('/ledger'),
         F9: () => searchRef.current?.focus(),
         F10: () => navigate('/reports'),
@@ -290,9 +286,7 @@ export function PdcCashbook() {
         : `${formatNumber(shown.length)} of ${formatNumber(register.length)} shown`,
     },
     { key: 'expenses', label: 'Expenses', value: summary.totalExpenses, tone: 'neg' },
-    { key: 'receivable', label: 'Receivable', value: summary.totalReceivable, tone: 'pos', hint: 'owed to you' },
-    // The other side of the book, beside its opposite so the two read together.
-    { key: 'payable', label: 'Payable', value: summary.totalPayable, tone: 'neg', hint: 'you owe' },
+    { key: 'receivable', label: 'Receivable', value: summary.totalReceivable, tone: 'pos' },
     {
       key: 'all',
       label: summary.netProfit >= 0 ? 'Profit' : 'Loss',
