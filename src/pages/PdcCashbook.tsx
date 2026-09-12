@@ -89,6 +89,30 @@ export function PdcCashbook() {
   const [selParty, setSelParty] = useState('');
   const [filters, setFilters] = useState<RegisterFilters>(EMPTY_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
+
+  /** First and last day of the month containing `d` (an ISO date). */
+  const monthBounds = (d: string) => {
+    const [y, m] = d.split('-').map(Number);
+    const last = new Date(y, m, 0).getDate();
+    const mm = String(m).padStart(2, '0');
+    return { from: `${y}-${mm}-01`, to: `${y}-${mm}-${String(last).padStart(2, '0')}` };
+  };
+  const thisMonth = monthBounds(today);
+  /** Is the current date filter exactly one whole calendar month? */
+  const monthOn = (b: { from: string; to: string }) => filters.from === b.from && filters.to === b.to;
+  /** Step the filter to the previous / next month from whatever month is shown. */
+  const stepMonth = (delta: number) => {
+    const base = filters.from || today;
+    const [y, m] = base.split('-').map(Number);
+    const d = new Date(y, m - 1 + delta, 1);
+    const b = monthBounds(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`);
+    setFilters((f) => ({ ...f, from: b.from, to: b.to }));
+  };
+  const shownMonthLabel = filters.from
+    ? new Date(Number(filters.from.slice(0, 4)), Number(filters.from.slice(5, 7)) - 1, 1)
+        .toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+    : '';
+
   const [selected, setSelected] = useState(-1);
   const [detail, setDetail] = useState<RegisterRow | null>(null);
   const [chequeAction, setChequeAction] = useState<{ id: string; action: ChequeAction }>({ id: '', action: null });
@@ -113,6 +137,10 @@ export function PdcCashbook() {
    * pdcRegister so the same rule is tested and cannot drift from the screen.
    */
   const totals = useMemo(() => rowTotals(shown), [shown]);
+  const periodSales = useMemo(
+    () => rowTotals(shown.filter((r) => r.txn.type === 'Sale')).amount,
+    [shown]
+  );
 
   const openForm = (kind: PdcFormKind) => {
     setFormParty(selParty);
@@ -274,6 +302,14 @@ export function PdcCashbook() {
       hint: 'open the Cash Account',
       go: '/ledger?cash=1',
     },
+    // Sales for the period on screen: this month, a stepped month, or all.
+    {
+      key: 'sales',
+      label: shownMonthLabel ? `Sales · ${shownMonthLabel}` : 'Sales',
+      value: periodSales,
+      tone: 'pos',
+      hint: shownMonthLabel ? 'for the month shown' : 'all dates',
+    },
     // How much stock actually moved, across the rows currently shown.
     {
       key: 'all',
@@ -428,6 +464,8 @@ export function PdcCashbook() {
               set: () => setFilters((f) => ({ ...f, card: 'all', method: 'all', type: 'all', from: '', to: '' })) },
             { label: 'Today', on: filters.from === today && filters.to === today,
               set: () => setFilters((f) => ({ ...f, from: today, to: today })) },
+            { label: 'This Month', on: monthOn(thisMonth),
+              set: () => setFilters((f) => ({ ...f, from: thisMonth.from, to: thisMonth.to })) },
             // Sales and Purchases switch the list to the simplified invoice
             // layout — Date, Item, Qty, Rate, Description, Party, Amount. They
             // belong on the front of the screen, not buried under Filters.
@@ -460,6 +498,15 @@ export function PdcCashbook() {
               {c.label}
             </button>
           ))}
+          {/* Step month by month — every month's sales, purchases and totals
+              without typing a date range. */}
+          <span className="month-stepper">
+            <button className="chip" title="Previous month" onClick={() => stepMonth(-1)}>‹</button>
+            <span className="faint" style={{ minWidth: 110, textAlign: 'center' }}>
+              {shownMonthLabel || 'All dates'}
+            </span>
+            <button className="chip" title="Next month" onClick={() => stepMonth(1)}>›</button>
+          </span>
         </div>
 
         <div className="pdc-search-row">
