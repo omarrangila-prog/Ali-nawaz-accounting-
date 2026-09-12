@@ -43,6 +43,8 @@ export function PdcLedger() {
   );
   /** Narrows the party list by name — with dozens of parties, scanning is slow. */
   const [partySearch, setPartySearch] = useState('');
+  /** Which lines of the statement to show: everything, money in, or money out. */
+  const [lineKind, setLineKind] = useState<'all' | 'receive' | 'pay' | 'sale' | 'purchase'>('all');
   const [detail, setDetail] = useState<RegisterRow | null>(null);
   const [toEdit, setToEdit] = useState<RegisterRow | null>(null);
   const [toDelete, setToDelete] = useState<string | null>(null);
@@ -158,9 +160,40 @@ export function PdcLedger() {
    * register's on-screen feel, but a statement has to read downwards so each
    * running balance follows from the line above it.
    */
-  const statementRows = useMemo(
+  const allStatementRows = useMemo(
     () => (ledger ? [...ledger.rows].reverse() : []),
     [ledger]
+  );
+  const LINE_TYPES: Record<string, string[]> = {
+    receive: ['Cash Received', 'PDC Received', 'Cheque Cleared'],
+    pay: ['Cash Paid', 'PDC Issued'],
+    sale: ['Sale'],
+    purchase: ['Purchase'],
+  };
+  const statementRows = useMemo(() => {
+    if (lineKind === 'all') return allStatementRows;
+    const want = LINE_TYPES[lineKind];
+    return allStatementRows.filter((r) => r.txn && want.includes(r.txn.type));
+  }, [allStatementRows, lineKind]);
+
+  /** Counts per kind, so the chips say what they will show before clicking. */
+  const lineCounts = useMemo(() => {
+    const c = { all: allStatementRows.length, receive: 0, pay: 0, sale: 0, purchase: 0 };
+    for (const r of allStatementRows) {
+      const t = r.txn?.type;
+      if (!t) continue;
+      if (LINE_TYPES.receive.includes(t)) c.receive++;
+      else if (LINE_TYPES.pay.includes(t)) c.pay++;
+      else if (t === 'Sale') c.sale++;
+      else if (t === 'Purchase') c.purchase++;
+    }
+    return c;
+  }, [allStatementRows]);
+
+  /** Total of the lines shown, so a filtered view totals itself. */
+  const shownTotal = useMemo(
+    () => statementRows.reduce((s, r) => s + r.entry.debit - r.entry.credit, 0),
+    [statementRows]
   );
 
   /**
@@ -417,6 +450,33 @@ export function PdcLedger() {
         <div className="card">
           <div className="pdc-register-head">
             <div className="stmt-title" style={{ margin: 0 }}>{title} — Ledger</div>
+          </div>
+
+          {/* See only the receipts, only the payments, or only the trades on
+              this statement. The running balance stays the TRUE balance at
+              each line, so this is a selection from the real statement, not a
+              recalculated one. */}
+          <div className="quick-filters no-print" style={{ margin: '8px 0' }}>
+            {([
+              { id: 'all' as const, label: `All (${lineCounts.all})` },
+              { id: 'receive' as const, label: `Receive (${lineCounts.receive})` },
+              { id: 'pay' as const, label: `Pay (${lineCounts.pay})` },
+              { id: 'sale' as const, label: `Sales (${lineCounts.sale})` },
+              { id: 'purchase' as const, label: `Purchases (${lineCounts.purchase})` },
+            ]).map((c) => (
+              <button
+                key={c.id}
+                className={cx('chip', lineKind === c.id && 'chip-done')}
+                onClick={() => setLineKind(lineKind === c.id ? 'all' : c.id)}
+              >
+                {c.label}
+              </button>
+            ))}
+            {lineKind !== 'all' && statementRows.length > 0 && (
+              <span className="mono" style={{ marginLeft: 'auto', fontWeight: 700 }}>
+                {formatMoney(Math.abs(shownTotal), cur)}
+              </span>
+            )}
           </div>
 
           <div className="pdc-ledger-summary">
