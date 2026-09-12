@@ -435,6 +435,12 @@ export function PdcCashbook() {
               set: () => setFilters((f) => ({ ...f, type: f.type === 'Sale' ? 'all' : 'Sale' })) },
             { label: 'Purchases', on: filters.type === 'Purchase',
               set: () => setFilters((f) => ({ ...f, type: f.type === 'Purchase' ? 'all' : 'Purchase' })) },
+            // Money in and money out, each on its own — so a Pay entry is never
+            // read among receipts, or the other way round.
+            { label: 'Receive', on: filters.type === 'Cash Received',
+              set: () => setFilters((f) => ({ ...f, type: f.type === 'Cash Received' ? 'all' : 'Cash Received' })) },
+            { label: 'Pay', on: filters.type === 'Cash Paid',
+              set: () => setFilters((f) => ({ ...f, type: f.type === 'Cash Paid' ? 'all' : 'Cash Paid' })) },
             { label: 'Cash', on: filters.method === 'cash',
               set: () => setFilters((f) => ({ ...f, method: f.method === 'cash' ? 'all' : 'cash' })) },
             { label: 'Bank', on: filters.method === 'bank',
