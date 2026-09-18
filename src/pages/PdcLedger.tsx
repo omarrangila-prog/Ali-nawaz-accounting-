@@ -38,7 +38,7 @@ export function PdcLedger() {
   /** The Cash Account view — physical cash in hand, with nothing else in it. */
   const [showCash, setShowCash] = useState(params.get('cash') === '1');
   /** Which side of the book to list: everyone, only debtors, or only creditors. */
-  const [side, setSide] = useState<'all' | 'receivable' | 'payable'>(
+  const [side, setSide] = useState<'all' | 'receivable' | 'payable' | 'i-pay' | 'i-receive'>(
     (params.get('side') as 'receivable' | 'payable') ?? 'all'
   );
   /** Narrows the party list by name — with dozens of parties, scanning is slow. */
@@ -67,6 +67,28 @@ export function PdcLedger() {
    */
   const balances = useMemo(() => partyBalances(data), [data]);
 
+  /**
+   * Who a party IS to the business, taken from what has actually happened with
+   * them rather than from the sign of their balance:
+   *
+   *   paid     — money has gone out to them (a supplier / payee)
+   *   received — money has come in from them (a customer)
+   *
+   * A party can be both. This is separate from receivable/payable, which only
+   * says which way the balance currently leans — a supplier you have paid in
+   * advance shows as receivable, and that is correct but not what you want to
+   * read when asking "who do I pay?".
+   */
+  const roles = useMemo(() => {
+    const paid = new Set<string>(), received = new Set<string>();
+    for (const t of data.transactions) {
+      if (t.reversed || !t.partyId) continue;
+      if (t.type === 'Cash Paid' || t.type === 'PDC Issued' || t.type === 'Purchase') paid.add(t.partyId);
+      if (t.type === 'Cash Received' || t.type === 'PDC Received' || t.type === 'Sale') received.add(t.partyId);
+    }
+    return { paid, received };
+  }, [data.transactions]);
+
   const partyRows = useMemo(
     () =>
       data.parties
@@ -80,7 +102,9 @@ export function PdcLedger() {
     receivable: partyRows.filter((r) => r.balance > 0).length,
     payable: partyRows.filter((r) => r.balance < 0).length,
     settled: partyRows.filter((r) => r.balance === 0).length,
-  }), [partyRows]);
+    iPay: partyRows.filter((r) => roles.paid.has(r.party.id)).length,
+    iReceive: partyRows.filter((r) => roles.received.has(r.party.id)).length,
+  }), [partyRows, roles]);
 
   /** Total owed to you, and total you owe — the headline for the chosen side. */
   const sideTotals = useMemo(() => ({
@@ -92,10 +116,12 @@ export function PdcLedger() {
     const bySide =
       side === 'receivable' ? partyRows.filter((r) => r.balance > 0)
         : side === 'payable' ? partyRows.filter((r) => r.balance < 0)
+        : side === 'i-pay' ? partyRows.filter((r) => roles.paid.has(r.party.id))
+        : side === 'i-receive' ? partyRows.filter((r) => roles.received.has(r.party.id))
         : partyRows;
     const q = partySearch.trim().toLowerCase();
     return q ? bySide.filter((r) => r.party.name.toLowerCase().includes(q)) : bySide;
-  }, [partyRows, side, partySearch]);
+  }, [partyRows, side, partySearch, roles]);
 
   // The balance rides along in the dropdown, so which side a party is on is
   // visible while choosing rather than only after opening the ledger.
@@ -251,6 +277,9 @@ export function PdcLedger() {
               label: `Payable (${counts.payable})`,
               hint: formatMoney(sideTotals.payable, cur),
             },
+            // By ROLE, not by balance: who you pay, and who pays you.
+            { id: 'i-pay' as const, label: `I Pay (${counts.iPay})`, hint: '' },
+            { id: 'i-receive' as const, label: `I Receive (${counts.iReceive})`, hint: '' },
           ]).map((c) => (
             <button
               key={c.id}
@@ -262,7 +291,9 @@ export function PdcLedger() {
                 // contradict the filter just chosen.
                 const still = c.id === 'all'
                   || (c.id === 'receivable' && (balances.get(partyId) ?? 0) > 0)
-                  || (c.id === 'payable' && (balances.get(partyId) ?? 0) < 0);
+                  || (c.id === 'payable' && (balances.get(partyId) ?? 0) < 0)
+                  || (c.id === 'i-pay' && roles.paid.has(partyId))
+                  || (c.id === 'i-receive' && roles.received.has(partyId));
                 if (partyId && !still) setPartyId('');
               }}
             >
@@ -358,6 +389,8 @@ export function PdcLedger() {
             <div className="stmt-title" style={{ margin: 0 }}>
               {side === 'receivable' ? 'Receivable Parties'
                 : side === 'payable' ? 'Payable Parties'
+                : side === 'i-pay' ? 'Parties I Pay'
+                : side === 'i-receive' ? 'Parties I Receive From'
                 : 'All Parties'}
               {' · '}{formatNumber(shownParties.length)}
             </div>
