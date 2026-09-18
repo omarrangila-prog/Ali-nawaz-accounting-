@@ -20,8 +20,13 @@ import { fileURLToPath } from 'node:url';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 
-/** The cheque numbers to mark as paid in cash. */
-const NUMBERS = ['12165219', '12165220'];
+/**
+ * The cheque numbers to mark as paid in cash.
+ *
+ * #12165220 was deliberately left out: only one of Javed's two 500,000 cheques
+ * has been paid. Add it here when the second one is honoured.
+ */
+const NUMBERS = ['12165219'];
 const WORKSPACE = 'bond-workspace';
 const HERE = (f) => fileURLToPath(new URL(f, import.meta.url));
 const BACKUP = HERE('./clear-cheques-backup.json');
