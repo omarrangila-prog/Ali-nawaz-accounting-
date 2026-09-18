@@ -18,3 +18,7 @@ firebase-debug.log
 release
 
 .vercel
+
+# Migration backups: live financial records, kept on disk as the undo path
+# for the tools/ scripts. Not pushed — say the word if you want them in git.
+tools/*-backup.json

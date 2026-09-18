@@ -23,10 +23,12 @@ import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from 'fireb
 /**
  * The cheque numbers to mark as paid in cash.
  *
- * #12165220 was deliberately left out: only one of Javed's two 500,000 cheques
- * has been paid. Add it here when the second one is honoured.
+ * Deliberately EMPTY. Neither of Javed naik amal's 500,000 cheques is being
+ * cleared: #12165220 is being deleted as an error instead, and #12165219 stays
+ * pending, so cash in hand remains 561,150. Add a number here when a cheque is
+ * actually honoured — running this as it stands does nothing.
  */
-const NUMBERS = ['12165219'];
+const NUMBERS = [];
 const WORKSPACE = 'bond-workspace';
 const HERE = (f) => fileURLToPath(new URL(f, import.meta.url));
 const BACKUP = HERE('./clear-cheques-backup.json');
