@@ -60,6 +60,7 @@ export type PdcReportId =
   | 'party-statement'
   | 'bank-ledger'
   | 'cash-ledger'
+  | 'pay-report'
   | 'debit-credit'
   | 'daily'
   | 'monthly'
@@ -101,6 +102,7 @@ export const PDC_REPORTS: PdcReportMeta[] = [
   { id: 'trial-balance', title: 'Trial Balance', description: 'Every account with its debit or credit — totals must agree', group: 'Financial', icon: 'scale', tone: 'slate', featured: true },
   { id: 'receivable', title: 'Receivable Report', description: 'Outstanding amounts owed to you', group: 'Financial', icon: 'receivable', tone: 'green' },
   { id: 'payable', title: 'Payable Report', description: 'Outstanding amounts you owe', group: 'Financial', icon: 'payable', tone: 'red' },
+  { id: 'pay-report', title: 'Pay Report', description: 'Who you have paid, and who you still need to pay', group: 'Financial', icon: 'arrow-up', tone: 'orange', featured: true },
   { id: 'debit-credit', title: 'Debit & Credit', description: 'All manual adjustments', group: 'Financial', icon: 'scale', tone: 'slate' },
 
   // --- Trading ---
@@ -602,6 +604,80 @@ export function buildPdcReport(
         ],
         numericCols: [1],
       });
+      break;
+    }
+
+    /**
+     * PAY REPORT — the two questions asked together: who has been paid, and
+     * who is still owed.
+     *
+     * Payments come from the transactions themselves; the amount still owed
+     * comes from the party balances, replayed from the ledger. So the second
+     * half is always the CURRENT position, not a running tally that could
+     * drift from it.
+     */
+    case 'pay-report': {
+      const paid = data.transactions
+        .filter((t) => isLive(t) && t.type === 'Cash Paid' && inRange(t.date, f)
+          && (!f.partyId || t.partyId === f.partyId))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      const paidTotal = paid.reduce((s, t) => s + t.amount, 0);
+
+      // Paid per party, biggest first — who has had the most money.
+      const perParty = new Map<string, { n: number; amt: number }>();
+      for (const t of paid) {
+        const k = t.partyId ?? '';
+        const cur = perParty.get(k) ?? { n: 0, amt: 0 };
+        cur.n += 1; cur.amt += t.amount;
+        perParty.set(k, cur);
+      }
+      const paidRows = [...perParty.entries()]
+        .map(([pid, x]) => ({ name: partyName(data, pid) || '—', ...x }))
+        .sort((a, b) => b.amt - a.amt);
+
+      // Who is still owed, from the live balances.
+      const bal = partyBalances(data);
+      const owed = data.parties
+        .map((p) => ({ p, bal: bal.get(p.id) ?? 0 }))
+        .filter((x) => x.bal < 0 && (!f.partyId || x.p.id === f.partyId))
+        .sort((a, b) => a.bal - b.bal);
+      const owedTotal = owed.reduce((s, x) => s - x.bal, 0);
+
+      sections.push({
+        title: 'Paid — by party',
+        subtitle: `${paid.length} payment${paid.length === 1 ? '' : 's'}, largest first`,
+        emptyText: 'No payments in this period.',
+        head: ['Party', 'Payments', 'Total Paid'],
+        numericCols: [1, 2],
+        rows: paidRows.map((r) => [r.name, String(r.n), m(r.amt)]),
+        foot: ['Total Paid', String(paid.length), m(paidTotal)],
+      });
+
+      sections.push({
+        title: 'Paid — every payment',
+        subtitle: 'In date order',
+        emptyText: 'No payments in this period.',
+        head: ['Date', 'Reference', 'Party', 'Description', 'Amount'],
+        numericCols: [4],
+        rows: paid.map((t) => [
+          formatDate(t.date), t.reference, partyName(data, t.partyId) || '—',
+          t.description || '—', m(t.amount),
+        ]),
+        foot: ['', '', '', 'Total', m(paidTotal)],
+        newPage: true,
+      });
+
+      sections.push({
+        title: 'Still to pay — who you owe now',
+        subtitle: 'Current balances, largest first',
+        emptyText: 'You do not owe anybody right now.',
+        head: ['Party', 'Amount Payable'],
+        numericCols: [1],
+        rows: owed.map((x) => [x.p.name, m(-x.bal)]),
+        foot: ['Total Payable', m(owedTotal)],
+        newPage: true,
+      });
+
       break;
     }
 
