@@ -28,6 +28,7 @@ import {
   EMPTY_FILTERS,
   lowBalanceAccounts,
   rowTotals,
+  settledState,
   type RegisterFilters,
 } from '@/lib/pdcRegister';
 import { bankBalances } from '@/lib/pdcEngine';
@@ -743,9 +744,26 @@ export function PdcCashbook() {
                         {formatMoney(row.running, cur)}
                       </td>
                       <td data-label="Status" className="mid">
-                        {row.status
-                          ? <span className={cx('pdc-status', `st-${row.status}`)}>{row.status}</span>
-                          : <span className="faint">—</span>}
+                        {/* Whether the money has actually moved, in plain
+                            words. The cheque's own status sits beneath it,
+                            because a recorded payment is not a paid one until
+                            the cheque clears. */}
+                        {(() => {
+                          const st = settledState(row);
+                          return (
+                            <>
+                              {st && (
+                                <span className={cx('pdc-status', st.tone === 'done' ? 'st-cleared' : 'st-pending')}>
+                                  {st.label}
+                                </span>
+                              )}
+                              {row.status && (
+                                <div className="faint" style={{ fontSize: 10.5 }}>{row.status}</div>
+                              )}
+                              {!st && !row.status && <span className="faint">—</span>}
+                            </>
+                          );
+                        })()}
                       </td>
                       <td data-label="Holder">{row.holderLabel || '—'}</td>
                       <td className="no-print actions-cell">

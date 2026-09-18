@@ -169,6 +169,43 @@ export function buildRegister(data: PdcDataSet): RegisterRow[] {
 }
 
 /**
+ * For a money entry, whether the money has ACTUALLY moved yet — in the plain
+ * words the user asks the question in.
+ *
+ *   'paid'        cash or bank has left, or the cheque has cleared
+ *   'need to pay' a cheque was issued but has not cleared, so the money is
+ *                 still owed despite the entry existing
+ *   'received'    money has come in
+ *   'due in'      a cheque was received but has not cleared yet
+ *
+ * A cheque entry is the whole reason this is not simply the entry's type: the
+ * payment is recorded, but nothing has left the account until it clears.
+ */
+export function settledState(
+  row: RegisterRow
+): { label: string; tone: 'done' | 'waiting' } | null {
+  const t = row.txn;
+  const out = t.type === 'Cash Paid' || t.type === 'PDC Issued' || t.type === 'Purchase';
+  const inn = t.type === 'Cash Received' || t.type === 'PDC Received' || t.type === 'Sale';
+  if (!out && !inn) return null;
+
+  const c = row.cheque;
+  if (c) {
+    // Only a cleared cheque has actually moved money.
+    if (c.status === 'cleared') return { label: out ? 'Paid' : 'Received', tone: 'done' };
+    if (['bounced', 'returned', 'cancelled'].includes(c.status)) {
+      return { label: out ? 'Need to Pay' : 'Not Received', tone: 'waiting' };
+    }
+    return { label: out ? 'Need to Pay' : 'Due In', tone: 'waiting' };
+  }
+  // A credit trade moves no money; the party settles it later.
+  if (t.type === 'Purchase') return { label: 'Need to Pay', tone: 'waiting' };
+  if (t.type === 'Sale') return { label: t.settlement === 'cash' ? 'Received' : 'Due In',
+                                  tone: t.settlement === 'cash' ? 'done' : 'waiting' };
+  return { label: out ? 'Paid' : 'Received', tone: 'done' };
+}
+
+/**
  * Totals for a set of register rows — what the Cash Book prints in its totals
  * row and its Total Quantity card.
  *
