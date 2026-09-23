@@ -20,6 +20,19 @@ import { bankAccountLabel, partyName } from './pdcEngine';
 import { buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, paymentMethodOf } from './pdcRegister';
 import { formatDate, formatNumber, todayISO } from './utils';
 
+/** Quantity / rate for a row, or a dash — the printed book shows them blank. */
+const qtyOf = (row: { txn?: any }): string =>
+  row.txn?.quantity !== undefined ? formatNumber(row.txn.quantity) : '-';
+const rateOf = (row: { txn?: any }): string =>
+  row.txn?.rate !== undefined ? formatNumber(row.txn.rate) : '-';
+
+/** How it was paid, worded exactly as the screen words it. */
+const methodOf = (data: PdcDataSet, row: { txn?: any }): string => {
+  if (!row.txn) return '-';
+  const { method } = paymentMethodOf(data, row.txn);
+  return method && method !== '—' ? method : '-';
+};
+
 /** A figure, or a dash when it is zero — as the printed ledger shows it. */
 const num = (n: number): string => (n ? formatNumber(n) : '-');
 
@@ -86,7 +99,11 @@ export function buildPartyWorksheet(data: PdcDataSet, partyId: string): jsPDF {
   const body: (string | number)[][] = [
     // Row one: the opening balance, always present.
     [
-      party?.createdAt ? formatDate(new Date(party.createdAt).toISOString().slice(0, 10)) : '',
+      // No date: an opening balance is the position BEFORE any transaction,
+      // not something that happened on a day. Printing the party's record
+      // creation timestamp here produced "01 Jan 1970" on older records.
+      '',
+      '-', '-', '-', '-',
       'Opening Balance',
       opening > 0 ? formatNumber(opening) : '-',
       opening < 0 ? formatNumber(-opening) : '-',
@@ -98,6 +115,10 @@ export function buildPartyWorksheet(data: PdcDataSet, partyId: string): jsPDF {
     running += r.entry.debit - r.entry.credit;
     body.push([
       formatDate(r.entry.date),
+      qtyOf(r),
+      rateOf(r),
+      methodOf(data, r),
+      r.cheque?.chequeNumber || '-',
       tafseelFor(data, r),
       num(r.entry.debit),
       num(r.entry.credit),
@@ -108,13 +129,15 @@ export function buildPartyWorksheet(data: PdcDataSet, partyId: string): jsPDF {
   const totalDebit = chrono.reduce((s, r) => s + r.entry.debit, 0) + Math.max(opening, 0);
   const totalCredit = chrono.reduce((s, r) => s + r.entry.credit, 0) + Math.max(-opening, 0);
 
+  // The same columns the screen shows, in the same order, so a printed
+  // statement can be read against the screen line for line.
   const section: PdfSection = {
     title: `${party?.name ?? 'Party'} Statement`,
-    head: ['Date', 'Tafseel', 'Debit (-)', 'Credit (+)', 'Balance'],
+    head: ['Date', 'Qty', 'Rate', 'Method', 'Cheque #', 'Tafseel', 'Debit (-)', 'Credit (+)', 'Balance'],
     rows: body,
-    foot: ['', 'Total', formatNumber(totalDebit), formatNumber(totalCredit), bal(running)],
-    numericCols: [2, 3, 4],
-    wideCol: 1,          // Tafseel carries the user's own words
+    foot: ['', '', '', '', '', 'Total', formatNumber(totalDebit), formatNumber(totalCredit), bal(running)],
+    numericCols: [1, 2, 6, 7, 8],
+    wideCol: 5,          // Tafseel carries the user's own words
   };
 
   const now = new Date();
@@ -144,7 +167,7 @@ export function buildBankWorksheet(data: PdcDataSet, accountId: string): jsPDF {
   let running = opening;
   const body: (string | number)[][] = [
     // Row one is ALWAYS the opening balance, even at zero.
-    ['', 'Opening Balance', '-',
+    ['', '-', '-', '-', '-', 'Opening Balance',
       opening > 0 ? formatNumber(opening) : '-',
       opening < 0 ? formatNumber(-opening) : '-',
       bal(opening)],
@@ -155,8 +178,11 @@ export function buildBankWorksheet(data: PdcDataSet, accountId: string): jsPDF {
     running += r.entry.debit - r.entry.credit;
     body.push([
       formatDate(r.entry.date),
-      tafseelFor(data, r),
+      qtyOf(r),
+      rateOf(r),
+      methodOf(data, r),
       r.cheque?.chequeNumber || '-',
+      tafseelFor(data, r),
       num(r.entry.debit),
       num(r.entry.credit),
       bal(running),
@@ -174,11 +200,11 @@ export function buildBankWorksheet(data: PdcDataSet, accountId: string): jsPDF {
     year: now.getFullYear(),
     sections: [{
       title: `${label} Statement`,
-      head: ['Date', 'Tafseel', 'Cheque #', 'Deposit (+)', 'Withdraw (-)', 'Balance'],
+      head: ['Date', 'Qty', 'Rate', 'Method', 'Cheque #', 'Tafseel', 'Deposit (+)', 'Withdraw (-)', 'Balance'],
       rows: body,
-      foot: ['', 'Total', '', formatNumber(deposits), formatNumber(withdrawals), bal(running)],
-      numericCols: [3, 4, 5],
-      wideCol: 1,
+      foot: ['', '', '', '', '', 'Total', formatNumber(deposits), formatNumber(withdrawals), bal(running)],
+      numericCols: [1, 2, 6, 7, 8],
+      wideCol: 5,
     }],
   });
 }
@@ -189,12 +215,16 @@ export function buildCashBookWorksheet(data: PdcDataSet): jsPDF {
   const opening = data.bankAccounts.reduce((s, a) => s + a.openingBalance, 0);
 
   const body: (string | number)[][] = [
-    ['', 'Opening Balance', '', opening > 0 ? formatNumber(opening) : '-', '-', bal(opening)],
+    ['', '-', '-', 'Opening Balance', '-', '-',
+      opening > 0 ? formatNumber(opening) : '-', '-', bal(opening)],
   ];
   for (const r of reg) {
     body.push([
       formatDate(r.txn.date),
+      qtyOf(r),
+      rateOf(r),
       r.partyName || '-',
+      r.cheque?.chequeNumber || '-',
       tafseelFor(data, { entry: { description: r.txn.description ?? '', type: r.txn.type }, txn: r.txn, cheque: r.cheque }),
       num(r.debit),
       num(r.credit),
@@ -210,14 +240,14 @@ export function buildCashBookWorksheet(data: PdcDataSet): jsPDF {
     year: now.getFullYear(),
     sections: [{
       title: 'Cash Book Statement',
-      head: ['Date', 'Party', 'Tafseel', 'Debit (-)', 'Credit (+)', 'Balance'],
+      head: ['Date', 'Qty', 'Rate', 'Party', 'Cheque #', 'Tafseel', 'Debit (-)', 'Credit (+)', 'Balance'],
       rows: body,
-      foot: ['', '', 'Total',
+      foot: ['', '', '', '', '', 'Total',
         formatNumber(reg.reduce((s, r) => s + r.debit, 0)),
         formatNumber(reg.reduce((s, r) => s + r.credit, 0)),
         bal(reg.length ? reg[reg.length - 1].running : opening)],
-      numericCols: [3, 4, 5],
-      wideCol: 2,
+      numericCols: [1, 2, 6, 7, 8],
+      wideCol: 5,
     }],
   });
 }
@@ -237,14 +267,17 @@ export function buildCashWorksheet(data: PdcDataSet): jsPDF {
   let running = 0;
   const body: (string | number)[][] = [
     // Cash always starts from nothing: it is created by the entries below it.
-    ['', 'Opening Balance', '-', '-', '-', bal(0)],
+    ['', '-', '-', '-', '-', 'Opening Balance', '-', '-', bal(0)],
   ];
   for (const r of chrono) {
     running += r.entry.debit - r.entry.credit;
     body.push([
       formatDate(r.entry.date),
-      tafseelFor(data, r),
+      qtyOf(r),
+      rateOf(r),
       r.txn?.type ?? '-',
+      r.cheque?.chequeNumber || '-',
+      tafseelFor(data, r),
       num(r.entry.debit),
       num(r.entry.credit),
       bal(running),
@@ -260,11 +293,11 @@ export function buildCashWorksheet(data: PdcDataSet): jsPDF {
     sections: [
       {
         title: 'Cash Account',
-        head: ['Date', 'Tafseel', 'Type', 'Cash In (+)', 'Cash Out (-)', 'Balance'],
+        head: ['Date', 'Qty', 'Rate', 'Type', 'Cheque #', 'Tafseel', 'Cash In (+)', 'Cash Out (-)', 'Balance'],
         rows: body,
-        foot: ['', 'Total', '', formatNumber(totalIn), formatNumber(totalOut), bal(balance)],
-        numericCols: [3, 4, 5],
-        wideCol: 1,
+        foot: ['', '', '', '', '', 'Total', formatNumber(totalIn), formatNumber(totalOut), bal(balance)],
+        numericCols: [1, 2, 6, 7, 8],
+        wideCol: 5,
       },
       {
         // Where the cash came from and what it went on, so the balance above is
