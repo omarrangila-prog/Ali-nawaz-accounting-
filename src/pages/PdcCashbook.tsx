@@ -651,7 +651,7 @@ export function PdcCashbook() {
                       <th className="num">Qty</th><th className="num">Rate</th>
                       <th className="mid">Method</th>
                       <th>Description</th>
-                      <th>From Party</th><th>To Party</th>
+                      <th>From</th><th>To</th>
                       <th className="mid">Cheque #</th><th className="mid">Due Date</th><th>Bank</th>
                       <th className="num">Debit</th><th className="num">Credit</th>
                       <th className="num">Balance</th>
@@ -733,8 +733,11 @@ export function PdcCashbook() {
                         {row.bankName && <div className="faint method-bank">{row.bankName}</div>}
                       </td>
                       <td data-label="Description">{txn.description || '—'}</td>
-                      <td data-label="From Party">{row.partyName || '—'}</td>
-                      <td data-label="To Party">{row.toPartyName || '—'}</td>
+                      {/* Read off the posting: a Receive reads "Javed → Cash in
+                          Hand", a Pay "Cash in Hand → Ali", exactly the way a
+                          cheque names who it came from and who it went to. */}
+                      <td data-label="From">{row.fromName}</td>
+                      <td data-label="To">{row.toName}</td>
                       <td data-label="Cheque #" className="mono mid">{cheque?.chequeNumber ?? '—'}</td>
                       <td data-label="Due Date" className="mid">{cheque ? formatDate(cheque.chequeDate) : '—'}</td>
                       <td data-label="Bank">{row.bankLabel || '—'}</td>

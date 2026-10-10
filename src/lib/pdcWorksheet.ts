@@ -17,7 +17,10 @@ import type { Settings } from '@/types';
 import type { PdcDataSet } from '@/types/pdc';
 import { buildReportPdf, type PdfSection } from './exportPdf';
 import { bankAccountLabel, partyName } from './pdcEngine';
-import { buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, paymentMethodOf } from './pdcRegister';
+import {
+  buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, paymentMethodOf,
+  type PartyLedgerRow,
+} from './pdcRegister';
 import { formatDate, formatNumber, todayISO } from './utils';
 
 /** Quantity / rate for a row, or a dash — the printed book shows them blank. */
@@ -81,6 +84,72 @@ function tafseelFor(
 }
 
 /**
+ * The columns every printed ledger carries — party, bank and cash alike, on
+ * the Party Ledger page and on the Reports page — in the order the screen
+ * shows them, so a printout can be read against the screen line for line.
+ */
+export function ledgerHead(inLabel: string, outLabel: string): string[] {
+  return ['Date', 'Qty', 'Rate', 'Method', 'From', 'To', 'Cheque #', 'Tafseel', inLabel, outLabel, 'Balance'];
+}
+export const LEDGER_NUMERIC_COLS = [1, 2, 8, 9, 10];
+/** Tafseel carries the user's own words, so it gets the spare width. */
+export const LEDGER_WIDE_COL = 7;
+/**
+ * How the page width is shared out: From and To carry party and bank names,
+ * so they get the most room; Qty, Rate and Method only ever hold a short word
+ * or figure.
+ */
+export const LEDGER_COL_WEIGHTS = [1.1, 0.75, 0.75, 0.8, 1.75, 1.75, 1.0, 1.6, 1.0, 1.0, 1.2];
+
+/**
+ * The body of a printed ledger: the opening figure first, then each line
+ * oldest-first with its running balance, then the totals row.
+ *
+ * `opening` is the balance the page starts from — the account's opening
+ * balance, or what was brought forward when the page starts mid-way.
+ */
+export function ledgerTable(
+  data: PdcDataSet,
+  chrono: PartyLedgerRow[],
+  opening: number,
+  openingLabel = 'Opening Balance'
+): { rows: string[][]; foot: string[]; closing: number } {
+  let running = opening;
+  const rows: string[][] = [
+    // No date: an opening balance is the position BEFORE any transaction,
+    // not something that happened on a day. Printing the record creation
+    // timestamp here produced "01 Jan 1970" on older records.
+    ['', '-', '-', '-', '-', '-', '-', openingLabel,
+      opening > 0 ? formatNumber(opening) : '-',
+      opening < 0 ? formatNumber(-opening) : '-',
+      bal(opening)],
+  ];
+  for (const r of chrono) {
+    running += r.entry.debit - r.entry.credit;
+    rows.push([
+      formatDate(r.entry.date),
+      qtyOf(r),
+      rateOf(r),
+      methodOf(data, r),
+      r.from,
+      r.to,
+      r.cheque?.chequeNumber || '-',
+      tafseelFor(data, r),
+      num(r.entry.debit),
+      num(r.entry.credit),
+      bal(running),
+    ]);
+  }
+  const totalIn = chrono.reduce((s, r) => s + r.entry.debit, 0) + Math.max(opening, 0);
+  const totalOut = chrono.reduce((s, r) => s + r.entry.credit, 0) + Math.max(-opening, 0);
+  return {
+    rows,
+    foot: ['', '', '', '', '', '', '', 'Total', formatNumber(totalIn), formatNumber(totalOut), bal(running)],
+    closing: running,
+  };
+}
+
+/**
  * Party ledger in the worksheet format.
  *
  * The FIRST row is always the Opening Balance, so the statement starts from a
@@ -95,49 +164,15 @@ export function buildPartyWorksheet(data: PdcDataSet, partyId: string): jsPDF {
   // oldest-first so the running balance builds down the page.
   const chrono = [...rows].reverse();
 
-  let running = opening;
-  const body: (string | number)[][] = [
-    // Row one: the opening balance, always present.
-    [
-      // No date: an opening balance is the position BEFORE any transaction,
-      // not something that happened on a day. Printing the party's record
-      // creation timestamp here produced "01 Jan 1970" on older records.
-      '',
-      '-', '-', '-', '-',
-      'Opening Balance',
-      opening > 0 ? formatNumber(opening) : '-',
-      opening < 0 ? formatNumber(-opening) : '-',
-      bal(opening),
-    ],
-  ];
-
-  for (const r of chrono) {
-    running += r.entry.debit - r.entry.credit;
-    body.push([
-      formatDate(r.entry.date),
-      qtyOf(r),
-      rateOf(r),
-      methodOf(data, r),
-      r.cheque?.chequeNumber || '-',
-      tafseelFor(data, r),
-      num(r.entry.debit),
-      num(r.entry.credit),
-      bal(running),
-    ]);
-  }
-
-  const totalDebit = chrono.reduce((s, r) => s + r.entry.debit, 0) + Math.max(opening, 0);
-  const totalCredit = chrono.reduce((s, r) => s + r.entry.credit, 0) + Math.max(-opening, 0);
-
-  // The same columns the screen shows, in the same order, so a printed
-  // statement can be read against the screen line for line.
+  const table = ledgerTable(data, chrono, opening);
   const section: PdfSection = {
     title: `${party?.name ?? 'Party'} Statement`,
-    head: ['Date', 'Qty', 'Rate', 'Method', 'Cheque #', 'Tafseel', 'Debit (-)', 'Credit (+)', 'Balance'],
-    rows: body,
-    foot: ['', '', '', '', '', 'Total', formatNumber(totalDebit), formatNumber(totalCredit), bal(running)],
-    numericCols: [1, 2, 6, 7, 8],
-    wideCol: 5,          // Tafseel carries the user's own words
+    head: ledgerHead('Debit (-)', 'Credit (+)'),
+    rows: table.rows,
+    foot: table.foot,
+    numericCols: LEDGER_NUMERIC_COLS,
+    wideCol: LEDGER_WIDE_COL,
+    colWeights: LEDGER_COL_WEIGHTS,
   };
 
   const now = new Date();
@@ -164,33 +199,9 @@ export function buildBankWorksheet(data: PdcDataSet, accountId: string): jsPDF {
   const opening = account?.openingBalance ?? 0;
   const chrono = [...rows].reverse();   // oldest first, so the balance builds
 
-  let running = opening;
-  const body: (string | number)[][] = [
-    // Row one is ALWAYS the opening balance, even at zero.
-    ['', '-', '-', '-', '-', 'Opening Balance',
-      opening > 0 ? formatNumber(opening) : '-',
-      opening < 0 ? formatNumber(-opening) : '-',
-      bal(opening)],
-  ];
-  for (const r of chrono) {
-    // On a bank account a debit is money IN (a deposit) and a credit is money
-    // OUT (a withdrawal) — the customer's view, which is how a statement reads.
-    running += r.entry.debit - r.entry.credit;
-    body.push([
-      formatDate(r.entry.date),
-      qtyOf(r),
-      rateOf(r),
-      methodOf(data, r),
-      r.cheque?.chequeNumber || '-',
-      tafseelFor(data, r),
-      num(r.entry.debit),
-      num(r.entry.credit),
-      bal(running),
-    ]);
-  }
-
-  const deposits = chrono.reduce((s, r) => s + r.entry.debit, 0) + Math.max(opening, 0);
-  const withdrawals = chrono.reduce((s, r) => s + r.entry.credit, 0) + Math.max(-opening, 0);
+  // On a bank account a debit is money IN (a deposit) and a credit is money
+  // OUT (a withdrawal) — the customer's view, which is how a statement reads.
+  const table = ledgerTable(data, chrono, opening);
 
   const now = new Date();
   return buildReportPdf({
@@ -200,11 +211,12 @@ export function buildBankWorksheet(data: PdcDataSet, accountId: string): jsPDF {
     year: now.getFullYear(),
     sections: [{
       title: `${label} Statement`,
-      head: ['Date', 'Qty', 'Rate', 'Method', 'Cheque #', 'Tafseel', 'Deposit (+)', 'Withdraw (-)', 'Balance'],
-      rows: body,
-      foot: ['', '', '', '', '', 'Total', formatNumber(deposits), formatNumber(withdrawals), bal(running)],
-      numericCols: [1, 2, 6, 7, 8],
-      wideCol: 5,
+      head: ledgerHead('Deposit (+)', 'Withdraw (-)'),
+      rows: table.rows,
+      foot: table.foot,
+      numericCols: LEDGER_NUMERIC_COLS,
+      wideCol: LEDGER_WIDE_COL,
+      colWeights: LEDGER_COL_WEIGHTS,
     }],
   });
 }
@@ -264,25 +276,8 @@ export function buildCashWorksheet(data: PdcDataSet): jsPDF {
   const { rows, balance, totalIn, totalOut, breakdown } = buildCashLedger(data);
   const chrono = [...rows].reverse();   // oldest first, so the balance builds
 
-  let running = 0;
-  const body: (string | number)[][] = [
-    // Cash always starts from nothing: it is created by the entries below it.
-    ['', '-', '-', '-', '-', 'Opening Balance', '-', '-', bal(0)],
-  ];
-  for (const r of chrono) {
-    running += r.entry.debit - r.entry.credit;
-    body.push([
-      formatDate(r.entry.date),
-      qtyOf(r),
-      rateOf(r),
-      r.txn?.type ?? '-',
-      r.cheque?.chequeNumber || '-',
-      tafseelFor(data, r),
-      num(r.entry.debit),
-      num(r.entry.credit),
-      bal(running),
-    ]);
-  }
+  // Cash always starts from nothing: it is created by the entries below it.
+  const table = ledgerTable(data, chrono, 0);
 
   const now = new Date();
   return buildReportPdf({
@@ -293,11 +288,12 @@ export function buildCashWorksheet(data: PdcDataSet): jsPDF {
     sections: [
       {
         title: 'Cash Account',
-        head: ['Date', 'Qty', 'Rate', 'Type', 'Cheque #', 'Tafseel', 'Cash In (+)', 'Cash Out (-)', 'Balance'],
-        rows: body,
-        foot: ['', '', '', '', '', 'Total', formatNumber(totalIn), formatNumber(totalOut), bal(balance)],
-        numericCols: [1, 2, 6, 7, 8],
-        wideCol: 5,
+        head: ledgerHead('Cash In (+)', 'Cash Out (-)'),
+        rows: table.rows,
+        foot: table.foot,
+        numericCols: LEDGER_NUMERIC_COLS,
+        wideCol: LEDGER_WIDE_COL,
+        colWeights: LEDGER_COL_WEIGHTS,
       },
       {
         // Where the cash came from and what it went on, so the balance above is

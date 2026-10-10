@@ -599,9 +599,10 @@ export function PdcLedger() {
                     <th className="mid">Date</th>
                     <th className="num">Qty</th><th className="num">Rate</th>
                     <th className="mid">Method</th>
-                    {/* Who it came from or went to, and the cheque it rode on —
-                        a statement line has to be readable on its own. */}
-                    <th>From / To</th>
+                    {/* Where the money came from and where it went — for cash
+                        exactly as for a cheque — so a statement line reads on
+                        its own: "Javed → Cash in Hand", "Cash in Hand → Ali". */}
+                    <th>From</th><th>To</th>
                     <th className="mid">Cheque #</th><th className="mid">Cheque Date</th>
                     <th>Description</th>
                     {/* On a bank account a debit is money IN and a credit is
@@ -623,7 +624,8 @@ export function PdcLedger() {
                     <td data-label="Qty" className="num mono">—</td>
                     <td data-label="Rate" className="num mono">—</td>
                     <td data-label="Method" className="mid"><span className="faint">—</span></td>
-                    <td data-label="From / To"><span className="faint">—</span></td>
+                    <td data-label="From"><span className="faint">—</span></td>
+                    <td data-label="To"><span className="faint">—</span></td>
                     <td data-label="Cheque #" className="mid"><span className="faint">—</span></td>
                     <td data-label="Cheque Date" className="mid"><span className="faint">—</span></td>
                     <td data-label="Description">
@@ -644,7 +646,7 @@ export function PdcLedger() {
                   </tr>
                   {/* Oldest first, so the running balance builds down the page
                       exactly as it does on the printed statement. */}
-                  {statementRows.map(({ entry, txn, cheque, running, relatedName, bankLabel }) => (
+                  {statementRows.map(({ entry, txn, cheque, running, from, to }) => (
                     <tr
                       key={entry.id}
                       className={cx(txn?.reversed && 'row-reversed')}
@@ -671,7 +673,8 @@ export function PdcLedger() {
                             : <span className={cx('method-pill', `m-${m.toLowerCase()}`)}>{m}</span>;
                         })()}
                       </td>
-                      <td data-label="From / To">{relatedName || bankLabel || '—'}</td>
+                      <td data-label="From">{from}</td>
+                      <td data-label="To">{to}</td>
                       <td data-label="Cheque #" className="mono mid">{cheque?.chequeNumber || '—'}</td>
                       <td data-label="Cheque Date" className="mid">{cheque ? formatDate(cheque.chequeDate) : '—'}</td>
                       <td data-label="Description">{describe(entry, txn)}</td>

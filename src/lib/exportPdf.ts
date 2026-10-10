@@ -21,6 +21,13 @@ export interface PdfSection {
    * (e.g. a Tafseel description). Optional — omitted, widths are unchanged.
    */
   wideCol?: number;
+  /**
+   * Relative width of each column. When given, the columns share the whole
+   * page width in these proportions (no spare columns are added), so names get
+   * room and short figures like Qty and Rate give it up. Takes the place of
+   * `wideCol`.
+   */
+  colWeights?: number[];
 }
 
 export interface PdfSummaryCard {
@@ -147,10 +154,19 @@ export function buildReportPdf(opts: {
     const totalUnits = (realCols - 1 + FIRST_MULT) + extraCols;
     let unit = usableW / totalUnits;
     if (unit < MIN_COL) { extraCols = 0; unit = usableW / (realCols - 1 + FIRST_MULT); }
+    const weights = section.colWeights?.length === realCols ? section.colWeights : undefined;
+    if (weights) extraCols = 0;
     const cols = realCols + extraCols;
     const pad = (arr: string[]) => [...arr, ...blankRow(extraCols)];
 
     const colStyles = (): Record<number, any> => {
+      if (weights) {
+        const sum = weights.reduce((a, b) => a + b, 0);
+        const cs: Record<number, any> = {};
+        weights.forEach((w, c) => { cs[c] = { cellWidth: (usableW * w) / sum }; });
+        (section.numericCols ?? []).forEach((c) => { cs[c] = { ...cs[c], halign: 'right' }; });
+        return cs;
+      }
       const cs: Record<number, any> = { 0: { halign: 'left', cellWidth: unit * FIRST_MULT } };
       for (let c = 1; c < cols; c++) cs[c] = { cellWidth: unit };
       // Give the free-text column the room it needs, taken evenly from the

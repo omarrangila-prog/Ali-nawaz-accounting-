@@ -7,6 +7,7 @@
  */
 
 import type {
+  AccountRef,
   Cheque,
   PdcDataSet,
   PdcLedgerEntry,
@@ -39,6 +40,135 @@ export function fundsDelta(data: PdcDataSet, txn: PdcTransaction): number {
     if (isFundsAccount(l.account)) delta += l.debit - l.credit;
   }
   return round2(delta);
+}
+
+// ---------------------------------------------------------------------------
+// From → To: where the money (or goods) on a line came from and went to
+// ---------------------------------------------------------------------------
+
+/** Both ends of a movement, named the way the user thinks of them. */
+export interface Flow {
+  from: string;
+  to: string;
+}
+
+/** The internal accounts, in plain words. */
+const INTERNAL_LABEL: Record<string, string> = {
+  [CASH_ACCOUNT_ID]: 'Cash in Hand',
+  ADJ: 'Adjustment',
+  'NOM:SALES': 'Sales',
+  'NOM:PURCHASES': 'Purchases',
+  'NOM:EXPENSES': 'Expenses',
+  'NOM:INCOME': 'Income',
+};
+
+const accountKey = (a: AccountRef): string => `${a.kind}:${a.id}`;
+
+/**
+ * One account's name. A cheque's custody account is named after the person
+ * the cheque belongs to — unless that person is already one end of the
+ * movement, in which case "Cheque in Hand" says it without repeating them.
+ */
+function accountLabel(
+  data: PdcDataSet,
+  account: AccountRef,
+  ctx: { cheques: Map<string, Cheque>; parties: Set<string>; txn?: PdcTransaction }
+): string {
+  if (account.kind === 'party') return partyName(data, account.id) || '—';
+  if (account.kind === 'bank') return bankAccountLabel(data.banks, data.bankAccounts, account.id) || '—';
+  if (account.kind === 'ledger') return data.ledgers.find((l) => l.id === account.id)?.name ?? '—';
+
+  const custody = /^(PDCI?):(.+)$/.exec(account.id);
+  if (custody) {
+    const cheque = ctx.cheques.get(custody[2]);
+    const issued = custody[1] === 'PDCI';
+    if (cheque && !ctx.parties.has(cheque.partyId)) {
+      return `${partyName(data, cheque.partyId) || '—'} (cheque)`;
+    }
+    if (issued) {
+      const bank = bankAccountLabel(data.banks, data.bankAccounts, cheque?.bankAccountId);
+      return bank ? `${bank} (cheque)` : 'Cheque Issued';
+    }
+    return 'Cheque in Hand';
+  }
+  if (account.id === 'NOM:EXPENSES' && ctx.txn?.category?.trim()) return ctx.txn.category.trim();
+  return INTERNAL_LABEL[account.id] ?? account.id;
+}
+
+const joinNames = (names: string[]): string => [...new Set(names.filter(Boolean))].join(', ');
+
+/** Every ledger line grouped by the transaction it belongs to. */
+export function linesByTxn(data: PdcDataSet): Map<string, PdcLedgerEntry[]> {
+  const out = new Map<string, PdcLedgerEntry[]>();
+  for (const l of data.ledger) {
+    const list = out.get(l.txnId);
+    if (list) list.push(l);
+    else out.set(l.txnId, [l]);
+  }
+  return out;
+}
+
+/**
+ * From → To for ONE ledger line, read off the other side of the same posting.
+ *
+ * In a double entry the value leaves the credited account and arrives in the
+ * debited one, so a debit on this line means it came FROM the lines credited
+ * alongside it, and a credit means it went TO the lines debited alongside it.
+ * Reading the posting itself — rather than a stored "related party" field that
+ * older entries never had — names both ends of cash, bank, cheque, sale and
+ * transfer lines alike.
+ */
+export function lineFlow(
+  data: PdcDataSet,
+  entry: PdcLedgerEntry,
+  siblings: PdcLedgerEntry[],
+  cheques: Map<string, Cheque>,
+  txn?: PdcTransaction
+): Flow {
+  const self = accountKey(entry.account);
+  const inbound = entry.debit > 0;
+  const others = siblings.filter(
+    (l) => accountKey(l.account) !== self && (inbound ? l.credit > 0 : l.debit > 0)
+  );
+  const parties = new Set<string>();
+  for (const l of [entry, ...others]) if (l.account.kind === 'party') parties.add(l.account.id);
+  const ctx = { cheques, parties, txn };
+
+  const selfName = accountLabel(data, entry.account, ctx);
+  const other =
+    joinNames(others.map((l) => accountLabel(data, l.account, ctx))) ||
+    partyName(data, entry.relatedPartyId) ||
+    bankAccountLabel(data.banks, data.bankAccounts, entry.relatedBankAccountId) ||
+    '—';
+  return inbound ? { from: other, to: selfName } : { from: selfName, to: other };
+}
+
+/**
+ * From → To for a WHOLE transaction: every account it took value out of, and
+ * every account it put value into. An account that nets to nothing (in and
+ * straight back out) is neither end.
+ */
+export function txnFlow(
+  data: PdcDataSet,
+  txn: PdcTransaction,
+  lines: PdcLedgerEntry[],
+  cheques: Map<string, Cheque>
+): Flow {
+  const net = new Map<string, { account: AccountRef; n: number }>();
+  const parties = new Set<string>();
+  for (const l of lines) {
+    const k = accountKey(l.account);
+    const cur = net.get(k) ?? { account: l.account, n: 0 };
+    cur.n += l.debit - l.credit;
+    net.set(k, cur);
+    if (l.account.kind === 'party') parties.add(l.account.id);
+  }
+  const ctx = { cheques, parties, txn };
+  const ends = (sign: 1 | -1) =>
+    joinNames([...net.values()]
+      .filter((v) => v.n * sign > 0.005)
+      .map((v) => accountLabel(data, v.account, ctx)));
+  return { from: ends(-1) || '—', to: ends(1) || '—' };
 }
 
 /** Debit / credit totals for a transaction, from its ledger lines. */
@@ -137,6 +267,7 @@ export function buildRegister(data: PdcDataSet): RegisterRow[] {
     (a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt
   );
   const chequeById = new Map(data.cheques.map((c) => [c.id, c]));
+  const byTxn = linesByTxn(data);
 
   // Start from the money that already existed before any transaction — the
   // bank accounts' opening balances. Starting at zero would make the Balance
@@ -146,6 +277,7 @@ export function buildRegister(data: PdcDataSet): RegisterRow[] {
     running += fundsDelta(data, txn);
     const { debit, credit } = txnTotals(data, txn.id);
     const cheque = txn.chequeId ? chequeById.get(txn.chequeId) : undefined;
+    const flow = txnFlow(data, txn, byTxn.get(txn.id) ?? [], chequeById);
     return {
       txn,
       debit,
@@ -154,6 +286,8 @@ export function buildRegister(data: PdcDataSet): RegisterRow[] {
       cheque,
       partyName: partyName(data, txn.partyId),
       toPartyName: partyName(data, txn.toPartyId),
+      fromName: flow.from,
+      toName: flow.to,
       bankLabel: bankAccountLabel(
         data.banks,
         data.bankAccounts,
@@ -253,6 +387,8 @@ export function matchesSearch(row: RegisterRow, raw: string): boolean {
     row.txn.date,
     row.partyName,
     row.toPartyName,
+    row.fromName,
+    row.toName,
     row.bankLabel,
     row.method,
     row.bankName,
@@ -363,6 +499,9 @@ export interface PartyLedgerRow {
   running: number;
   relatedName: string;
   bankLabel: string;
+  /** Where the value on this line came from, and where it went. */
+  from: string;
+  to: string;
 }
 
 /**
@@ -380,15 +519,18 @@ export function buildPartyLedger(
 
   const txnById = new Map(data.transactions.map((t) => [t.id, t]));
   const chequeById = new Map(data.cheques.map((c) => [c.id, c]));
+  const byTxn = linesByTxn(data);
 
   let running = party?.openingBalance ?? 0;
   const rows: PartyLedgerRow[] = entries.map((entry) => {
     running += entry.debit - entry.credit;
+    const txn = txnById.get(entry.txnId);
     return {
       entry,
-      txn: txnById.get(entry.txnId),
+      txn,
       cheque: entry.chequeId ? chequeById.get(entry.chequeId) : undefined,
       running: round2(running),
+      ...lineFlow(data, entry, byTxn.get(entry.txnId) ?? [], chequeById, txn),
       relatedName: partyName(data, entry.relatedPartyId),
       bankLabel: bankAccountLabel(data.banks, data.bankAccounts, entry.relatedBankAccountId),
     };
@@ -409,15 +551,18 @@ export function buildBankLedger(
 
   const txnById = new Map(data.transactions.map((t) => [t.id, t]));
   const chequeById = new Map(data.cheques.map((c) => [c.id, c]));
+  const byTxn = linesByTxn(data);
 
   let running = account?.openingBalance ?? 0;
   const rows: PartyLedgerRow[] = entries.map((entry) => {
     running += entry.debit - entry.credit;
+    const txn = txnById.get(entry.txnId);
     return {
       entry,
-      txn: txnById.get(entry.txnId),
+      txn,
       cheque: entry.chequeId ? chequeById.get(entry.chequeId) : undefined,
       running: round2(running),
+      ...lineFlow(data, entry, byTxn.get(entry.txnId) ?? [], chequeById, txn),
       relatedName: partyName(data, entry.relatedPartyId),
       bankLabel: '',
     };
@@ -461,6 +606,7 @@ export function buildCashLedger(data: PdcDataSet): CashLedgerView {
 
   const txnById = new Map(data.transactions.map((t) => [t.id, t]));
   const chequeById = new Map(data.cheques.map((c) => [c.id, c]));
+  const byTxn = linesByTxn(data);
 
   let running = 0;
   let totalIn = 0;
@@ -495,6 +641,7 @@ export function buildCashLedger(data: PdcDataSet): CashLedgerView {
       txn,
       cheque: entry.chequeId ? chequeById.get(entry.chequeId) : undefined,
       running: round2(running),
+      ...lineFlow(data, entry, byTxn.get(entry.txnId) ?? [], chequeById, txn),
       relatedName: partyName(data, entry.relatedPartyId),
       bankLabel: bankAccountLabel(data.banks, data.bankAccounts, entry.relatedBankAccountId),
     };

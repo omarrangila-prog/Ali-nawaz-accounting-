@@ -528,6 +528,9 @@ export interface RegisterRow {
   cheque?: Cheque;
   partyName: string;
   toPartyName: string;
+  /** Where the value came from and where it went, read off the posting. */
+  fromName: string;
+  toName: string;
   bankLabel: string;
   status?: ChequeStatus;
   holderLabel: string;

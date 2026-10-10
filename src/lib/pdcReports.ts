@@ -29,7 +29,11 @@ import {
   partyName,
   balanceLabel,
 } from './pdcEngine';
-import { buildBankLedger, buildPartyLedger, buildRegister, fundsDelta } from './pdcRegister';
+import {
+  buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, fundsDelta,
+  type PartyLedgerRow,
+} from './pdcRegister';
+import { LEDGER_COL_WEIGHTS, LEDGER_NUMERIC_COLS, ledgerHead, ledgerTable } from './pdcWorksheet';
 import { formatDate, formatNumber, round2, todayISO } from './utils';
 
 /** Every report the module can produce (spec §23). */
@@ -159,6 +163,26 @@ function inRange(date: string, f: PdcReportFilters): boolean {
   if (f.from && date < f.from) return false;
   if (f.to && date > f.to) return false;
   return true;
+}
+
+/**
+ * The part of a ledger a report's date range covers, with the balance it
+ * starts from. Lines before the range are carried in as one figure, so the
+ * running balance on the page still ends at the true balance.
+ */
+function pageOf(
+  rows: PartyLedgerRow[],
+  openingBalance: number,
+  f: PdcReportFilters
+): { shown: PartyLedgerRow[]; opening: number; label: string } {
+  const chrono = [...rows].reverse();   // the builders return newest-first
+  const before = f.from ? chrono.filter((r) => r.entry.date < f.from!) : [];
+  const opening = round2(before.reduce((s, r) => s + r.entry.debit - r.entry.credit, openingBalance));
+  return {
+    shown: chrono.filter((r) => inRange(r.entry.date, f)),
+    opening,
+    label: before.length ? 'Brought Forward' : 'Opening Balance',
+  };
 }
 
 /**
@@ -322,7 +346,8 @@ export function buildPdcReport(
   const m = M(data);
   const today = todayISO();
   const meta = PDC_REPORTS.find((r) => r.id === id)!;
-  const sections: DesignSection[] = [];
+  // A section may share out its own column widths (the ledgers do).
+  const sections: (DesignSection & { colWeights?: number[] })[] = [];
   let kpis: Kpi[] | undefined;
   let charts: ChartSpec[] | undefined;
 
@@ -1073,23 +1098,16 @@ export function buildPdcReport(
           formatValue: (n) => money(n, data.settings.currency),
         },
       ];
-      // Oldest-first reads correctly on a printed statement.
-      const ordered = [...rows].reverse().filter((r) => inRange(r.entry.date, f));
+      // The same columns as the Party Ledger screen and its printout.
+      const { shown, opening, label: openLabel } = pageOf(rows, p?.openingBalance ?? 0, f);
+      const table = ledgerTable(data, shown, opening, openLabel);
       sections.push({
         title: `${p?.name ?? 'Party'} — Ledger`,
-        head: ['Date', 'Reference', 'Type', 'Cheque #', 'Description', 'Debit', 'Credit', 'Balance'],
-        numericCols: [5, 6, 7],
-        rows: ordered.map((r) => [
-          formatDate(r.entry.date),
-          r.txn?.reference ?? '—',
-          r.entry.type,
-          r.cheque?.chequeNumber ?? '—',
-          r.entry.description,
-          r.entry.debit ? m(r.entry.debit) : '—',
-          r.entry.credit ? m(r.entry.credit) : '—',
-          m(r.running),
-        ]),
-        foot: ['', '', '', '', '', '', balanceLabel(balance), m(Math.abs(balance))],
+        head: ledgerHead('Debit (-)', 'Credit (+)'),
+        numericCols: LEDGER_NUMERIC_COLS,
+        colWeights: LEDGER_COL_WEIGHTS,
+        rows: table.rows,
+        foot: table.foot,
       });
       break;
     }
@@ -1103,32 +1121,26 @@ export function buildPdcReport(
         { label: 'Money In', value: m(rows.reduce((s, r) => s + r.entry.debit, 0)), tone: 'green' },
         { label: 'Money Out', value: m(rows.reduce((s, r) => s + r.entry.credit, 0)), tone: 'red' },
       ];
+      const acc = data.bankAccounts.find((a) => a.id === f.bankAccountId);
+      const { shown, opening, label: openLabel } = pageOf(rows, acc?.openingBalance ?? 0, f);
+      const table = ledgerTable(data, shown, opening, openLabel);
       sections.push({
         title: `${label} — Ledger`,
-        head: ['Date', 'Reference', 'Type', 'Cheque #', 'Description', 'Debit', 'Credit', 'Balance'],
-        numericCols: [5, 6, 7],
-        rows: [...rows].reverse().filter((r) => inRange(r.entry.date, f)).map((r) => [
-          formatDate(r.entry.date),
-          r.txn?.reference ?? '—',
-          r.entry.type,
-          r.cheque?.chequeNumber ?? '—',
-          r.entry.description,
-          r.entry.debit ? m(r.entry.debit) : '—',
-          r.entry.credit ? m(r.entry.credit) : '—',
-          m(r.running),
-        ]),
-        foot: ['', '', '', '', '', '', 'Balance', m(balance)],
+        head: ledgerHead('Deposit (+)', 'Withdraw (-)'),
+        numericCols: LEDGER_NUMERIC_COLS,
+        colWeights: LEDGER_COL_WEIGHTS,
+        rows: table.rows,
+        foot: table.foot,
       });
       break;
     }
 
     case 'cash-ledger': {
-      const rows = data.ledger
-        .filter((l) => l.account.kind === 'cash' && l.account.id === 'CASH' && inRange(l.date, f))
-        .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt);
-      let run = 0;
-      const cashIn = rows.reduce((s, l) => s + l.debit, 0);
-      const cashOut = rows.reduce((s, l) => s + l.credit, 0);
+      // The same cash ledger the screen reads, so a date range starts from the
+      // cash that was in hand that morning rather than from zero.
+      const { shown, opening, label: openLabel } = pageOf(buildCashLedger(data).rows, 0, f);
+      const cashIn = shown.reduce((s, r) => s + r.entry.debit, 0);
+      const cashOut = shown.reduce((s, r) => s + r.entry.credit, 0);
       kpis = [
         { label: 'Cash in Hand', value: m(cashBalance(data)), tone: 'blue' },
         { label: 'Cash In', value: m(cashIn), tone: 'green' },
@@ -1143,19 +1155,14 @@ export function buildPdcReport(
           formatValue: (n) => money(n, data.settings.currency),
         },
       ];
+      const table = ledgerTable(data, shown, opening, openLabel);
       sections.push({
         title: 'Cash Ledger',
-        head: ['Date', 'Type', 'Description', 'Debit', 'Credit', 'Balance'],
-        numericCols: [3, 4, 5],
-        rows: rows.map((l) => {
-          run += l.debit - l.credit;
-          return [
-            formatDate(l.date), l.type, l.description,
-            l.debit ? m(l.debit) : '—',
-            l.credit ? m(l.credit) : '—',
-            m(run),
-          ];
-        }),
+        head: ledgerHead('Cash In (+)', 'Cash Out (-)'),
+        numericCols: LEDGER_NUMERIC_COLS,
+        colWeights: LEDGER_COL_WEIGHTS,
+        rows: table.rows,
+        foot: table.foot,
       });
       break;
     }
@@ -1307,6 +1314,7 @@ export function buildPdcReport(
       // Give the widest free-text column room, so a description like
       // "Raheem easy paisa" prints in full instead of being clipped.
       wideCol: widestTextCol(s.head, s.numericCols),
+      colWeights: s.colWeights,
     })),
   });
 }
