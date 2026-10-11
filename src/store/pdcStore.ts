@@ -42,6 +42,7 @@ import {
   partyDeleteImpact,
   partyDeleteTxnIds,
   ledgerDeleteImpact,
+  relinkCheque,
   type Posting,
 } from '@/lib/pdcEngine';
 import { PAKISTAN_BANKS } from '@/config/pakistanBanks';
@@ -916,11 +917,7 @@ export const usePdc = create<PdcStore>((set, get) => ({
     if (cheque) txn.chequeId = cheque.id;
     else delete txn.chequeId;
 
-    const lines = corrected.lines.map((l) => ({
-      ...l,
-      txnId: txn.id,
-      chequeId: l.chequeId && oldChequeId && cheque ? cheque.id : l.chequeId,
-    }));
+    const lines = relinkCheque(corrected.lines, txn.id, corrected.cheque?.id, cheque?.id);
 
     try {
       if (lines.length > 0) assertBalanced(lines);

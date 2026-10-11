@@ -12,7 +12,7 @@ import { DEFAULT_PDC_SETTINGS } from '@/types/pdc';
 import {
   buildSale, buildPurchase, buildCashReceived, buildCashPaid, buildExpense,
   ledgerIsBalanced, accountBalance, partyAcc, cashBalance, bankBalances,
-  computeProfit, partyBalances,
+  buildCreditAdjustment, trialBalanceRows,
   type Posting,
 } from './pdcEngine';
 import { buildBankLedger } from './pdcRegister';
@@ -49,36 +49,14 @@ function apply(d: PdcDataSet, p: Posting | { error: string }): PdcDataSet {
   };
 }
 
-/**
- * The same figures the Trial Balance report builds, computed the same way, so
- * the test proves the report's arithmetic rather than restating it.
- */
+/** The Trial Balance report's own rows, totalled. */
 function trialBalance(d: PdcDataSet): { debit: number; credit: number; rows: number } {
-  const live = (c: (typeof d.cheques)[number]) =>
-    c.status === 'pending' || c.status === 'deposited' || c.status === 'presented';
-  const vals: number[] = [];
-  vals.push(cashBalance(d));
-  for (const v of bankBalances(d).values()) vals.push(v);
-  for (const p of d.parties) vals.push(partyBalances(d).get(p.id) ?? 0);
-  vals.push(d.cheques.filter((c) => c.direction === 'received' && live(c)).reduce((s, c) => s + c.amount, 0));
-  vals.push(-d.cheques.filter((c) => c.direction === 'issued' && live(c)).reduce((s, c) => s + c.amount, 0));
-  const pl = computeProfit(d);
-  vals.push(-pl.sales, -(pl.otherIncome ?? 0), pl.purchases, pl.expenses);
-  // Opening balances carry no opposing entry of their own; capital is the
-  // other side of them.
-  vals.push(-(
-    d.parties.reduce((s, p) => s + p.openingBalance, 0) +
-    d.bankAccounts.reduce((s, a) => s + a.openingBalance, 0) +
-    d.ledgers.reduce((s, l) => s + l.openingBalance, 0)
-  ));
-
-  let debit = 0, credit = 0, rows = 0;
-  for (const v of vals) {
-    if (round2(v) === 0) continue;
-    rows++;
-    if (v > 0) debit += v; else credit += -v;
-  }
-  return { debit: round2(debit), credit: round2(credit), rows };
+  const rows = trialBalanceRows(d);
+  return {
+    debit: round2(rows.reduce((s, r) => s + r.debit, 0)),
+    credit: round2(rows.reduce((s, r) => s + r.credit, 0)),
+    rows: rows.length,
+  };
 }
 
 describe('trial balance', () => {
@@ -127,6 +105,31 @@ describe('trial balance', () => {
     const tb = trialBalance(d);
     expect(tb.debit).toBe(tb.credit);
     expect(ledgerIsBalanced(d)).toBe(true);
+  });
+
+  it('lists an adjustment, so it does not tip the totals', () => {
+    let d = seed();
+    d = apply(d, buildSale(d, { partyId: 'CUST', amount: 100_000, date: '2026-08-01', settlement: 'credit' }));
+    d = apply(d, buildCreditAdjustment(d, { partyId: 'CUST', amount: 350_000, date: '2026-08-02' }));
+    const rows = trialBalanceRows(d);
+    expect(rows.find((r) => r.name === 'Adjustments')?.debit).toBe(350_000);
+    const tb = trialBalance(d);
+    expect(tb.debit).toBe(tb.credit);
+  });
+
+  it('counts a cheque by what the books hold, not by the label on it', () => {
+    let d = seed();
+    d = apply(d, buildCashReceived(d, {
+      partyId: 'CUST', amount: 300_000, date: '2026-08-06',
+      paymentMethod: 'cheque', cheque: { chequeNumber: 'C1', bankId: 'HABIB', chequeDate: '2026-09-01' },
+    }));
+    // A cheque record that never had an entry behind it (left over from a
+    // deleted receipt): its status says pending, but the books hold nothing.
+    d = { ...d, cheques: [...d.cheques, { ...d.cheques[0], id: 'GHOST', chequeNumber: 'C2' }] };
+    const rows = trialBalanceRows(d);
+    expect(rows.find((r) => r.name.startsWith('Cheques in Hand'))?.debit).toBe(300_000);
+    const tb = trialBalance(d);
+    expect(tb.debit).toBe(tb.credit);
   });
 });
 

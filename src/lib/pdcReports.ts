@@ -28,6 +28,7 @@ import {
   partyBalances,
   partyName,
   balanceLabel,
+  trialBalanceRows,
 } from './pdcEngine';
 import {
   buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, fundsDelta,
@@ -550,53 +551,7 @@ export function buildPdcReport(
      * also the proof that every posting in the system is balanced.
      */
     case 'trial-balance': {
-      type TB = { name: string; debit: number; credit: number };
-      const rows: TB[] = [];
-      /** A balance lands in Debit when positive, Credit when negative. */
-      const put = (name: string, bal: number) => {
-        if (round2(bal) === 0) return;          // a nil account adds nothing
-        rows.push({ name, debit: bal > 0 ? bal : 0, credit: bal < 0 ? -bal : 0 });
-      };
-
-      // Cash and every bank account — assets, so normally debit.
-      put('Cash in Hand', cashBalance(data));
-      for (const [id, v] of bankBalances(data).entries()) {
-        put(bankAccountLabel(data.banks, data.bankAccounts, id), v);
-      }
-
-      // Every party: a receivable is a debit, a payable is a credit.
-      for (const p of data.parties) {
-        put(p.name, partyBalances(data).get(p.id) ?? 0);
-      }
-
-      // Cheques still in hand are an asset until they clear or bounce.
-      const pendingReceived = data.cheques
-        .filter((c) => c.direction === 'received' && live(c))
-        .reduce((s, c) => s + c.amount, 0);
-      const pendingIssued = data.cheques
-        .filter((c) => c.direction === 'issued' && live(c))
-        .reduce((s, c) => s + c.amount, 0);
-      put('Cheques in Hand (received, uncleared)', pendingReceived);
-      put('Cheques Issued (not yet cleared)', -pendingIssued);
-
-      // Trading and P&L accounts. Sales and income are credits; purchases and
-      // expenses are debits — the normal balance of each.
-      const pl = computeProfit(data);
-      put('Sales', -pl.sales);
-      put('Other Income', -(pl.otherIncome ?? 0));
-      put('Purchases', pl.purchases);
-      put('Expenses', pl.expenses);
-
-      // Opening balances are seeded onto their accounts without a matching
-      // entry anywhere — that is what an opening balance IS: the position
-      // carried in from before the books started. Left alone they would tip the
-      // trial balance by their own total, so the opposing side is stated here
-      // as capital, exactly as it would be written into a new ledger book.
-      const openingCapital =
-        data.parties.reduce((s, p) => s + p.openingBalance, 0) +
-        data.bankAccounts.reduce((s, a) => s + a.openingBalance, 0) +
-        data.ledgers.reduce((s, l) => s + l.openingBalance, 0);
-      put('Opening Capital', -openingCapital);
+      const rows = trialBalanceRows(data);
 
       const totalDebit = rows.reduce((s, r) => s + r.debit, 0);
       const totalCredit = rows.reduce((s, r) => s + r.credit, 0);

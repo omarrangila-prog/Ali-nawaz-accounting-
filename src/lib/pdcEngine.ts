@@ -95,6 +95,34 @@ export const chequeAcc = (chequeId: string, dir: ChequeDirection): AccountRef =>
   id: `${dir === 'received' ? 'PDC' : 'PDCI'}:${chequeId}`,
 });
 
+/**
+ * Re-point a corrected posting at the entry and the cheque it corrects.
+ *
+ * An edit is built as a brand-new posting, so a cheque in it carries a fresh
+ * id — on each line's `chequeId` AND in the custody account the line posts to.
+ * Both have to go back to the original cheque. Moving only the label left the
+ * money in a custody account no cheque owns, so the cheque's later clearing or
+ * transfer landed in a different account from its receipt and the cheque
+ * figures stopped agreeing with the books.
+ */
+export function relinkCheque(
+  lines: PdcLedgerEntry[],
+  txnId: string,
+  fromChequeId?: string,
+  toChequeId?: string
+): PdcLedgerEntry[] {
+  return lines.map((l) => {
+    const out: PdcLedgerEntry = { ...l, txnId };
+    if (!fromChequeId || !toChequeId || fromChequeId === toChequeId) return out;
+    if (out.chequeId === fromChequeId) out.chequeId = toChequeId;
+    const custody = /^(PDCI?):(.+)$/.exec(l.account.id);
+    if (l.account.kind === 'cash' && custody && custody[2] === fromChequeId) {
+      out.account = { ...l.account, id: `${custody[1]}:${toChequeId}` };
+    }
+    return out;
+  });
+}
+
 /** The pseudo-account adjustments post against. */
 export const adjustmentAcc = (): AccountRef => ({ kind: 'cash', id: 'ADJ' });
 
@@ -604,6 +632,79 @@ export function computeSummary(data: PdcDataSet, today: ISODate): PdcSummary {
     otherIncome: pl.otherIncome,
     netProfit: pl.netProfit,
   };
+}
+
+/** One line of the trial balance. */
+export interface TrialRow {
+  name: string;
+  debit: number;
+  credit: number;
+}
+
+/**
+ * TRIAL BALANCE — every account that carries a balance, read off the books.
+ *
+ * Each figure is the account's own replayed balance, so when every posting
+ * is balanced the debits and credits agree by construction. Cheques are taken
+ * from their custody accounts, not from each cheque's status: a status is a
+ * label on the cheque, while the custody account is what the books actually
+ * hold, and the two only disagree when something needs repairing. Every
+ * internal account (Adjustments included) is listed, because leaving one out
+ * tips the totals by exactly its balance.
+ */
+export function trialBalanceRows(data: PdcDataSet): TrialRow[] {
+  const rows: TrialRow[] = [];
+  /** A balance lands in Debit when positive, Credit when negative. */
+  const put = (name: string, bal: number) => {
+    if (round2(bal) === 0) return;          // a nil account adds nothing
+    rows.push({ name, debit: bal > 0 ? round2(bal) : 0, credit: bal < 0 ? round2(-bal) : 0 });
+  };
+
+  // Cash and every bank account — assets, so normally debit.
+  put('Cash in Hand', cashBalance(data));
+  for (const [id, v] of bankBalances(data).entries()) {
+    put(bankAccountLabel(data.banks, data.bankAccounts, id), v);
+  }
+
+  // Every party: a receivable is a debit, a payable is a credit.
+  const parties = partyBalances(data);
+  for (const p of data.parties) put(p.name, parties.get(p.id) ?? 0);
+
+  // Ledgers the user created.
+  for (const l of data.ledgers) put(l.name, accountBalance(data, ledgerAcc(l.id)));
+
+  // Every internal account, cheque custody included, straight from the lines.
+  const internal = new Map<string, number>();
+  for (const e of data.ledger) {
+    if (e.account.kind !== 'cash' || e.account.id === CASH_ACCOUNT_ID) continue;
+    const id = e.account.id.startsWith('PDCI:') ? 'PDCI'
+      : e.account.id.startsWith('PDC:') ? 'PDC'
+      : e.account.id;
+    internal.set(id, (internal.get(id) ?? 0) + e.debit - e.credit);
+  }
+  const NAMES: Record<string, string> = {
+    PDC: 'Cheques in Hand (received, uncleared)',
+    PDCI: 'Cheques Issued (not yet cleared)',
+    'NOM:SALES': 'Sales',
+    'NOM:INCOME': 'Other Income',
+    'NOM:PURCHASES': 'Purchases',
+    'NOM:EXPENSES': 'Expenses',
+    ADJ: 'Adjustments',
+  };
+  for (const [id, v] of internal) put(NAMES[id] ?? id, v);
+
+  // Opening balances are seeded onto their accounts without a matching
+  // entry anywhere — that is what an opening balance IS: the position
+  // carried in from before the books started. Left alone they would tip the
+  // trial balance by their own total, so the opposing side is stated here
+  // as capital, exactly as it would be written into a new ledger book.
+  const openingCapital =
+    data.parties.reduce((s, p) => s + p.openingBalance, 0) +
+    data.bankAccounts.reduce((s, a) => s + a.openingBalance, 0) +
+    data.ledgers.reduce((s, l) => s + l.openingBalance, 0);
+  put('Opening Capital', -openingCapital);
+
+  return rows;
 }
 
 // ---------------------------------------------------------------------------

@@ -12,9 +12,10 @@ import { DEFAULT_PDC_SETTINGS } from '@/types/pdc';
 import {
   buildSale, buildCashReceived,
   ledgerIsBalanced, accountBalance, partyAcc, cashBalance, bankBalances,
-  computeProfit, type Posting,
+  computeProfit, relinkCheque, type Posting,
 } from './pdcEngine';
 import { buildPartyLedger, buildRegister } from './pdcRegister';
+import { buildChequeTransfer } from './chequeWorkflow';
 
 function seed(): PdcDataSet {
   return {
@@ -63,11 +64,7 @@ function edit(d: PdcDataSet, txnId: string, corrected: Posting): PdcDataSet {
   if (cheque) txn.chequeId = cheque.id;
   else delete txn.chequeId;
 
-  const lines = corrected.lines.map((l) => ({
-    ...l,
-    txnId: txn.id,
-    chequeId: l.chequeId && oldChequeId && cheque ? cheque.id : l.chequeId,
-  }));
+  const lines = relinkCheque(corrected.lines, txn.id, corrected.cheque?.id, cheque?.id);
 
   return {
     ...d,
@@ -266,5 +263,49 @@ describe('the register after an edit', () => {
     expect(bal(d, 'A')).toBe(8_000);
     expect(buildRegister(d)).toHaveLength(1);
     expect(computeProfit(d).sales).toBe(8_000);
+  });
+});
+
+describe('editing a cheque entry', () => {
+  /** Every cheque custody account in the books, with its balance. */
+  function custody(d: PdcDataSet): Map<string, number> {
+    const out = new Map<string, number>();
+    for (const l of d.ledger) {
+      if (!/^PDCI?:/.test(l.account.id)) continue;
+      out.set(l.account.id, (out.get(l.account.id) ?? 0) + l.debit - l.credit);
+    }
+    return out;
+  }
+
+  /** A 900,000 cheque from Ahmed, then the entry edited (date corrected). */
+  function received(): { d: PdcDataSet; chequeId: string } {
+    let d = seed();
+    const input = {
+      partyId: 'A', amount: 900_000, date: '2026-09-01', paymentMethod: 'cheque' as const,
+      cheque: { chequeNumber: '94473746', bankId: 'HABIB', chequeDate: '2026-09-15' },
+    };
+    d = apply(d, buildCashReceived(d, input));
+    const chequeId = d.cheques[0].id;
+    d = edit(d, d.transactions[0].id, buildCashReceived(d, { ...input, date: '2026-09-02' }));
+    return { d, chequeId };
+  }
+
+  it('keeps the money in the cheque it belongs to', () => {
+    const { d, chequeId } = received();
+    // One custody account, owned by the cheque, holding the full amount — not a
+    // second account under an id no cheque has.
+    expect([...custody(d)]).toEqual([[`PDC:${chequeId}`, 900_000]]);
+    expect(d.ledger.every((l) => !l.chequeId || l.chequeId === chequeId)).toBe(true);
+  });
+
+  it('so passing the cheque on afterwards empties that same account', () => {
+    let { d, chequeId } = received();
+    d = apply(d, buildChequeTransfer(d, {
+      chequeId, toPartyId: 'B', amount: 900_000, date: '2026-09-05',
+    }) as any);
+    // Before the fix: +900,000 left in an ownerless account and −900,000 on the
+    // cheque's own — the books balanced, but the trial balance did not.
+    for (const v of custody(d).values()) expect(v).toBe(0);
+    expect(ledgerIsBalanced(d)).toBe(true);
   });
 });
