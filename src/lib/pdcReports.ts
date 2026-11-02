@@ -31,10 +31,13 @@ import {
   trialBalanceRows,
 } from './pdcEngine';
 import {
-  buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, fundsDelta,
+  buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, fundsDelta, partyDealings,
   type PartyLedgerRow,
 } from './pdcRegister';
-import { LEDGER_COL_WEIGHTS, LEDGER_NUMERIC_COLS, ledgerHead, ledgerTable } from './pdcWorksheet';
+import {
+  LEDGER_COL_WEIGHTS, LEDGER_NUMERIC_COLS, ledgerHead, ledgerTable,
+  bankSentence, cashSentence, partyPlainSection, partySentence,
+} from './pdcWorksheet';
 import { formatDate, formatNumber, round2, todayISO } from './utils';
 
 /** Every report the module can produce (spec §23). */
@@ -828,6 +831,7 @@ export function buildPdcReport(
 
     case 'receivable': {
       const balances = partyBalances(data);
+      const deal = partyDealings(data);
       const rows = data.parties
         .map((p) => ({ p, bal: balances.get(p.id) ?? 0 }))
         .filter((x) => x.bal > 0)
@@ -850,19 +854,24 @@ export function buildPdcReport(
         data: rows.slice(0, 6).map((x) => ({ label: x.p.name, value: x.bal, color: T.green })),
       }];
       sections.push({
-        title: 'Receivable by Party',
+        title: `I will receive ${m(total)} from ${rows.length} part${rows.length === 1 ? 'y' : 'ies'}`,
         subtitle: 'Largest balances first',
         emptyText: 'Nobody owes you anything right now.',
-        head: ['Party', 'Amount Receivable'],
-        numericCols: [1],
-        rows: rows.map((x) => [x.p.name, m(x.bal)]),
-        foot: ['Total', m(total)],
+        // I Gave - I Got = what they still owe, so each line explains itself.
+        head: ['Party', 'I Gave', 'I Got', 'Will Pay You'],
+        numericCols: [1, 2, 3],
+        rows: rows.map((x) => {
+          const d = deal.get(x.p.id);
+          return [x.p.name, m(d?.gave ?? 0), m(d?.got ?? 0), m(x.bal)];
+        }),
+        foot: ['Total', '', '', m(total)],
       });
       break;
     }
 
     case 'payable': {
       const balances = partyBalances(data);
+      const deal = partyDealings(data);
       const rows = data.parties
         .map((p) => ({ p, bal: balances.get(p.id) ?? 0 }))
         .filter((x) => x.bal < 0)
@@ -885,13 +894,17 @@ export function buildPdcReport(
         data: rows.slice(0, 6).map((x) => ({ label: x.p.name, value: -x.bal, color: T.red })),
       }];
       sections.push({
-        title: 'Payable by Party',
+        title: `I must pay ${m(total)} to ${rows.length} part${rows.length === 1 ? 'y' : 'ies'}`,
         subtitle: 'Largest balances first',
         emptyText: 'You do not owe anybody right now.',
-        head: ['Party', 'Amount Payable'],
-        numericCols: [1],
-        rows: rows.map((x) => [x.p.name, m(-x.bal)]),
-        foot: ['Total', m(total)],
+        // I Got - I Gave = what I still owe them.
+        head: ['Party', 'I Got', 'I Gave', 'You Will Pay'],
+        numericCols: [1, 2, 3],
+        rows: rows.map((x) => {
+          const d = deal.get(x.p.id);
+          return [x.p.name, m(d?.got ?? 0), m(d?.gave ?? 0), m(-x.bal)];
+        }),
+        foot: ['Total', '', '', m(total)],
       });
       break;
     }
@@ -1057,13 +1070,14 @@ export function buildPdcReport(
       const { shown, opening, label: openLabel } = pageOf(rows, p?.openingBalance ?? 0, f);
       const table = ledgerTable(data, shown, opening, openLabel);
       sections.push({
-        title: `${p?.name ?? 'Party'} — Ledger`,
+        title: `${p?.name ?? 'Party'} — ${partySentence(data, f.partyId)}`,
         head: ledgerHead('Debit (-)', 'Credit (+)'),
         numericCols: LEDGER_NUMERIC_COLS,
         colWeights: LEDGER_COL_WEIGHTS,
         rows: table.rows,
         foot: table.foot,
       });
+      sections.push(partyPlainSection(data, f.partyId));
       break;
     }
 
@@ -1080,7 +1094,7 @@ export function buildPdcReport(
       const { shown, opening, label: openLabel } = pageOf(rows, acc?.openingBalance ?? 0, f);
       const table = ledgerTable(data, shown, opening, openLabel);
       sections.push({
-        title: `${label} — Ledger`,
+        title: `${label} — ${bankSentence(data, label, balance)}`,
         head: ledgerHead('Deposit (+)', 'Withdraw (-)'),
         numericCols: LEDGER_NUMERIC_COLS,
         colWeights: LEDGER_COL_WEIGHTS,
@@ -1112,7 +1126,7 @@ export function buildPdcReport(
       ];
       const table = ledgerTable(data, shown, opening, openLabel);
       sections.push({
-        title: 'Cash Ledger',
+        title: `Cash Ledger — ${cashSentence(data, cashBalance(data))}`,
         head: ledgerHead('Cash In (+)', 'Cash Out (-)'),
         numericCols: LEDGER_NUMERIC_COLS,
         colWeights: LEDGER_COL_WEIGHTS,

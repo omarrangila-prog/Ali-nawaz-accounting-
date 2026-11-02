@@ -18,7 +18,7 @@ import type { PdcDataSet } from '@/types/pdc';
 import { buildReportPdf, type PdfSection } from './exportPdf';
 import { bankAccountLabel, partyName } from './pdcEngine';
 import {
-  buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, paymentMethodOf,
+  buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, partyDealings, paymentMethodOf, whoPays,
   type PartyLedgerRow,
 } from './pdcRegister';
 import { formatDate, formatNumber, todayISO } from './utils';
@@ -149,6 +149,58 @@ export function ledgerTable(
   };
 }
 
+/** Money in a sentence: "Rs 300,000". */
+export const sayMoney = (data: PdcDataSet) => (n: number): string =>
+  `${data.settings.currency || 'Rs'} ${formatNumber(Math.round(n))}`;
+
+/** One sentence that says where an account stands, for the top of its page. */
+export function partySentence(data: PdcDataSet, partyId: string): string {
+  const name = data.parties.find((p) => p.id === partyId)?.name ?? 'Party';
+  return whoPays(name, partyDealings(data).get(partyId)?.balance ?? 0, sayMoney(data));
+}
+export function bankSentence(data: PdcDataSet, label: string, balance: number): string {
+  const say = sayMoney(data);
+  return balance >= 0 ? `You have ${say(balance)} in ${label}` : `${label} is overdrawn by ${say(-balance)}`;
+}
+export function cashSentence(data: PdcDataSet, balance: number): string {
+  const say = sayMoney(data);
+  return balance >= 0 ? `Cash in hand: ${say(balance)}` : `Cash is short by ${say(-balance)} — some cash going out was never recorded coming in`;
+}
+
+/**
+ * "In plain words" — what I gave the party, what I got from them, and what is
+ * left, laid out as a sum the reader can check: Gave − Got = still to receive
+ * or pay.
+ */
+export function partyPlainSection(data: PdcDataSet, partyId: string): PdfSection {
+  const name = data.parties.find((p) => p.id === partyId)?.name ?? 'Party';
+  const d = partyDealings(data).get(partyId);
+  const z = (n?: number) => formatNumber(n ?? 0);
+  const rows: string[][] = [
+    [`I GAVE ${name}`, z(d?.gave)],
+    ['  - goods sold to them', z(d?.goodsSold)],
+    ['  - money & cheques paid to them', z(d?.moneyGiven)],
+    [`I GOT from ${name}`, z(d?.got)],
+    ['  - money & cheques received from them', z(d?.moneyGot)],
+  ];
+  if (d?.chequesPending) rows.push(['      (of which cheques not cleared yet)', z(d.chequesPending)]);
+  rows.push(['  - goods bought from them', z(d?.goodsBought)]);
+  const bal = d?.balance ?? 0;
+  return {
+    title: `In plain words — ${partySentence(data, partyId)}`,
+    head: ['', 'Amount'],
+    rows,
+    foot: [
+      bal > 0 ? `STILL TO RECEIVE from ${name} (I gave - I got)`
+        : bal < 0 ? `STILL TO PAY ${name} (I got - I gave)`
+        : 'SETTLED — nothing to receive or pay',
+      z(Math.abs(bal)),
+    ],
+    numericCols: [1],
+    colWeights: [3, 1],
+  };
+}
+
 /**
  * Party ledger in the worksheet format.
  *
@@ -166,7 +218,7 @@ export function buildPartyWorksheet(data: PdcDataSet, partyId: string): jsPDF {
 
   const table = ledgerTable(data, chrono, opening);
   const section: PdfSection = {
-    title: `${party?.name ?? 'Party'} Statement`,
+    title: `${party?.name ?? 'Party'} Statement — ${partySentence(data, partyId)}`,
     head: ledgerHead('Debit (-)', 'Credit (+)'),
     rows: table.rows,
     foot: table.foot,
@@ -181,7 +233,7 @@ export function buildPartyWorksheet(data: PdcDataSet, partyId: string): jsPDF {
     settings: shim(data),
     month: now.getMonth() + 1,
     year: now.getFullYear(),
-    sections: [section],
+    sections: [section, partyPlainSection(data, partyId)],
   });
 }
 
@@ -210,7 +262,7 @@ export function buildBankWorksheet(data: PdcDataSet, accountId: string): jsPDF {
     month: now.getMonth() + 1,
     year: now.getFullYear(),
     sections: [{
-      title: `${label} Statement`,
+      title: `${label} Statement — ${bankSentence(data, label, table.closing)}`,
       head: ledgerHead('Deposit (+)', 'Withdraw (-)'),
       rows: table.rows,
       foot: table.foot,
@@ -287,7 +339,7 @@ export function buildCashWorksheet(data: PdcDataSet): jsPDF {
     year: now.getFullYear(),
     sections: [
       {
-        title: 'Cash Account',
+        title: `Cash Account — ${cashSentence(data, balance)}`,
         head: ledgerHead('Cash In (+)', 'Cash Out (-)'),
         rows: table.rows,
         foot: table.foot,

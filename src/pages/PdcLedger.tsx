@@ -517,6 +517,30 @@ export function PdcLedger() {
             <div className="stmt-title" style={{ margin: 0 }}>{title} — Ledger</div>
           </div>
 
+          {/* A bank account or the cash box, said in one line. */}
+          {!party && (
+            <div className={cx('owe-banner', ledger.balance >= 0 ? 'in' : 'out')}>
+              <div className="owe-banner-say" style={{ marginBottom: cash ? 10 : 0 }}>
+                {showCash
+                  ? (ledger.balance >= 0
+                    ? `Cash in hand: ${money(ledger.balance)}`
+                    : `Cash is short by ${money(-ledger.balance)} — some cash going out was never recorded coming in`)
+                  : (ledger.balance >= 0
+                    ? `You have ${money(ledger.balance)} in ${title}`
+                    : `${title} is overdrawn by ${money(-ledger.balance)}`)}
+              </div>
+              {cash && (
+                <div className="owe-banner-math">
+                  <div><span className="lbl">Cash came in</span><span className="mono">{money(cash.totalIn)}</span></div>
+                  <div className="owe-op">−</div>
+                  <div><span className="lbl">Cash went out</span><span className="mono">{money(cash.totalOut)}</span></div>
+                  <div className="owe-op">=</div>
+                  <div><span className="lbl">In hand now</span><span className="mono">{money(cash.balance)}</span></div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* The whole statement in one sentence, then what it is made of. */}
           {party && (() => {
             const d = dealings.get(party.id);

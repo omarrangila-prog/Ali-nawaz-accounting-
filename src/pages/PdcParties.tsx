@@ -20,6 +20,7 @@ import type { Bank, BankAccount, NamedLedger, PdcParty } from '@/types/pdc';
 import { PAKISTAN_BANK_OPTIONS, PAKISTAN_BANKS } from '@/config/pakistanBanks';
 import { formatMoney, cx } from '@/lib/utils';
 import { toast } from '@/store/toast';
+import { partyDealings } from '@/lib/pdcRegister';
 import './pdc.css';
 
 /**
@@ -57,6 +58,8 @@ export function PdcParties() {
   const [ledgerToDelete, setLedgerToDelete] = useState<NamedLedger | null>(null);
 
   const balances = useMemo(() => partyBalances(data), [data]);
+  /** What I gave each party and what I got from them. */
+  const dealings = useMemo(() => partyDealings(data), [data]);
   const bankBals = useMemo(() => bankBalances(data), [data]);
 
   /** Bulk-add every Pakistani bank, skipping any already present. */
@@ -292,8 +295,11 @@ export function PdcParties() {
                 <thead>
                   <tr>
                     <th>Party</th>
-                    <th className="num">Opening</th><th className="num">Balance</th>
-                    <th>Status</th><th className="no-print"></th>
+                    {/* I Gave - I Got = Balance, so each row explains itself. */}
+                    <th className="num" title="Goods sold to them + money/cheques paid to them">I Gave</th>
+                    <th className="num" title="Money/cheques received from them + goods bought from them">I Got</th>
+                    <th className="num">Balance</th>
+                    <th>What it means</th><th className="no-print"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -311,13 +317,16 @@ export function PdcParties() {
                         onClick={() => navigate(`/ledger?party=${p.id}`)}
                       >
                         <td data-label="Party"><span className="link-text">{p.name}</span></td>
-                        <td data-label="Opening" className="num mono">{formatMoney(p.openingBalance, cur)}</td>
+                        <td data-label="I Gave" className="num mono">{formatMoney(dealings.get(p.id)?.gave ?? 0, cur)}</td>
+                        <td data-label="I Got" className="num mono">{formatMoney(dealings.get(p.id)?.got ?? 0, cur)}</td>
                         <td data-label="Balance" className={cx('num mono', bal > 0 ? 'pos' : bal < 0 ? 'neg' : '')}>
                           {formatMoney(Math.abs(bal), cur)}
                         </td>
-                        <td data-label="Status">
-                          <span className={cx('pdc-status', bal > 0 ? 'st-cleared' : bal < 0 ? 'st-bounced' : 'st-cancelled')}>
-                            {balanceLabel(bal)}
+                        <td data-label="What it means">
+                          <span className={cx('owe-say', bal > 0 ? 'in' : bal < 0 ? 'out' : '')}>
+                            {bal > 0 ? `Will pay you ${formatMoney(bal, cur)}`
+                              : bal < 0 ? `You will pay ${formatMoney(-bal, cur)}`
+                              : 'Settled'}
                           </span>
                         </td>
                         <td className="no-print actions-cell">
