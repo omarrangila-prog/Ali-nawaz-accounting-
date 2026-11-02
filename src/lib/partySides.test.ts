@@ -255,3 +255,45 @@ describe('recording a payable directly', () => {
     expect(s.payable).toHaveLength(0);
   });
 });
+
+describe('what I gave and what I got, per party', () => {
+  it('Gave − Got is always the real balance, and the sentence says who pays', async () => {
+    const { partyDealings, whoPays } = await import('./pdcRegister');
+    const eng = await import('./pdcEngine');
+    let d = seedForDealings();
+    const ap = (p: any) => { d = { ...d, cheques: p.cheque ? [...d.cheques, p.cheque] : d.cheques, transactions: [...d.transactions, p.txn], ledger: [...d.ledger, ...p.lines], movements: [...d.movements, ...p.movements] }; };
+    ap(eng.buildSale(d, { partyId: 'A', amount: 700_000, date: '2026-08-01', settlement: 'credit' }));
+    ap(eng.buildCashReceived(d, { partyId: 'A', amount: 300_000, date: '2026-08-02', paymentMethod: 'cash' }));
+    ap(eng.buildCashReceived(d, {
+      partyId: 'A', amount: 100_000, date: '2026-08-03', paymentMethod: 'cheque',
+      cheque: { chequeNumber: 'C1', bankId: 'HABIB', chequeDate: '2026-09-01' },
+    }));
+    ap(eng.buildCashPaid(d, { partyId: 'B', amount: 50_000, date: '2026-08-04', paymentMethod: 'cash' }));
+    ap(eng.buildPurchase(d, { partyId: 'B', amount: 200_000, date: '2026-08-05', settlement: 'credit' }));
+
+    const m = partyDealings(d);
+    const bal = eng.partyBalances(d);
+    for (const p of d.parties) expect(m.get(p.id)!.balance).toBe(bal.get(p.id));
+
+    const a = m.get('A')!;
+    expect([a.goodsSold, a.moneyGot, a.chequesPending, a.balance]).toEqual([700_000, 400_000, 100_000, 300_000]);
+    const b = m.get('B')!;
+    expect([b.moneyGiven, b.goodsBought, b.balance]).toEqual([50_000, 200_000, -150_000]);
+
+    const rs = (n: number) => `Rs ${n.toLocaleString()}`;
+    expect(whoPays('Ahmed', a.balance, rs)).toBe('Ahmed will pay you Rs 300,000');
+    expect(whoPays('Bilal', b.balance, rs)).toBe('You will pay Bilal Rs 150,000');
+  });
+});
+
+function seedForDealings(): any {
+  return {
+    parties: [
+      { id: 'A', name: 'Ahmed', openingBalance: 0, active: true, createdAt: 1, updatedAt: 1 },
+      { id: 'B', name: 'Bilal', openingBalance: 0, active: true, createdAt: 1, updatedAt: 1 },
+    ],
+    ledgers: [], banks: [{ id: 'HABIB', name: 'Habib Bank', active: true, createdAt: 1, updatedAt: 1 }],
+    bankAccounts: [], cheques: [], transactions: [], ledger: [], movements: [], allocations: [], audit: [],
+    settings: { updatedAt: 1 },
+  };
+}

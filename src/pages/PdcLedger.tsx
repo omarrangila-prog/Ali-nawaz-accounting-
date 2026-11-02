@@ -11,7 +11,9 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Icon } from '@/components/ui/Icon';
 import { Combo } from '@/components/ui/Combo';
 import { usePdc } from '@/store/pdcStore';
-import { buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, paymentMethodOf } from '@/lib/pdcRegister';
+import {
+  buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, partyDealings, paymentMethodOf, whoPays,
+} from '@/lib/pdcRegister';
 import { DetailsDrawer } from '@/components/pdc/DetailsDrawer';
 import { EditTxnModal, canEdit } from '@/components/pdc/EditTxnModal';
 import { ConfirmDialog } from '@/components/ui/Modal';
@@ -66,6 +68,9 @@ export function PdcLedger() {
    * payable as a receivable, so the choice is made explicit at the top.
    */
   const balances = useMemo(() => partyBalances(data), [data]);
+  /** What I gave each party and what I got from them. */
+  const dealings = useMemo(() => partyDealings(data), [data]);
+  const money = (n: number) => formatMoney(n, cur);
 
   /**
    * Who a party IS to the business, taken from what has actually happened with
@@ -261,6 +266,27 @@ export function PdcLedger() {
     <div className="pdc-page">
       <PageHeader title="Ledger" subtitle="Party and bank account ledgers with running balances" />
 
+      {/* The two questions, answered before anything else: how much will come
+          in, and how much must go out. Click one to list those parties. */}
+      <div className="owe-boxes no-print">
+        <button
+          className={cx('owe-box in', side === 'receivable' && 'on')}
+          onClick={() => { setSide(side === 'receivable' ? 'all' : 'receivable'); setPartyId(''); }}
+        >
+          <span className="owe-lbl">I will receive · Logon se lena hai</span>
+          <span className="owe-val mono">{money(sideTotals.receivable)}</span>
+          <span className="owe-sub">{formatNumber(counts.receivable)} parties will pay you — tap to see who</span>
+        </button>
+        <button
+          className={cx('owe-box out', side === 'payable' && 'on')}
+          onClick={() => { setSide(side === 'payable' ? 'all' : 'payable'); setPartyId(''); }}
+        >
+          <span className="owe-lbl">I must pay · Logon ko dena hai</span>
+          <span className="owe-val mono">{money(sideTotals.payable)}</span>
+          <span className="owe-sub">You will pay {formatNumber(counts.payable)} parties — tap to see who</span>
+        </button>
+      </div>
+
       <div className="card" style={{ marginBottom: 12 }}>
         {/* Choose the side of the book FIRST, so a payable is never mistaken
             for a receivable while picking a party. */}
@@ -431,8 +457,11 @@ export function PdcLedger() {
                 <thead>
                   <tr>
                     <th>Party</th>
-                    <th className="num">Outstanding</th>
-                    <th className="mid">Status</th>
+                    {/* Gave − Got = Balance, so the row explains itself. */}
+                    <th className="num" title="Goods sold to them + money/cheques paid to them">I Gave</th>
+                    <th className="num" title="Money/cheques received from them + goods bought from them">I Got</th>
+                    <th className="num">Balance</th>
+                    <th>What it means</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -445,16 +474,19 @@ export function PdcLedger() {
                       onClick={() => { setPartyId(party.id); setAccountId(''); setShowCash(false); }}
                     >
                       <td data-label="Party"><span className="link-text">{party.name}</span></td>
-                      <td data-label="Outstanding" className={cx('num mono', balance > 0 ? 'pos' : balance < 0 ? 'neg' : '')}>
-                        {balance === 0 ? '—' : formatMoney(Math.abs(balance), cur)}
+                      <td data-label="I Gave" className="num mono">{money(dealings.get(party.id)?.gave ?? 0)}</td>
+                      <td data-label="I Got" className="num mono">{money(dealings.get(party.id)?.got ?? 0)}</td>
+                      <td data-label="Balance" className={cx('num mono', balance > 0 ? 'pos' : balance < 0 ? 'neg' : '')}>
+                        {balance === 0 ? '—' : money(Math.abs(balance))}
                       </td>
-                      <td data-label="Status" className="mid">
+                      <td data-label="What it means">
                         {/* Derived from the live balance, so a party that has
                             been settled stops showing as owing the moment the
                             payment is recorded. */}
-                        <span className={cx('pdc-status',
-                          balance > 0 ? 'st-cleared' : balance < 0 ? 'st-bounced' : 'st-cancelled')}>
-                          {balanceLabel(balance)}
+                        <span className={cx('owe-say', balance > 0 ? 'in' : balance < 0 ? 'out' : '')}>
+                          {balance > 0 ? `Will pay you ${money(balance)}`
+                            : balance < 0 ? `You will pay ${money(-balance)}`
+                            : 'Settled'}
                         </span>
                       </td>
                     </tr>
@@ -484,6 +516,38 @@ export function PdcLedger() {
           <div className="pdc-register-head">
             <div className="stmt-title" style={{ margin: 0 }}>{title} — Ledger</div>
           </div>
+
+          {/* The whole statement in one sentence, then what it is made of. */}
+          {party && (() => {
+            const d = dealings.get(party.id);
+            if (!d) return null;
+            return (
+              <div className={cx('owe-banner', d.balance > 0 ? 'in' : d.balance < 0 ? 'out' : '')}>
+                <div className="owe-banner-say">{whoPays(party.name, d.balance, money)}</div>
+                <div className="owe-banner-math">
+                  <div>
+                    <span className="lbl">I gave {party.name}</span>
+                    <span className="mono">{money(d.gave)}</span>
+                    <span className="faint">goods {money(d.goodsSold)} · money &amp; cheques {money(d.moneyGiven)}</span>
+                  </div>
+                  <div className="owe-op">−</div>
+                  <div>
+                    <span className="lbl">I got from {party.name}</span>
+                    <span className="mono">{money(d.got)}</span>
+                    <span className="faint">
+                      money &amp; cheques {money(d.moneyGot)} · goods {money(d.goodsBought)}
+                      {d.chequesPending > 0 && <> · {money(d.chequesPending)} in cheques not cleared yet</>}
+                    </span>
+                  </div>
+                  <div className="owe-op">=</div>
+                  <div>
+                    <span className="lbl">{d.balance > 0 ? 'Still to receive' : d.balance < 0 ? 'Still to pay' : 'Balance'}</span>
+                    <span className="mono">{money(Math.abs(d.balance))}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* See only the receipts, only the payments, or only the trades on
               this statement. The running balance stays the TRUE balance at

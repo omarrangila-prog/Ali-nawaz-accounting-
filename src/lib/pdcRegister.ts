@@ -489,6 +489,79 @@ export function applyFilters(
 }
 
 // ---------------------------------------------------------------------------
+// What I gave a party and what I got from them, in plain words
+// ---------------------------------------------------------------------------
+
+/**
+ * Everything that has passed between the business and one party, split the
+ * way the owner thinks about it: what I GAVE them (goods sold, money or
+ * cheques paid) and what I GOT from them (money or cheques received, goods
+ * bought). Balance = Gave − Got, so the three figures always add up.
+ */
+export interface PartyDealings {
+  /** Goods sold to them. */
+  goodsSold: number;
+  /** Money and cheques paid to them (plus any other debit). */
+  moneyGiven: number;
+  /** Money and cheques received from them (plus any other credit). */
+  moneyGot: number;
+  /** Goods bought from them. */
+  goodsBought: number;
+  /** Cheques they gave that have not cleared yet — part of moneyGot. */
+  chequesPending: number;
+  gave: number;
+  got: number;
+  /** Positive: they will pay me. Negative: I will pay them. */
+  balance: number;
+}
+
+export function partyDealings(data: PdcDataSet): Map<string, PartyDealings> {
+  const typeOf = new Map(data.transactions.map((t) => [t.id, t.type]));
+  const out = new Map<string, PartyDealings>();
+  for (const p of data.parties) {
+    out.set(p.id, {
+      goodsSold: 0, moneyGiven: Math.max(p.openingBalance, 0),
+      moneyGot: Math.max(-p.openingBalance, 0), goodsBought: 0,
+      chequesPending: 0, gave: 0, got: 0, balance: 0,
+    });
+  }
+  for (const l of data.ledger) {
+    if (l.account.kind !== 'party') continue;
+    const d = out.get(l.account.id);
+    if (!d) continue;
+    const type = typeOf.get(l.txnId);
+    if (l.debit) {
+      if (type === 'Sale') d.goodsSold += l.debit; else d.moneyGiven += l.debit;
+    }
+    if (l.credit) {
+      if (type === 'Purchase') d.goodsBought += l.credit; else d.moneyGot += l.credit;
+    }
+  }
+  for (const c of data.cheques) {
+    if (c.direction !== 'received' || !['pending', 'deposited', 'presented'].includes(c.status)) continue;
+    const d = out.get(c.partyId);
+    if (d) d.chequesPending += c.amount - (c.allocatedAmount || 0);
+  }
+  for (const d of out.values()) {
+    d.goodsSold = round2(d.goodsSold); d.moneyGiven = round2(d.moneyGiven);
+    d.moneyGot = round2(d.moneyGot); d.goodsBought = round2(d.goodsBought);
+    d.chequesPending = round2(d.chequesPending);
+    d.gave = round2(d.goodsSold + d.moneyGiven);
+    d.got = round2(d.moneyGot + d.goodsBought);
+    d.balance = round2(d.gave - d.got);
+  }
+  return out;
+}
+
+/** The balance as one plain sentence: who pays whom, and how much. */
+export function whoPays(name: string, balance: number, money: (n: number) => string): string {
+  if (Math.abs(balance) < 0.5) return `All settled with ${name}`;
+  return balance > 0
+    ? `${name} will pay you ${money(balance)}`
+    : `You will pay ${name} ${money(-balance)}`;
+}
+
+// ---------------------------------------------------------------------------
 // Party ledger (spec §5)
 // ---------------------------------------------------------------------------
 

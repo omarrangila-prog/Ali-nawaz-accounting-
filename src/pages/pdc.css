@@ -321,6 +321,39 @@
 }
 .pdc-ledger-summary .val { font-size: 16px; font-weight: 700; }
 
+/* --- I will receive / I must pay, in plain words --- */
+.owe-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.owe-box {
+  display: flex; flex-direction: column; gap: 4px; text-align: left; cursor: pointer;
+  padding: 16px 18px; border-radius: 14px; border: 2px solid var(--stroke);
+  background: var(--surface, #fff); font: inherit; color: inherit;
+}
+.owe-box.in { border-color: rgba(16, 163, 74, 0.35); }
+.owe-box.out { border-color: rgba(220, 38, 38, 0.35); }
+.owe-box.in.on { background: rgba(16, 163, 74, 0.08); border-color: #16a34a; }
+.owe-box.out.on { background: rgba(220, 38, 38, 0.08); border-color: #dc2626; }
+.owe-lbl { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-faint); }
+.owe-val { font-size: 26px; font-weight: 800; }
+.owe-box.in .owe-val { color: #16a34a; }
+.owe-box.out .owe-val { color: #dc2626; }
+.owe-sub { font-size: 12.5px; color: var(--text-faint); }
+.owe-say { font-weight: 600; }
+.owe-say.in { color: #16a34a; }
+.owe-say.out { color: #dc2626; }
+.owe-banner { border-radius: 12px; padding: 14px 16px; margin: 10px 0; border: 1px solid var(--stroke); }
+.owe-banner.in { background: rgba(16, 163, 74, 0.07); border-color: rgba(16, 163, 74, 0.35); }
+.owe-banner.out { background: rgba(220, 38, 38, 0.07); border-color: rgba(220, 38, 38, 0.35); }
+.owe-banner-say { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+.owe-banner.in .owe-banner-say { color: #16a34a; }
+.owe-banner.out .owe-banner-say { color: #dc2626; }
+.owe-banner-math { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.owe-banner-math > div:not(.owe-op) { display: flex; flex-direction: column; gap: 2px; min-width: 160px; }
+.owe-banner-math .lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-faint); }
+.owe-banner-math .mono { font-size: 17px; font-weight: 700; }
+.owe-banner-math .faint { font-size: 11.5px; }
+.owe-op { font-size: 22px; font-weight: 700; color: var(--text-faint); }
+@media (max-width: 640px) { .owe-boxes { grid-template-columns: 1fr; } .owe-val { font-size: 22px; } }
+
 /* --- Responsive (spec §29) --- */
 @media (max-width: 1280px) {
   .pdc-cards { grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); }
