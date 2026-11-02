@@ -194,3 +194,18 @@ describe('what cheque-to-cash refuses', () => {
     expect(ledgerIsBalanced(d)).toBe(true);
   });
 });
+
+describe('which entry created a cheque', () => {
+  it('a Receive with a cheque created it, so deleting it must remove the cheque', async () => {
+    const { createsCheque } = await import('./pdcEngine');
+    let d = withCheque();
+    const receive = d.transactions.find((t) => t.type === 'Cash Received')!;
+    // Before the fix only "PDC Received" counted, so this cheque stayed behind.
+    expect(createsCheque(d, receive)).toBe(true);
+
+    d = apply(d, buildChequeToCash(d, { chequeId: d.cheques[0].id, date: DUE }));
+    const later = d.transactions[d.transactions.length - 1];
+    expect(createsCheque(d, later)).toBe(false);   // only undoes itself
+    expect(createsCheque(d, receive)).toBe(true);
+  });
+});

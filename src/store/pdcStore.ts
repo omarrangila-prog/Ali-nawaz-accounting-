@@ -43,6 +43,7 @@ import {
   partyDeleteTxnIds,
   ledgerDeleteImpact,
   relinkCheque,
+  createsCheque,
   type Posting,
 } from '@/lib/pdcEngine';
 import { PAKISTAN_BANKS } from '@/config/pakistanBanks';
@@ -798,8 +799,7 @@ export const usePdc = create<PdcStore>((set, get) => ({
     }
     // Deleting the entry that CREATED the cheque removes the cheque itself.
     // A later entry (endorsement, clearing) only removes that entry.
-    const isCreatingEntry =
-      !!cheque && (txn.type === 'PDC Received' || txn.type === 'PDC Issued');
+    const isCreatingEntry = !!cheque && createsCheque(s.dataset(), txn);
 
     set({ saving: true });
     try {

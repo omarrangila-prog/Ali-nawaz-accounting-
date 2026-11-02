@@ -123,6 +123,23 @@ export function relinkCheque(
   });
 }
 
+/**
+ * True when this entry is the one that brought its cheque into existence — the
+ * earliest entry on the cheque. Receive, Pay, Sale and Purchase all create
+ * cheques now, so the entry's TYPE cannot say it; checking only for the old
+ * "PDC Received" / "PDC Issued" types left the cheque behind, still pending,
+ * when its Receive or Pay entry was deleted.
+ */
+export function createsCheque(data: PdcDataSet, txn: PdcTransaction): boolean {
+  if (!txn.chequeId) return false;
+  return !data.transactions.some(
+    (t) =>
+      t.id !== txn.id &&
+      t.chequeId === txn.chequeId &&
+      (t.date < txn.date || (t.date === txn.date && t.createdAt < txn.createdAt))
+  );
+}
+
 /** The pseudo-account adjustments post against. */
 export const adjustmentAcc = (): AccountRef => ({ kind: 'cash', id: 'ADJ' });
 
