@@ -460,6 +460,15 @@ export function PdcLedger() {
                     </tr>
                   ))}
                 </tbody>
+                {/* Totals of the parties LISTED, so they still agree after a search. */}
+                <tfoot>
+                  <tr className="pdc-total-row">
+                    <td>Total · {formatNumber(shownParties.length)} parties</td>
+                    <td className="num mono pos">{money(shownParties.reduce((s, r) => s + r.pay.received, 0))}</td>
+                    <td className="num mono neg">{money(shownParties.reduce((s, r) => s + r.pay.paid, 0))}</td>
+                    <td className="num mono">{signed(shownParties.reduce((s, r) => s + (balances.get(r.party.id) ?? 0), 0))}</td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}
@@ -762,6 +771,23 @@ export function PdcLedger() {
                     </tr>
                   ))}
                 </tbody>
+                {/* Totals of the lines shown: Opening + Paid/Sold − Received/Bought
+                    = the balance after the last entry. */}
+                <tfoot>
+                  <tr className="pdc-total-row">
+                    <td>Total</td>
+                    <td className="num mono">
+                      {formatNumber(statementRows.reduce((s, r) => s + (r.txn?.quantity ?? 0), 0))}
+                    </td>
+                    <td colSpan={7}>
+                      {lineKind !== 'all' && <span className="faint">{statementRows.length} lines shown</span>}
+                    </td>
+                    <td className="num mono pos">{formatMoney(statementRows.reduce((s, r) => s + r.entry.debit, 0), cur)}</td>
+                    <td className="num mono neg">{formatMoney(statementRows.reduce((s, r) => s + r.entry.credit, 0), cur)}</td>
+                    <td className="num mono">{party ? signed(ledger.balance) : formatMoney(ledger.balance, cur)}</td>
+                    <td colSpan={2}></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}

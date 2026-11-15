@@ -166,19 +166,23 @@ export function PdcLedgers() {
                 </tbody>
                 <tfoot>
                   <tr className="pdc-total-row">
-                    <td>Parties subtotal</td>
-                    <td className="num mono">{formatMoney(v.partiesTotal, cur)}</td>
-                    <td colSpan={3}></td>
+                    <td>Parties total</td>
+                    <td className="num mono pos">{formatMoney(v.parties.reduce((s, r) => s + (payments.get(r.party.id)?.received ?? 0), 0), cur)}</td>
+                    <td className="num mono neg">{formatMoney(v.parties.reduce((s, r) => s + (payments.get(r.party.id)?.paid ?? 0), 0), cur)}</td>
+                    <td className="num mono">{signed(v.partiesTotal)}</td>
+                    <td colSpan={2}></td>
                   </tr>
                   <tr className="pdc-total-row">
                     <td>Own balance</td>
-                    <td className="num mono">{formatMoney(v.ownBalance, cur)}</td>
-                    <td colSpan={3}></td>
+                    <td colSpan={2}></td>
+                    <td className="num mono">{signed(v.ownBalance)}</td>
+                    <td colSpan={2}></td>
                   </tr>
                   <tr className="pdc-total-row">
                     <td><strong>{v.ledger.name} total</strong></td>
-                    <td className="num mono"><strong>{formatMoney(v.total, cur)}</strong></td>
-                    <td colSpan={3}></td>
+                    <td colSpan={2}></td>
+                    <td className="num mono"><strong>{signed(v.total)}</strong></td>
+                    <td colSpan={2}></td>
                   </tr>
                 </tfoot>
               </table>

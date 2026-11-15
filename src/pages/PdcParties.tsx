@@ -345,6 +345,16 @@ export function PdcParties() {
                     );
                   })}
                 </tbody>
+                {/* Totals of the parties LISTED, so they still agree after a search. */}
+                <tfoot>
+                  <tr className="pdc-total-row">
+                    <td>Total · {parties.length} parties</td>
+                    <td className="num mono pos">{formatMoney(parties.reduce((t, p) => t + (payments.get(p.id)?.received ?? 0), 0), cur)}</td>
+                    <td className="num mono neg">{formatMoney(parties.reduce((t, p) => t + (payments.get(p.id)?.paid ?? 0), 0), cur)}</td>
+                    <td className="num mono">{signed(parties.reduce((t, p) => t + (balances.get(p.id) ?? 0), 0))}</td>
+                    <td className="no-print"></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}
