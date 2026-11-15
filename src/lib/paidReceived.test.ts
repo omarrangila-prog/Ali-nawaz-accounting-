@@ -150,3 +150,27 @@ describe('Paid & Received', () => {
     ]);
   });
 });
+
+describe('the Received / Paid cards', () => {
+  it('list exactly the payments their totals add up — no reversed entry, no bounced cheque', () => {
+    let d = seed();
+    d = apply(d, buildCashReceived(d, { partyId: 'N', amount: 100_000, date: '2026-08-02', paymentMethod: 'cash' }));
+    d = { ...d, transactions: d.transactions.map((t) => ({ ...t, reversed: true })) };
+    d = apply(d, buildCashReceived(d, {
+      partyId: 'N', amount: 200_000, date: '2026-08-03', paymentMethod: 'cheque',
+      cheque: { chequeNumber: 'C1', bankId: 'HABIB', chequeDate: '2026-08-10' },
+    }));
+    d = { ...d, cheques: d.cheques.map((c) => ({ ...c, status: 'bounced' as const })) };
+    d = apply(d, buildCashReceived(d, { partyId: 'N', amount: 30_000, date: '2026-08-04', paymentMethod: 'cash' }));
+    d = apply(d, buildCashPaid(d, {
+      partyId: 'P', otherPartyId: 'N', amount: 50_000, date: '2026-08-05', paymentMethod: 'cash',
+    }));
+
+    const reg = buildRegister(d);
+    const { received, paid } = paidAndReceived(d);
+    const listed = (card: 'received' | 'paid') =>
+      applyFilters(reg, { ...EMPTY_FILTERS, card }, '2026-08-05').map((r) => r.txn.id).sort();
+    expect(listed('received')).toEqual([...new Set(received.map((p) => p.txnId))].sort());
+    expect(listed('paid')).toEqual([...new Set(paid.map((p) => p.txnId))].sort());
+  });
+});

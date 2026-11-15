@@ -550,8 +550,18 @@ function matchesCard(row: RegisterRow, card: SummaryFilter, today: ISODate): boo
     case 'all': return true;
     case 'receivable': return row.txn.type === 'PDC Received' || row.txn.type === 'Debit Adjustment';
     case 'payable': return row.txn.type === 'PDC Issued' || row.txn.type === 'Credit Adjustment';
-    case 'received': return settledState(row)?.label === 'Received';
-    case 'paid': return settledState(row)?.label === 'Paid';
+    // Exactly the payments the Received / Paid cards add up: completed ones
+    // only (not reversed, no bounced cheque), and a two-party entry under
+    // both, since it is received from one party and paid to the other.
+    case 'received':
+    case 'paid': {
+      const t = row.txn;
+      if (t.reversed || t.type === 'Reversal') return false;
+      if (row.cheque && ['bounced', 'returned', 'cancelled'].includes(row.cheque.status)) return false;
+      const label = settledState(row)?.label;
+      const want = card === 'received' ? 'Received' : 'Paid';
+      return label === want || (!!t.otherPartyId && !!label);
+    }
     case 'pending-received': return !!c && c.direction === 'received' && isLive(c);
     case 'pending-issued': return !!c && c.direction === 'issued' && isLive(c);
     case 'due-today': return !!c && isLive(c) && c.chequeDate === today;
