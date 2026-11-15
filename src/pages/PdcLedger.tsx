@@ -73,7 +73,12 @@ export function PdcLedger() {
    * outstanding balance — are what the list is built on.
    */
   const payments = useMemo(() => paymentsByParty(data), [data]);
+  /** Each party's balance now — the last line of its ledger. */
+  const balances = useMemo(() => partyBalances(data), [data]);
   const money = (n: number) => formatMoney(n, cur);
+  /** A balance with its sign: + the party has to give you, − you have to give them. */
+  const signed = (n: number) =>
+    Math.abs(n) < 0.005 ? formatMoney(0, cur) : `${n > 0 ? '+' : '−'}${formatMoney(Math.abs(n), cur)}`;
 
   const partyRows = useMemo(
     () =>
@@ -428,6 +433,7 @@ export function PdcLedger() {
                         went out to them. */}
                     <th className="num" title="Money and cheques received from this party">Received</th>
                     <th className="num" title="Money and cheques paid to this party">Paid</th>
+                    <th className="num" title="The party's balance after its latest entry">Balance</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -448,10 +454,19 @@ export function PdcLedger() {
                         {pay.paid ? money(pay.paid) : '—'}
                         {pay.paidCount > 0 && <span className="faint"> · {pay.paidCount}×</span>}
                       </td>
+                      <td data-label="Balance" className="num mono">
+                        {signed(balances.get(party.id) ?? 0)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {shownParties.length > 0 && (
+            <div className="faint" style={{ fontSize: 12, marginTop: 8 }}>
+              Balance after every entry: <strong className="pos">+</strong> means the party has to give you ·{' '}
+              <strong className="neg">−</strong> means you have to give the party
             </div>
           )}
 
@@ -508,6 +523,11 @@ export function PdcLedger() {
                     <span className="lbl">Paid to {party.name}</span>
                     <span className="mono neg">{money(p?.paid ?? 0)}</span>
                     <span className="faint">{p?.paidCount ?? 0} payment{p?.paidCount === 1 ? '' : 's'} out</span>
+                  </div>
+                  <div>
+                    <span className="lbl">Balance now</span>
+                    <span className="mono">{signed(ledger.balance)}</span>
+                    <span className="faint">after the last entry below</span>
                   </div>
                 </div>
               </div>
@@ -636,8 +656,8 @@ export function PdcLedger() {
                     <th>Description</th>
                     {/* On a bank account a debit is money IN and a credit is
                         money OUT, so name them the way a bank statement does. */}
-                    <th className="num">{showCash ? 'Cash In' : account ? 'Deposits' : 'Debit'}</th>
-                    <th className="num">{showCash ? 'Cash Out' : account ? 'Withdrawals' : 'Credit'}</th>
+                    <th className="num">{showCash ? 'Cash In' : account ? 'Deposits' : 'Paid / Sold'}</th>
+                    <th className="num">{showCash ? 'Cash Out' : account ? 'Withdrawals' : 'Received / Bought'}</th>
                     <th className="num">Balance</th>
                     <th className="mid">Status</th>
                     <th className="no-print"></th>
@@ -660,10 +680,10 @@ export function PdcLedger() {
                     <td data-label="Description">
                       <strong>{showCash ? 'Opening Cash' : 'Opening Balance'}</strong>
                     </td>
-                    <td data-label={showCash ? 'Cash In' : account ? 'Deposits' : 'Debit'} className="num mono pos">
+                    <td data-label={showCash ? 'Cash In' : account ? 'Deposits' : 'Paid / Sold'} className="num mono pos">
                       {opening.amount > 0 ? formatMoney(opening.amount, cur) : '—'}
                     </td>
-                    <td data-label={showCash ? 'Cash Out' : account ? 'Withdrawals' : 'Credit'} className="num mono neg">
+                    <td data-label={showCash ? 'Cash Out' : account ? 'Withdrawals' : 'Received / Bought'} className="num mono neg">
                       {opening.amount < 0 ? formatMoney(-opening.amount, cur) : '—'}
                     </td>
                     <td data-label="Balance" className={cx('num mono stmt-bal',
@@ -707,8 +727,8 @@ export function PdcLedger() {
                       <td data-label="Cheque #" className="mono mid">{cheque?.chequeNumber || '—'}</td>
                       <td data-label="Cheque Date" className="mid">{cheque ? formatDate(cheque.chequeDate) : '—'}</td>
                       <td data-label="Description">{describe(entry, txn)}</td>
-                      <td data-label={showCash ? 'Cash In' : account ? 'Deposits' : 'Debit'} className="num mono pos">{entry.debit ? formatMoney(entry.debit, cur) : '—'}</td>
-                      <td data-label={showCash ? 'Cash Out' : account ? 'Withdrawals' : 'Credit'} className="num mono neg">{entry.credit ? formatMoney(entry.credit, cur) : '—'}</td>
+                      <td data-label={showCash ? 'Cash In' : account ? 'Deposits' : 'Paid / Sold'} className="num mono pos">{entry.debit ? formatMoney(entry.debit, cur) : '—'}</td>
+                      <td data-label={showCash ? 'Cash Out' : account ? 'Withdrawals' : 'Received / Bought'} className="num mono neg">{entry.credit ? formatMoney(entry.credit, cur) : '—'}</td>
                       <td data-label="Balance" className={cx('num mono stmt-bal', running > 0 ? 'pos' : running < 0 ? 'neg' : '')}>
                         {party
                           ? running === 0
@@ -743,6 +763,12 @@ export function PdcLedger() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {party && ledger.rows.length > 0 && (
+            <div className="faint" style={{ fontSize: 12, marginTop: 8 }}>
+              Balance after every entry: <strong className="pos">+</strong> means the party has to give you ·{' '}
+              <strong className="neg">−</strong> means you have to give the party
             </div>
           )}
 

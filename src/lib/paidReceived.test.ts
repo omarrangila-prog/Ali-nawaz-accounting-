@@ -174,3 +174,28 @@ describe('the Received / Paid cards', () => {
     expect(listed('paid')).toEqual([...new Set(paid.map((p) => p.txnId))].sort());
   });
 });
+
+describe('balance after every entry', () => {
+  it("each payment's Balance After is the running balance its party's ledger shows on that line", () => {
+    let d = seed();
+    d = apply(d, buildSale(d, { partyId: 'N', amount: 900_000, date: '2026-08-01', settlement: 'credit' }));
+    d = apply(d, buildCashReceived(d, { partyId: 'N', amount: 300_000, date: '2026-08-02', paymentMethod: 'cash' }));
+    d = apply(d, buildCashReceived(d, { partyId: 'N', amount: 100_000, date: '2026-08-03', paymentMethod: 'cash' }));
+    d = apply(d, buildCashPaid(d, {
+      partyId: 'P', otherPartyId: 'N', amount: 50_000, date: '2026-08-04', paymentMethod: 'cash',
+    }));
+    d = apply(d, buildCashPaid(d, { partyId: 'P', amount: 20_000, date: '2026-08-05', paymentMethod: 'cash' }));
+
+    const { received, paid } = paidAndReceived(d);
+    // Haji Naseer: sold 900,000, then received 300,000 → 600,000, 100,000 →
+    // 500,000, and the 50,000 passed on to Pak trading → 450,000.
+    expect(received.map((p) => p.balanceAfter)).toEqual([600_000, 500_000, 450_000]);
+    // Pak trading: paid 50,000 → +50,000, then 20,000 more → +70,000.
+    expect(paid.map((p) => p.balanceAfter)).toEqual([50_000, 70_000]);
+
+    for (const p of [...received, ...paid]) {
+      const line = buildPartyLedger(d, p.partyId).rows.find((r) => r.entry.txnId === p.txnId)!;
+      expect(p.balanceAfter).toBe(line.running);
+    }
+  });
+});

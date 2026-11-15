@@ -39,6 +39,9 @@ export function PdcLedgers() {
   const views = useMemo(() => buildAllLedgerViews(data), [data]);
   /** Money received from, and paid to, each party — completed payments only. */
   const payments = useMemo(() => paymentsByParty(data), [data]);
+  /** A balance with its sign: + the party has to give you, − you have to give them. */
+  const signed = (n: number) =>
+    Math.abs(n) < 0.005 ? formatMoney(0, cur) : `${n > 0 ? '+' : '−'}${formatMoney(Math.abs(n), cur)}`;
   const view = useMemo(
     () => (selectedId ? buildLedgerView(data, selectedId) : null),
     [data, selectedId]
@@ -127,7 +130,7 @@ export function PdcLedgers() {
               <table className="grid stack-sm">
                 <thead>
                   <tr>
-                    <th>Party</th><th className="num">Received</th><th className="num">Paid</th>
+                    <th>Party</th><th className="num">Received</th><th className="num">Paid</th><th className="num">Balance</th>
                     <th>Shared With</th><th className="no-print"></th>
                   </tr>
                 </thead>
@@ -146,6 +149,7 @@ export function PdcLedgers() {
                       <td data-label="Paid" className="num mono neg">
                         {formatMoney(payments.get(r.party.id)?.paid ?? 0, cur)}
                       </td>
+                      <td data-label="Balance" className="num mono">{signed(r.balance)}</td>
                       <td data-label="Shared With">
                         {r.shared
                           ? <span className="pdc-status st-transferred">{r.sharedWith.join(', ')}</span>

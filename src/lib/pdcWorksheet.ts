@@ -100,7 +100,7 @@ export const LEDGER_WIDE_COL = 7;
  * so they get the most room; Qty, Rate and Method only ever hold a short word
  * or figure.
  */
-export const LEDGER_COL_WEIGHTS = [1.1, 0.75, 0.75, 0.8, 1.75, 1.75, 1.0, 1.6, 1.0, 1.0, 1.2];
+export const LEDGER_COL_WEIGHTS = [1.1, 0.75, 0.75, 0.8, 1.6, 1.6, 1.0, 1.55, 1.2, 1.25, 1.2];
 
 /**
  * The body of a printed ledger: the opening figure first, then each line
@@ -183,15 +183,18 @@ export function partyPlainSection(data: PdcDataSet, partyId: string): PdfSection
   const outTotal = mine.filter((p) => p.dir === 'Paid').reduce((s, p) => s + p.amount, 0);
   return {
     title: `Paid & Received — ${partySentence(data, partyId)}`,
-    head: ['Date', 'Reference', 'Method', 'Cheque #', 'Description', `Received from ${name}`, `Paid to ${name}`],
+    head: ['Date', 'Reference', 'Method', 'Cheque #', 'Description', 'Received', 'Paid', 'Balance After'],
     rows: mine.map((p) => [
       formatDate(p.date), p.reference, p.method, p.chequeNumber || '-', p.description || '-',
       p.dir === 'Received' ? formatNumber(p.amount) : '-',
       p.dir === 'Paid' ? formatNumber(p.amount) : '-',
+      bal(p.balanceAfter),
     ]),
-    foot: ['', '', '', '', 'Total', formatNumber(inTotal), formatNumber(outTotal)],
-    numericCols: [5, 6],
-    colWeights: [1, 1, 0.8, 1, 2.2, 1.3, 1.3],
+    foot: ['', '', '', '', 'Total', formatNumber(inTotal), formatNumber(outTotal),
+      bal(data.ledger.filter((l) => l.account.kind === 'party' && l.account.id === partyId)
+        .reduce((s, l) => s + l.debit - l.credit, data.parties.find((p) => p.id === partyId)?.openingBalance ?? 0))],
+    numericCols: [5, 6, 7],
+    colWeights: [1.1, 1, 0.8, 1, 2, 1.3, 1.3, 1.3],
   };
 }
 
@@ -213,7 +216,7 @@ export function buildPartyWorksheet(data: PdcDataSet, partyId: string): jsPDF {
   const table = ledgerTable(data, chrono, opening);
   const section: PdfSection = {
     title: `${party?.name ?? 'Party'} Statement — ${partySentence(data, partyId)}`,
-    head: ledgerHead('Debit (-)', 'Credit (+)'),
+    head: ledgerHead('Paid/Sold', 'Received/Bought'),
     rows: table.rows,
     foot: table.foot,
     numericCols: LEDGER_NUMERIC_COLS,

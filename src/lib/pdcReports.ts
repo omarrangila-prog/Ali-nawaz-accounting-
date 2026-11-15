@@ -383,15 +383,18 @@ function paymentSections(
       title: `${word} — every payment`,
       subtitle: 'In date order',
       emptyText: which === 'received' ? 'Nothing received in this period.' : 'Nothing paid in this period.',
-      head: ['Date', 'Reference', which === 'received' ? 'Received From' : 'Paid To', 'Method', 'Cheque #', 'Description', 'Amount'],
-      numericCols: [6],
+      // The party's balance right after each payment, as its ledger shows it:
+      // (+) the party has to give you, (-) you have to give the party.
+      head: ['Date', 'Reference', which === 'received' ? 'Received From' : 'Paid To', 'Method', 'Cheque #', 'Description', 'Amount', 'Balance After'],
+      numericCols: [6, 7],
       rows: all.map((p) => [
         formatDate(p.date), p.reference, p.partyName, p.method,
         p.chequeNumber || '—', p.description || '—', m(p.amount),
+        `${m(Math.abs(p.balanceAfter))} ${p.balanceAfter >= 0 ? '(+)' : '(-)'}`,
       ]),
-      foot: ['', '', '', '', '', 'Total', m(total)],
+      foot: ['', '', '', '', '', 'Total', m(total), ''],
       newPage: true,
-      colWeights: [1.3, 1.1, 2, 0.8, 1, 2.6, 1.3],
+      colWeights: [1.3, 1.1, 2, 0.8, 1, 2.3, 1.2, 1.4],
     },
   ];
 }
@@ -996,7 +999,7 @@ export function buildPdcReport(
       const table = ledgerTable(data, shown, opening, openLabel);
       sections.push({
         title: `${p?.name ?? 'Party'} — ${partySentence(data, f.partyId)}`,
-        head: ledgerHead('Debit (-)', 'Credit (+)'),
+        head: ledgerHead('Paid/Sold', 'Received/Bought'),
         numericCols: LEDGER_NUMERIC_COLS,
         colWeights: LEDGER_COL_WEIGHTS,
         rows: table.rows,

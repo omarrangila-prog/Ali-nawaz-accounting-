@@ -354,6 +354,28 @@ export interface Payment {
   method: string;
   chequeNumber?: string;
   description?: string;
+  /** The party's balance right after this entry, as its own ledger shows it. */
+  balanceAfter: number;
+}
+
+/**
+ * Every party's balance right after each entry — the same running figure its
+ * ledger shows on that line, so a list of payments can show it too.
+ * Keyed by `partyId|txnId`.
+ */
+export function balanceAfterEach(data: PdcDataSet): Map<string, number> {
+  const running = new Map<string, number>();
+  for (const p of data.parties) running.set(p.id, p.openingBalance);
+  const out = new Map<string, number>();
+  const lines = data.ledger
+    .filter((l) => l.account.kind === 'party')
+    .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt);
+  for (const l of lines) {
+    const next = round2((running.get(l.account.id) ?? 0) + l.debit - l.credit);
+    running.set(l.account.id, next);
+    out.set(`${l.account.id}|${l.txnId}`, next);
+  }
+  return out;
 }
 
 /** Entry types that move money to or from a party. */
@@ -379,6 +401,7 @@ export function paidAndReceived(
   const chequeById = new Map(data.cheques.map((c) => [c.id, c]));
   const received: Payment[] = [];
   const paid: Payment[] = [];
+  const after = balanceAfterEach(data);
   for (const l of data.ledger) {
     if (l.account.kind !== 'party') continue;
     const t = txnById.get(l.txnId);
@@ -396,6 +419,7 @@ export function paidAndReceived(
       method: c ? 'Cheque' : paymentMethodOf(data, t).method,
       chequeNumber: c?.chequeNumber,
       description: t.description,
+      balanceAfter: after.get(`${l.account.id}|${t.id}`) ?? 0,
     };
     if (l.credit > 0) received.push({ ...p, amount: round2(l.credit) });
     if (l.debit > 0) paid.push({ ...p, amount: round2(l.debit) });

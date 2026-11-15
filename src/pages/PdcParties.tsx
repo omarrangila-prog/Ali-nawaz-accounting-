@@ -60,6 +60,9 @@ export function PdcParties() {
   const balances = useMemo(() => partyBalances(data), [data]);
   /** Money received from, and paid to, each party — completed payments only. */
   const payments = useMemo(() => paymentsByParty(data), [data]);
+  /** A balance with its sign: + the party has to give you, − you have to give them. */
+  const signed = (n: number) =>
+    Math.abs(n) < 0.005 ? formatMoney(0, cur) : `${n > 0 ? '+' : '−'}${formatMoney(Math.abs(n), cur)}`;
   const bankBals = useMemo(() => bankBalances(data), [data]);
 
   /** Bulk-add every Pakistani bank, skipping any already present. */
@@ -294,6 +297,7 @@ export function PdcParties() {
                     {/* Completed payments only — what came in, what went out. */}
                     <th className="num" title="Money and cheques received from this party">Received</th>
                     <th className="num" title="Money and cheques paid to this party">Paid</th>
+                    <th className="num" title="The party's balance after its latest entry (+ they give you, − you give them)">Balance</th>
                     <th className="no-print"></th>
                   </tr>
                 </thead>
@@ -318,6 +322,7 @@ export function PdcParties() {
                         <td data-label="Paid" className="num mono neg">
                           {pay?.paid ? formatMoney(pay.paid, cur) : '—'}
                         </td>
+                        <td data-label="Balance" className="num mono">{signed(balances.get(p.id) ?? 0)}</td>
                         <td className="no-print actions-cell">
                           <div className="row" style={{ gap: 2, justifyContent: 'flex-end' }}>
                             {/* stopPropagation so Edit and Delete do not also
