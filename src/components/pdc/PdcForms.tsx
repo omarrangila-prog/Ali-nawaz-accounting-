@@ -153,6 +153,8 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
   // --- form state ----------------------------------------------------------
   const [partyId, setPartyId] = useState(defaultParty);
   const [toPartyId, setToPartyId] = useState('');
+  /** Pay: who the money came from. Receive: who it was handed straight to. */
+  const [otherPartyId, setOtherPartyId] = useState('');
   const [bankId, setBankId] = useState('');
   const [bankAccountId, setBankAccountId] = useState('');
   const [toBankAccountId, setToBankAccountId] = useState('');
@@ -182,6 +184,7 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     if (!kind) return;
     setPartyId(defaultParty);
     setToPartyId('');
+    setOtherPartyId('');
     setBankId('');
     setBankAccountId('');
     setToBankAccountId('');
@@ -372,6 +375,9 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
         e.chequeNumber = 'This cheque number already exists for that account.';
       }
     }
+    if ((kind === 'cash-received' || kind === 'cash-paid') && otherPartyId && otherPartyId === partyId) {
+      e.otherPartyId = 'Choose a different party, or leave this empty.';
+    }
     if (kind === 'party-transfer') {
       if (!toPartyId) e.toPartyId = 'Select the receiving party.';
       else if (toPartyId === partyId) e.toPartyId = 'Cannot transfer to the same party.';
@@ -395,7 +401,7 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
     setErrors(e);
     if (Object.keys(e).length > 0) {
       // Keep everything typed; just focus the first bad field.
-      const order = ['partyId', 'chequeId', 'toPartyId', 'bankId', 'bankAccountId',
+      const order = ['partyId', 'otherPartyId', 'chequeId', 'toPartyId', 'bankId', 'bankAccountId',
         'toBankAccountId', 'chequeNumber', 'chequeDate', 'amount', 'date'];
       const first = order.find((k) => e[k]);
       toast.error(e[first ?? order[0]] ?? 'Please fix the highlighted field.');
@@ -469,6 +475,7 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
             cheque: format === 'cheque'
               ? { chequeNumber: chequeNumber.trim(), chequeDate, bankId }
               : undefined,
+            otherPartyId: format !== 'cheque' && otherPartyId ? otherPartyId : undefined,
           })
         );
         break;
@@ -481,6 +488,7 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
             cheque: format === 'cheque'
               ? { chequeNumber: chequeNumber.trim(), chequeDate, bankId }
               : undefined,
+            otherPartyId: format !== 'cheque' && otherPartyId ? otherPartyId : undefined,
           })
         );
         break;
@@ -540,7 +548,7 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
       case 'pdc-issued': return 7;     // party, account, cheque#, cheque date, amount, date, desc
       // party, amount, format, [cheque x3 | account], date, desc
       case 'cash-received':
-      case 'cash-paid': return format === 'cheque' ? 8 : 6;
+      case 'cash-paid': return format === 'cheque' ? 8 : 7;
       case 'debit':
       case 'credit': return 4;         // party, amount, date, desc
       case 'party-transfer': return 5; // from, to, amount, date, desc
@@ -901,6 +909,14 @@ export function PdcForm({ kind, defaultParty = '', defaultCheque = '', onClose }
           'Bank Account', bankAccountId, accountPickerOptions,
           (v) => resolveAccount(v, setBankAccountId), 'bankAccountId', 'Select, search or type a bank',
           undefined, createAccount
+        ));
+      }
+      // Money that passed between two parties: one entry, shown in both
+      // parties' ledgers and as cash in and out.
+      if (format !== 'cheque') {
+        fields.push(partyField(
+          kind === 'cash-paid' ? 'Money came from (optional — another party)' : 'Handed straight to (optional — another party)',
+          otherPartyId, setOtherPartyId, 'otherPartyId'
         ));
       }
       fields.push(textField('Date', date, setDate, 'date', 'date'));

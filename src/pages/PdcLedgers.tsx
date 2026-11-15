@@ -20,6 +20,7 @@ import { usePdc } from '@/store/pdcStore';
 import { buildAllLedgerViews, buildLedgerView, balanceLabel, ledgerDeleteImpact } from '@/lib/pdcEngine';
 import type { NamedLedger } from '@/types/pdc';
 import { formatMoney, cx } from '@/lib/utils';
+import { paymentsByParty } from '@/lib/pdcRegister';
 import { toast } from '@/store/toast';
 import './pdc.css';
 
@@ -36,6 +37,8 @@ export function PdcLedgers() {
   const [assignFor, setAssignFor] = useState<string | null>(null);
 
   const views = useMemo(() => buildAllLedgerViews(data), [data]);
+  /** Money received from, and paid to, each party — completed payments only. */
+  const payments = useMemo(() => paymentsByParty(data), [data]);
   const view = useMemo(
     () => (selectedId ? buildLedgerView(data, selectedId) : null),
     [data, selectedId]
@@ -85,12 +88,18 @@ export function PdcLedgers() {
             <span className="pdc-card-hint">posted directly</span>
           </div>
           <div className="pdc-card pos">
-            <span className="pdc-card-label">Receivable</span>
-            <span className="pdc-card-value mono">{formatMoney(v.receivable, cur)}</span>
+            <span className="pdc-card-label">Received</span>
+            <span className="pdc-card-value mono">
+              {formatMoney(v.parties.reduce((s, r) => s + (payments.get(r.party.id)?.received ?? 0), 0), cur)}
+            </span>
+            <span className="pdc-card-hint">from these parties</span>
           </div>
           <div className="pdc-card neg">
-            <span className="pdc-card-label">Payable</span>
-            <span className="pdc-card-value mono">{formatMoney(v.payable, cur)}</span>
+            <span className="pdc-card-label">Paid</span>
+            <span className="pdc-card-value mono">
+              {formatMoney(v.parties.reduce((s, r) => s + (payments.get(r.party.id)?.paid ?? 0), 0), cur)}
+            </span>
+            <span className="pdc-card-hint">to these parties</span>
           </div>
         </div>
 
@@ -118,8 +127,8 @@ export function PdcLedgers() {
               <table className="grid stack-sm">
                 <thead>
                   <tr>
-                    <th>Party</th><th className="num">Balance</th>
-                    <th>Status</th><th>Shared With</th><th className="no-print"></th>
+                    <th>Party</th><th className="num">Received</th><th className="num">Paid</th>
+                    <th>Shared With</th><th className="no-print"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -131,15 +140,11 @@ export function PdcLedgers() {
                           {r.party.name}
                         </button>
                       </td>
-                      <td data-label="Balance"
-                        className={cx('num mono', r.balance > 0 ? 'pos' : r.balance < 0 ? 'neg' : '')}>
-                        {formatMoney(Math.abs(r.balance), cur)}
+                      <td data-label="Received" className="num mono pos">
+                        {formatMoney(payments.get(r.party.id)?.received ?? 0, cur)}
                       </td>
-                      <td data-label="Status">
-                        <span className={cx('pdc-status',
-                          r.balance > 0 ? 'st-cleared' : r.balance < 0 ? 'st-bounced' : 'st-cancelled')}>
-                          {balanceLabel(r.balance)}
-                        </span>
+                      <td data-label="Paid" className="num mono neg">
+                        {formatMoney(payments.get(r.party.id)?.paid ?? 0, cur)}
                       </td>
                       <td data-label="Shared With">
                         {r.shared

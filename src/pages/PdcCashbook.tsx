@@ -29,6 +29,7 @@ import {
   lowBalanceAccounts,
   rowTotals,
   settledState,
+  paidAndReceived,
   type RegisterFilters,
 } from '@/lib/pdcRegister';
 import { bankBalances } from '@/lib/pdcEngine';
@@ -142,6 +143,14 @@ export function PdcCashbook() {
     () => rowTotals(shown.filter((r) => r.txn.type === 'Sale')).amount,
     [shown]
   );
+  /** Money received and paid in the period on screen — completed payments only. */
+  const periodPayments = useMemo(() => {
+    const { received, paid } = paidAndReceived(data, { from: filters.from, to: filters.to });
+    return {
+      received: received.reduce((s, p) => s + p.amount, 0),
+      paid: paid.reduce((s, p) => s + p.amount, 0),
+    };
+  }, [data, filters.from, filters.to]);
 
   const openForm = (kind: PdcFormKind) => {
     setFormParty(selParty);
@@ -323,7 +332,22 @@ export function PdcCashbook() {
         : `${formatNumber(shown.length)} of ${formatNumber(register.length)} shown`,
     },
     { key: 'expenses', label: 'Expenses', value: summary.totalExpenses, tone: 'neg' },
-    { key: 'receivable', label: 'Receivable', value: summary.totalReceivable, tone: 'pos' },
+    // Money that has actually come in and gone out — the client records an
+    // entry only once the payment is made, so these are the figures that matter.
+    {
+      key: 'received',
+      label: shownMonthLabel ? `Received · ${shownMonthLabel}` : 'Received',
+      value: periodPayments.received,
+      tone: 'pos',
+      hint: 'tap to list every payment in',
+    },
+    {
+      key: 'paid',
+      label: shownMonthLabel ? `Paid · ${shownMonthLabel}` : 'Paid',
+      value: periodPayments.paid,
+      tone: 'neg',
+      hint: 'tap to list every payment out',
+    },
     {
       key: 'all',
       label: summary.netProfit >= 0 ? 'Profit' : 'Loss',

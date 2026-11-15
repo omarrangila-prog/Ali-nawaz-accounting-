@@ -73,6 +73,8 @@ export function EditTxnModal({ row, onClose }: Props) {
   const [chequeBankId, setChequeBankId] = useState('');
   const [chequeDate, setChequeDate] = useState('');
   const [reason, setReason] = useState('');
+  /** Pay: who the money came from. Receive: who it was handed straight to. */
+  const [otherPartyId, setOtherPartyId] = useState('');
 
   // Load the transaction's current values whenever a different row is opened.
   useEffect(() => {
@@ -95,6 +97,7 @@ export function EditTxnModal({ row, onClose }: Props) {
     setChequeBankId(cheque?.bankId ?? '');
     setChequeDate(cheque?.chequeDate ?? '');
     setReason('');
+    setOtherPartyId(txn.otherPartyId ?? '');
   }, [txn?.id]);
 
   // Quantity × rate keeps driving the amount, as it does on the entry form.
@@ -188,6 +191,7 @@ export function EditTxnModal({ row, onClose }: Props) {
           bankAccountId: method === 'bank' ? bankAccountId || undefined : undefined,
           paymentMethod: method,
           cheque: chequeInput,
+          otherPartyId: method !== 'cheque' && otherPartyId && otherPartyId !== partyId ? otherPartyId : undefined,
         });
         break;
       case 'Cash Paid':
@@ -196,6 +200,7 @@ export function EditTxnModal({ row, onClose }: Props) {
           bankAccountId: method === 'bank' ? bankAccountId || undefined : undefined,
           paymentMethod: method,
           cheque: chequeInput,
+          otherPartyId: method !== 'cheque' && otherPartyId && otherPartyId !== partyId ? otherPartyId : undefined,
         });
         break;
       case 'Expense':
@@ -342,6 +347,21 @@ export function EditTxnModal({ row, onClose }: Props) {
               options={accountOptions}
               placeholder="Select an account"
               onChange={setBankAccountId}
+            />
+          </div>
+        )}
+
+        {isMoney && method !== 'cheque' && (
+          <div className="field">
+            <label>
+              {received ? 'Handed straight to' : 'Money came from'}{' '}
+              <span className="faint">(optional — another party)</span>
+            </label>
+            <Combo
+              value={otherPartyId}
+              options={[{ id: '', label: 'Nobody else' }, ...partyOptions.filter((p) => p.id !== partyId)]}
+              placeholder="Nobody else"
+              onChange={setOtherPartyId}
             />
           </div>
         )}

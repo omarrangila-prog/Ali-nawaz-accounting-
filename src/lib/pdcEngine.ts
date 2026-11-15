@@ -954,6 +954,11 @@ export interface CashInput {
   bankAccountId?: string;
   /** 'cash' | 'bank' | 'cheque' — how the money actually moved. */
   paymentMethod?: 'cash' | 'bank' | 'cheque';
+  /**
+   * A second party the money passed between: on a Pay, who it came FROM; on a
+   * Receive, who it was handed straight TO. Cash or bank only.
+   */
+  otherPartyId?: string;
   /** Cheque details when paid by cheque; the cheque record is created here. */
   cheque?: {
     /** Optional — a cheque can be recorded before its number is known. */
@@ -998,12 +1003,53 @@ export function buildCashReceived(data: PdcDataSet, input: CashInput): Posting {
   }
 
   const target = input.bankAccountId ? bankAcc(input.bankAccountId) : cashAcc();
+  if (input.otherPartyId && input.otherPartyId !== input.partyId) {
+    return passThrough(data, txn, input, target, input.partyId, input.otherPartyId);
+  }
   return {
     txn,
     movements: [],
     lines: buildLines(txn, [
       { account: target, debit: amount, description: desc, relatedPartyId: input.partyId },
       { account: partyAcc(input.partyId), credit: amount, description: desc, relatedBankAccountId: input.bankAccountId },
+    ]),
+  };
+}
+
+/**
+ * Money that passed between two parties through our cash or bank: it came IN
+ * from one and went straight OUT to the other, as one entry.
+ *
+ *   Dr Cash / Cr From-party   (received from them)
+ *   Dr To-party / Cr Cash     (paid to them)
+ *
+ * Cash nets to nothing — it was only passing through — but both movements are
+ * on the Cash Ledger, and each party's ledger carries its own side, so the
+ * amount is never counted twice and never left out.
+ */
+function passThrough(
+  data: PdcDataSet,
+  txn: PdcTransaction,
+  input: CashInput,
+  funds: AccountRef,
+  fromPartyId: string,
+  toPartyId: string
+): Posting {
+  const amount = round2(input.amount);
+  txn.otherPartyId = input.otherPartyId;
+  const from = data.parties.find((p) => p.id === fromPartyId)?.name ?? 'party';
+  const to = data.parties.find((p) => p.id === toPartyId)?.name ?? 'party';
+  // Plain words, no arrow: printed PDFs have no arrow glyph.
+  const desc = input.description || `${input.bankAccountId ? 'Bank' : 'Cash'} from ${from} paid to ${to}`;
+  if (!txn.description) txn.description = desc;
+  return {
+    txn,
+    movements: [],
+    lines: buildLines(txn, [
+      { account: funds, debit: amount, description: desc, relatedPartyId: fromPartyId },
+      { account: partyAcc(fromPartyId), credit: amount, description: desc, relatedBankAccountId: input.bankAccountId },
+      { account: partyAcc(toPartyId), debit: amount, description: desc, relatedBankAccountId: input.bankAccountId },
+      { account: funds, credit: amount, description: desc, relatedPartyId: toPartyId },
     ]),
   };
 }
@@ -1040,6 +1086,9 @@ export function buildCashPaid(data: PdcDataSet, input: CashInput): Posting {
   }
 
   const source = input.bankAccountId ? bankAcc(input.bankAccountId) : cashAcc();
+  if (input.otherPartyId && input.otherPartyId !== input.partyId) {
+    return passThrough(data, txn, input, source, input.otherPartyId, input.partyId);
+  }
   return {
     txn,
     movements: [],

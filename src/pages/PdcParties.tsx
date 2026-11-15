@@ -20,7 +20,7 @@ import type { Bank, BankAccount, NamedLedger, PdcParty } from '@/types/pdc';
 import { PAKISTAN_BANK_OPTIONS, PAKISTAN_BANKS } from '@/config/pakistanBanks';
 import { formatMoney, cx } from '@/lib/utils';
 import { toast } from '@/store/toast';
-import { partyDealings } from '@/lib/pdcRegister';
+import { paymentsByParty } from '@/lib/pdcRegister';
 import './pdc.css';
 
 /**
@@ -45,7 +45,7 @@ export function PdcParties() {
   );
   const [search, setSearch] = useState('');
   /** Which side of the book to list, matching the Party Ledger page. */
-  const [side, setSide] = useState<'all' | 'receivable' | 'payable'>('all');
+  const [side, setSide] = useState<'all' | 'received' | 'paid'>('all');
   const [partyModal, setPartyModal] = useState<PdcParty | 'new' | null>(null);
   const [bankModal, setBankModal] = useState<Bank | 'new' | null>(null);
   const [accountModal, setAccountModal] = useState<BankAccount | 'new' | null>(null);
@@ -58,8 +58,8 @@ export function PdcParties() {
   const [ledgerToDelete, setLedgerToDelete] = useState<NamedLedger | null>(null);
 
   const balances = useMemo(() => partyBalances(data), [data]);
-  /** What I gave each party and what I got from them. */
-  const dealings = useMemo(() => partyDealings(data), [data]);
+  /** Money received from, and paid to, each party — completed payments only. */
+  const payments = useMemo(() => paymentsByParty(data), [data]);
   const bankBals = useMemo(() => bankBalances(data), [data]);
 
   /** Bulk-add every Pakistani bank, skipping any already present. */
@@ -77,33 +77,29 @@ export function PdcParties() {
     toast.success(`Added ${added} bank${added === 1 ? '' : 's'}`);
   };
 
-  /**
-   * Same split as the Party Ledger: who owes YOU, and who you owe. Derived from
-   * the live balance, so a settled party leaves its side on its own.
-   */
+  /** Same split as the Party Ledger: parties money came in from, and went out to. */
   const sideCounts = useMemo(() => {
-    const rows = data.parties.map((p) => balances.get(p.id) ?? 0);
+    const rows = data.parties.map((p) => payments.get(p.id));
     return {
       all: rows.length,
-      receivable: rows.filter((b) => b > 0).length,
-      payable: rows.filter((b) => b < 0).length,
-      settled: rows.filter((b) => b === 0).length,
-      totalReceivable: rows.reduce((s, b) => s + (b > 0 ? b : 0), 0),
-      totalPayable: rows.reduce((s, b) => s + (b < 0 ? -b : 0), 0),
+      received: rows.filter((r) => r?.receivedCount).length,
+      paid: rows.filter((r) => r?.paidCount).length,
+      totalReceived: rows.reduce((s, r) => s + (r?.received ?? 0), 0),
+      totalPaid: rows.reduce((s, r) => s + (r?.paid ?? 0), 0),
     };
-  }, [data.parties, balances]);
+  }, [data.parties, payments]);
 
   const parties = useMemo(() => {
     const q = search.trim().toLowerCase();
     return data.parties
       .filter((p) => {
-        const b = balances.get(p.id) ?? 0;
-        if (side === 'receivable' && b <= 0) return false;
-        if (side === 'payable' && b >= 0) return false;
+        const r = payments.get(p.id);
+        if (side === 'received' && !r?.receivedCount) return false;
+        if (side === 'paid' && !r?.paidCount) return false;
         return !q || p.name.toLowerCase().includes(q);
       })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [data.parties, search, side, balances]);
+  }, [data.parties, search, side, payments]);
 
   return (
     <div className="pdc-page">
@@ -249,8 +245,8 @@ export function PdcParties() {
           <div className="quick-filters no-print" style={{ marginBottom: 10 }}>
             {([
               { id: 'all' as const, label: `All Parties (${sideCounts.all})`, total: 0 },
-              { id: 'receivable' as const, label: `Receivable (${sideCounts.receivable})`, total: sideCounts.totalReceivable },
-              { id: 'payable' as const, label: `Payable (${sideCounts.payable})`, total: sideCounts.totalPayable },
+              { id: 'received' as const, label: `Received from (${sideCounts.received})`, total: sideCounts.totalReceived },
+              { id: 'paid' as const, label: `Paid to (${sideCounts.paid})`, total: sideCounts.totalPaid },
             ]).map((c) => (
               <button
                 key={c.id}
@@ -269,11 +265,11 @@ export function PdcParties() {
           {side !== 'all' && parties.length > 0 && (
             <div className="pdc-register-head" style={{ marginBottom: 6 }}>
               <div className="stmt-title" style={{ margin: 0 }}>
-                {side === 'receivable' ? 'Receivable Parties' : 'Payable Parties'} · {parties.length}
+                {side === 'received' ? 'Parties who paid you' : 'Parties you paid'} · {parties.length}
               </div>
               <div className="mono" style={{ fontWeight: 700 }}>
                 {formatMoney(
-                  parties.reduce((t, p) => t + Math.abs(balances.get(p.id) ?? 0), 0),
+                  parties.reduce((t, p) => t + ((side === 'received' ? payments.get(p.id)?.received : payments.get(p.id)?.paid) ?? 0), 0),
                   cur
                 )}
               </div>
@@ -285,8 +281,8 @@ export function PdcParties() {
               {/* Say WHY the list is empty — the reason differs per filter. */}
               {search.trim()
                 ? `No party matches "${search.trim()}" on this list.`
-                : side === 'receivable' ? 'No party currently owes you anything — everything is collected.'
-                : side === 'payable' ? 'You do not owe any party at the moment — everything is paid.'
+                : side === 'received' ? 'No money has been received from any party yet.'
+                : side === 'paid' ? 'No money has been paid to any party yet.'
                 : 'No parties yet. Add one to start recording cheques and payments.'}
             </div>
           ) : (
@@ -295,16 +291,15 @@ export function PdcParties() {
                 <thead>
                   <tr>
                     <th>Party</th>
-                    {/* I Gave - I Got = Balance, so each row explains itself. */}
-                    <th className="num" title="Goods sold to them + money/cheques paid to them">I Gave</th>
-                    <th className="num" title="Money/cheques received from them + goods bought from them">I Got</th>
-                    <th className="num">Balance</th>
-                    <th>What it means</th><th className="no-print"></th>
+                    {/* Completed payments only — what came in, what went out. */}
+                    <th className="num" title="Money and cheques received from this party">Received</th>
+                    <th className="num" title="Money and cheques paid to this party">Paid</th>
+                    <th className="no-print"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {parties.map((p) => {
-                    const bal = balances.get(p.id) ?? 0;
+                    const pay = payments.get(p.id);
                     return (
                       // The whole row opens the ledger — clicking a customer is
                       // how you look at their account, so it should not depend
@@ -317,17 +312,11 @@ export function PdcParties() {
                         onClick={() => navigate(`/ledger?party=${p.id}`)}
                       >
                         <td data-label="Party"><span className="link-text">{p.name}</span></td>
-                        <td data-label="I Gave" className="num mono">{formatMoney(dealings.get(p.id)?.gave ?? 0, cur)}</td>
-                        <td data-label="I Got" className="num mono">{formatMoney(dealings.get(p.id)?.got ?? 0, cur)}</td>
-                        <td data-label="Balance" className={cx('num mono', bal > 0 ? 'pos' : bal < 0 ? 'neg' : '')}>
-                          {formatMoney(Math.abs(bal), cur)}
+                        <td data-label="Received" className="num mono pos">
+                          {pay?.received ? formatMoney(pay.received, cur) : '—'}
                         </td>
-                        <td data-label="What it means">
-                          <span className={cx('owe-say', bal > 0 ? 'in' : bal < 0 ? 'out' : '')}>
-                            {bal > 0 ? `Will pay you ${formatMoney(bal, cur)}`
-                              : bal < 0 ? `You will pay ${formatMoney(-bal, cur)}`
-                              : 'Settled'}
-                          </span>
+                        <td data-label="Paid" className="num mono neg">
+                          {pay?.paid ? formatMoney(pay.paid, cur) : '—'}
                         </td>
                         <td className="no-print actions-cell">
                           <div className="row" style={{ gap: 2, justifyContent: 'flex-end' }}>
@@ -355,14 +344,6 @@ export function PdcParties() {
             </div>
           )}
 
-          {/* Settled parties are absent from both sides by design — say so, so
-              a shrinking list reads as progress rather than missing data. */}
-          {side !== 'all' && sideCounts.settled > 0 && (
-            <div className="faint" style={{ fontSize: 11.5, marginTop: 8 }}>
-              {sideCounts.settled} settled part{sideCounts.settled === 1 ? 'y is' : 'ies are'} hidden
-              — they have nothing outstanding.
-            </div>
-          )}
         </div>
       ) : (
         <div className="card">

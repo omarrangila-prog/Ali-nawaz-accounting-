@@ -127,9 +127,14 @@ export function lineFlow(
 ): Flow {
   const self = accountKey(entry.account);
   const inbound = entry.debit > 0;
-  const others = siblings.filter(
+  let others = siblings.filter(
     (l) => accountKey(l.account) !== self && (inbound ? l.credit > 0 : l.debit > 0)
   );
+  // Money that passed through our cash between two parties: each party's line
+  // names the cash it went into or came out of, not the other party as well.
+  if (entry.account.kind === 'party' && others.some((l) => isFundsAccount(l.account))) {
+    others = others.filter((l) => isFundsAccount(l.account));
+  }
   const parties = new Set<string>();
   for (const l of [entry, ...others]) if (l.account.kind === 'party') parties.add(l.account.id);
   const ctx = { cheques, parties, txn };
@@ -245,10 +250,21 @@ export function txnTotals(
 ): { debit: number; credit: number } {
   let funds = 0;
   let party = 0;
+  let fundsIn = 0;
+  let fundsOut = 0;
   for (const l of data.ledger) {
     if (l.txnId !== txnId) continue;
-    if (isFundsAccount(l.account)) funds += l.debit - l.credit;
-    else if (l.account.kind === 'party') party += l.debit - l.credit;
+    if (isFundsAccount(l.account)) {
+      funds += l.debit - l.credit;
+      fundsIn += l.debit;
+      fundsOut += l.credit;
+    } else if (l.account.kind === 'party') party += l.debit - l.credit;
+  }
+  // Money that came in from one party and went straight out to another: show
+  // both the cash in and the cash out, rather than a net of nothing.
+  if (funds === 0 && party === 0 && fundsIn > 0 && fundsIn === fundsOut
+      && data.transactions.find((t) => t.id === txnId)?.otherPartyId) {
+    return { debit: round2(fundsIn), credit: round2(fundsOut) };
   }
   const net = funds !== 0 ? funds : party;
   return {
@@ -303,40 +319,124 @@ export function buildRegister(data: PdcDataSet): RegisterRow[] {
 }
 
 /**
- * For a money entry, whether the money has ACTUALLY moved yet — in the plain
- * words the user asks the question in.
- *
- *   'paid'        cash or bank has left, or the cheque has cleared
- *   'need to pay' a cheque was issued but has not cleared, so the money is
- *                 still owed despite the entry existing
- *   'received'    money has come in
- *   'due in'      a cheque was received but has not cleared yet
- *
- * A cheque entry is the whole reason this is not simply the entry's type: the
- * payment is recorded, but nothing has left the account until it clears.
+ * For a money entry, which way the money went — in the plain words the client
+ * records in: an entry is made only AFTER the money has moved, so every
+ * payment out is simply "Paid" and every payment in is simply "Received".
+ * Trades (sales and purchases) move goods, not money, so they carry no status.
  */
 export function settledState(
   row: RegisterRow
 ): { label: string; tone: 'done' | 'waiting' } | null {
   const t = row.txn;
-  const out = t.type === 'Cash Paid' || t.type === 'PDC Issued' || t.type === 'Purchase';
-  const inn = t.type === 'Cash Received' || t.type === 'PDC Received' || t.type === 'Sale';
-  if (!out && !inn) return null;
-
-  const c = row.cheque;
-  if (c) {
-    // Only a cleared cheque has actually moved money.
-    if (c.status === 'cleared') return { label: out ? 'Paid' : 'Received', tone: 'done' };
-    if (['bounced', 'returned', 'cancelled'].includes(c.status)) {
-      return { label: out ? 'Need to Pay' : 'Not Received', tone: 'waiting' };
-    }
-    return { label: out ? 'Need to Pay' : 'Due In', tone: 'waiting' };
+  if (t.type === 'Cash Paid' || t.type === 'PDC Issued' || t.type === 'Cheque Endorsement') {
+    return { label: 'Paid', tone: 'done' };
   }
-  // A credit trade moves no money; the party settles it later.
-  if (t.type === 'Purchase') return { label: 'Need to Pay', tone: 'waiting' };
-  if (t.type === 'Sale') return { label: t.settlement === 'cash' ? 'Received' : 'Due In',
-                                  tone: t.settlement === 'cash' ? 'done' : 'waiting' };
-  return { label: out ? 'Paid' : 'Received', tone: 'done' };
+  // A cheque clearing only moves money already received into the bank, so it
+  // is not "Received" a second time.
+  if (t.type === 'Cash Received' || t.type === 'PDC Received') {
+    return { label: 'Received', tone: 'done' };
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Paid & Received — every completed payment, out and in
+// ---------------------------------------------------------------------------
+
+/** One completed payment: who, how much, when, and how. */
+export interface Payment {
+  txnId: string;
+  reference: string;
+  date: ISODate;
+  partyId: string;
+  partyName: string;
+  amount: number;
+  method: string;
+  chequeNumber?: string;
+  description?: string;
+}
+
+/** Entry types that move money to or from a party. */
+const PAYMENT_TYPES: PdcTxnType[] = [
+  'Cash Received', 'Cash Paid', 'PDC Received', 'PDC Issued', 'Cheque Endorsement',
+];
+
+/**
+ * Every completed payment, split into Received (money that came in from a
+ * party) and Paid (money that went out to a party).
+ *
+ * Read from each party's own ledger line, so an entry that passed between two
+ * parties gives one Received (from the first) and one Paid (to the second) —
+ * each party sees its own side, and no amount is counted twice. A reversed
+ * entry, and a cheque that bounced, was returned or was cancelled, is not a
+ * completed payment and is left out.
+ */
+export function paidAndReceived(
+  data: PdcDataSet,
+  range: { from?: ISODate; to?: ISODate } = {}
+): { received: Payment[]; paid: Payment[] } {
+  const txnById = new Map(data.transactions.map((t) => [t.id, t]));
+  const chequeById = new Map(data.cheques.map((c) => [c.id, c]));
+  const received: Payment[] = [];
+  const paid: Payment[] = [];
+  for (const l of data.ledger) {
+    if (l.account.kind !== 'party') continue;
+    const t = txnById.get(l.txnId);
+    if (!t || t.reversed || !PAYMENT_TYPES.includes(t.type)) continue;
+    if (range.from && t.date < range.from) continue;
+    if (range.to && t.date > range.to) continue;
+    const c = l.chequeId ? chequeById.get(l.chequeId) : undefined;
+    if (c && ['bounced', 'returned', 'cancelled'].includes(c.status)) continue;
+    const p: Omit<Payment, 'amount'> = {
+      txnId: t.id,
+      reference: t.reference,
+      date: t.date,
+      partyId: l.account.id,
+      partyName: partyName(data, l.account.id) || '—',
+      method: c ? 'Cheque' : paymentMethodOf(data, t).method,
+      chequeNumber: c?.chequeNumber,
+      description: t.description,
+    };
+    if (l.credit > 0) received.push({ ...p, amount: round2(l.credit) });
+    if (l.debit > 0) paid.push({ ...p, amount: round2(l.debit) });
+  }
+  const byDate = (a: Payment, b: Payment) => a.date.localeCompare(b.date) || a.reference.localeCompare(b.reference);
+  return { received: received.sort(byDate), paid: paid.sort(byDate) };
+}
+
+/** Received from, and paid to, each party — totals and entry counts. */
+export interface PartyPayments {
+  received: number;
+  paid: number;
+  receivedCount: number;
+  paidCount: number;
+}
+
+export function paymentsByParty(
+  data: PdcDataSet,
+  range: { from?: ISODate; to?: ISODate } = {}
+): Map<string, PartyPayments> {
+  const out = new Map<string, PartyPayments>();
+  for (const p of data.parties) out.set(p.id, { received: 0, paid: 0, receivedCount: 0, paidCount: 0 });
+  const { received, paid } = paidAndReceived(data, range);
+  for (const x of received) {
+    const r = out.get(x.partyId); if (!r) continue;
+    r.received = round2(r.received + x.amount); r.receivedCount++;
+  }
+  for (const x of paid) {
+    const r = out.get(x.partyId); if (!r) continue;
+    r.paid = round2(r.paid + x.amount); r.paidCount++;
+  }
+  return out;
+}
+
+/** One party's payments in a sentence. */
+export function paymentsSentence(name: string, p: PartyPayments | undefined, money: (n: number) => string): string {
+  if (!p || (!p.received && !p.paid)) return `No payments with ${name} yet`;
+  const parts: string[] = [];
+  if (p.received) parts.push(`Received ${money(p.received)} from ${name}`);
+  if (p.paid) parts.push(`Paid ${money(p.paid)} to ${name}`);
+  return parts.join(' · ');
 }
 
 /**
@@ -450,6 +550,8 @@ function matchesCard(row: RegisterRow, card: SummaryFilter, today: ISODate): boo
     case 'all': return true;
     case 'receivable': return row.txn.type === 'PDC Received' || row.txn.type === 'Debit Adjustment';
     case 'payable': return row.txn.type === 'PDC Issued' || row.txn.type === 'Credit Adjustment';
+    case 'received': return settledState(row)?.label === 'Received';
+    case 'paid': return settledState(row)?.label === 'Paid';
     case 'pending-received': return !!c && c.direction === 'received' && isLive(c);
     case 'pending-issued': return !!c && c.direction === 'issued' && isLive(c);
     case 'due-today': return !!c && isLive(c) && c.chequeDate === today;
@@ -474,7 +576,8 @@ export function applyFilters(
     if (f.type !== 'all' && row.txn.type !== f.type) return false;
     if (f.method !== 'all' && row.method.toLowerCase() !== f.method.toLowerCase()) return false;
     if (f.status !== 'all' && row.status !== f.status) return false;
-    if (f.partyId && row.txn.partyId !== f.partyId && row.txn.toPartyId !== f.partyId) return false;
+    if (f.partyId && row.txn.partyId !== f.partyId && row.txn.toPartyId !== f.partyId
+        && row.txn.otherPartyId !== f.partyId) return false;
     if (
       f.bankAccountId &&
       row.txn.fromBankAccountId !== f.bankAccountId &&
@@ -699,12 +802,12 @@ export function buildCashLedger(data: PdcDataSet): CashLedgerView {
     const type = txn?.type;
     if (entry.debit > 0) {
       if (type === 'Sale') b.fromSales += entry.debit;
-      else if (type === 'Cash Received') b.fromReceive += entry.debit;
+      else if (type === 'Cash Received' || (type === 'Cash Paid' && txn?.otherPartyId)) b.fromReceive += entry.debit;
       else b.fromOther += entry.debit;
     }
     if (entry.credit > 0) {
       if (type === 'Purchase') b.forPurchases += entry.credit;
-      else if (type === 'Cash Paid') b.forPay += entry.credit;
+      else if (type === 'Cash Paid' || (type === 'Cash Received' && txn?.otherPartyId)) b.forPay += entry.credit;
       else if (type === 'Expense') b.forExpenses += entry.credit;
       else b.forOther += entry.credit;
     }

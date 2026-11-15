@@ -31,7 +31,7 @@ import {
   trialBalanceRows,
 } from './pdcEngine';
 import {
-  buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, fundsDelta, partyDealings,
+  buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, fundsDelta, paidAndReceived,
   type PartyLedgerRow,
 } from './pdcRegister';
 import {
@@ -108,9 +108,9 @@ export const PDC_REPORTS: PdcReportMeta[] = [
   { id: 'profit-loss', title: 'Profit & Loss', description: 'Income less purchases and expenses', group: 'Financial', icon: 'trend-up', tone: 'green', featured: true },
   { id: 'balance-sheet', title: 'Balance Sheet', description: 'What you own and what you owe', group: 'Financial', icon: 'scale', tone: 'purple', featured: true },
   { id: 'trial-balance', title: 'Trial Balance', description: 'Every account with its debit or credit — totals must agree', group: 'Financial', icon: 'scale', tone: 'slate', featured: true },
-  { id: 'receivable', title: 'Receivable Report', description: 'Outstanding amounts owed to you', group: 'Financial', icon: 'receivable', tone: 'green' },
-  { id: 'payable', title: 'Payable Report', description: 'Outstanding amounts you owe', group: 'Financial', icon: 'payable', tone: 'red' },
-  { id: 'pay-report', title: 'Pay Report', description: 'Who you have paid, and who you still need to pay', group: 'Financial', icon: 'arrow-up', tone: 'orange', featured: true },
+  { id: 'receivable', title: 'Received Report', description: 'Every payment received — who paid, how much, when', group: 'Financial', icon: 'receivable', tone: 'green' },
+  { id: 'payable', title: 'Paid Report', description: 'Every payment made — who was paid, how much, when', group: 'Financial', icon: 'payable', tone: 'red' },
+  { id: 'pay-report', title: 'Paid & Received Report', description: 'Everything paid and received, by party and entry by entry', group: 'Financial', icon: 'arrow-up', tone: 'orange', featured: true },
   { id: 'debit-credit', title: 'Debit & Credit', description: 'All manual adjustments', group: 'Financial', icon: 'scale', tone: 'slate' },
 
   // --- Trading ---
@@ -342,6 +342,60 @@ function dailyTrend(data: PdcDataSet, f: PdcReportFilters): Array<{ label: strin
 // Main entry point
 // ---------------------------------------------------------------------------
 
+/**
+ * PAID or RECEIVED — completed payments only. The client records an entry once
+ * the money has moved, so these two lists are the whole story: who, how much,
+ * when and how. Per party first, then every payment in date order.
+ */
+function paymentSections(
+  data: PdcDataSet,
+  which: 'received' | 'paid',
+  f: PdcReportFilters
+): (DesignSection & { colWeights?: number[] })[] {
+  const m = M(data);
+  const all = paidAndReceived(data, { from: f.from, to: f.to })[which]
+    .filter((p) => !f.partyId || p.partyId === f.partyId);
+  const total = all.reduce((s, p) => s + p.amount, 0);
+  const word = which === 'received' ? 'Received' : 'Paid';
+
+  const per = new Map<string, { name: string; n: number; amt: number }>();
+  for (const p of all) {
+    const cur = per.get(p.partyId) ?? { name: p.partyName, n: 0, amt: 0 };
+    cur.n += 1; cur.amt += p.amount;
+    per.set(p.partyId, cur);
+  }
+  const perRows = [...per.values()].sort((a, b) => b.amt - a.amt);
+
+  return [
+    {
+      title: which === 'received'
+        ? `Received ${m(total)} from ${perRows.length} part${perRows.length === 1 ? 'y' : 'ies'}`
+        : `Paid ${m(total)} to ${perRows.length} part${perRows.length === 1 ? 'y' : 'ies'}`,
+      subtitle: 'By party, largest first',
+      emptyText: which === 'received' ? 'Nothing received in this period.' : 'Nothing paid in this period.',
+      head: ['Party', 'Payments', `Total ${word}`],
+      numericCols: [1, 2],
+      rows: perRows.map((r) => [r.name, String(r.n), m(r.amt)]),
+      foot: [`Total ${word}`, String(all.length), m(total)],
+      colWeights: [3, 0.8, 1.4],
+    },
+    {
+      title: `${word} — every payment`,
+      subtitle: 'In date order',
+      emptyText: which === 'received' ? 'Nothing received in this period.' : 'Nothing paid in this period.',
+      head: ['Date', 'Reference', which === 'received' ? 'Received From' : 'Paid To', 'Method', 'Cheque #', 'Description', 'Amount'],
+      numericCols: [6],
+      rows: all.map((p) => [
+        formatDate(p.date), p.reference, p.partyName, p.method,
+        p.chequeNumber || '—', p.description || '—', m(p.amount),
+      ]),
+      foot: ['', '', '', '', '', 'Total', m(total)],
+      newPage: true,
+      colWeights: [1.3, 1.1, 2, 0.8, 1, 2.6, 1.3],
+    },
+  ];
+}
+
 export function buildPdcReport(
   data: PdcDataSet,
   id: PdcReportId,
@@ -363,8 +417,8 @@ export function buildPdcReport(
       const s = computeSummary(data, today);
       kpis = [
         { label: 'Total Money', value: m(s.totalFunds), hint: 'cash + all banks', tone: 'blue' },
-        { label: 'Receivable', value: m(s.totalReceivable), hint: 'owed to you', tone: 'green' },
-        { label: 'Payable', value: m(s.totalPayable), hint: 'you owe', tone: 'red' },
+        { label: 'Received', value: m(paidAndReceived(data).received.reduce((t, p) => t + p.amount, 0)), hint: 'money in from parties', tone: 'green' },
+        { label: 'Paid', value: m(paidAndReceived(data).paid.reduce((t, p) => t + p.amount, 0)), hint: 'money out to parties', tone: 'red' },
         {
           label: s.netProfit >= 0 ? 'Net Profit' : 'Net Loss',
           value: m(Math.abs(s.netProfit)),
@@ -600,67 +654,10 @@ export function buildPdcReport(
      * drift from it.
      */
     case 'pay-report': {
-      const paid = data.transactions
-        .filter((t) => isLive(t) && t.type === 'Cash Paid' && inRange(t.date, f)
-          && (!f.partyId || t.partyId === f.partyId))
-        .sort((a, b) => a.date.localeCompare(b.date));
-      const paidTotal = paid.reduce((s, t) => s + t.amount, 0);
-
-      // Paid per party, biggest first — who has had the most money.
-      const perParty = new Map<string, { n: number; amt: number }>();
-      for (const t of paid) {
-        const k = t.partyId ?? '';
-        const cur = perParty.get(k) ?? { n: 0, amt: 0 };
-        cur.n += 1; cur.amt += t.amount;
-        perParty.set(k, cur);
-      }
-      const paidRows = [...perParty.entries()]
-        .map(([pid, x]) => ({ name: partyName(data, pid) || '—', ...x }))
-        .sort((a, b) => b.amt - a.amt);
-
-      // Who is still owed, from the live balances.
-      const bal = partyBalances(data);
-      const owed = data.parties
-        .map((p) => ({ p, bal: bal.get(p.id) ?? 0 }))
-        .filter((x) => x.bal < 0 && (!f.partyId || x.p.id === f.partyId))
-        .sort((a, b) => a.bal - b.bal);
-      const owedTotal = owed.reduce((s, x) => s - x.bal, 0);
-
-      sections.push({
-        title: 'Paid — by party',
-        subtitle: `${paid.length} payment${paid.length === 1 ? '' : 's'}, largest first`,
-        emptyText: 'No payments in this period.',
-        head: ['Party', 'Payments', 'Total Paid'],
-        numericCols: [1, 2],
-        rows: paidRows.map((r) => [r.name, String(r.n), m(r.amt)]),
-        foot: ['Total Paid', String(paid.length), m(paidTotal)],
-      });
-
-      sections.push({
-        title: 'Paid — every payment',
-        subtitle: 'In date order',
-        emptyText: 'No payments in this period.',
-        head: ['Date', 'Reference', 'Party', 'Description', 'Amount'],
-        numericCols: [4],
-        rows: paid.map((t) => [
-          formatDate(t.date), t.reference, partyName(data, t.partyId) || '—',
-          t.description || '—', m(t.amount),
-        ]),
-        foot: ['', '', '', 'Total', m(paidTotal)],
-        newPage: true,
-      });
-
-      sections.push({
-        title: 'Still to pay — who you owe now',
-        subtitle: 'Current balances, largest first',
-        emptyText: 'You do not owe anybody right now.',
-        head: ['Party', 'Amount Payable'],
-        numericCols: [1],
-        rows: owed.map((x) => [x.p.name, m(-x.bal)]),
-        foot: ['Total Payable', m(owedTotal)],
-        newPage: true,
-      });
-
+      sections.push(...paymentSections(data, 'paid', f));
+      const rec = paymentSections(data, 'received', f);
+      rec[0].newPage = true;
+      sections.push(...rec);
       break;
     }
 
@@ -829,85 +826,13 @@ export function buildPdcReport(
       break;
     }
 
-    case 'receivable': {
-      const balances = partyBalances(data);
-      const deal = partyDealings(data);
-      const rows = data.parties
-        .map((p) => ({ p, bal: balances.get(p.id) ?? 0 }))
-        .filter((x) => x.bal > 0)
-        .sort((a, b) => b.bal - a.bal);
-      const total = rows.reduce((s, x) => s + x.bal, 0);
-      kpis = [
-        { label: 'Total Receivable', value: m(total), tone: 'green' },
-        { label: 'Parties Owing', value: String(rows.length), tone: 'slate' },
-        {
-          label: 'Largest Balance',
-          value: rows.length ? m(rows[0].bal) : m(0),
-          hint: rows.length ? rows[0].p.name : undefined,
-          tone: 'orange',
-        },
-      ];
-      charts = [{
-        kind: 'bar',
-        title: 'Who owes you most',
-        formatValue: (n) => money(n, data.settings.currency),
-        data: rows.slice(0, 6).map((x) => ({ label: x.p.name, value: x.bal, color: T.green })),
-      }];
-      sections.push({
-        title: `I will receive ${m(total)} from ${rows.length} part${rows.length === 1 ? 'y' : 'ies'}`,
-        subtitle: 'Largest balances first',
-        emptyText: 'Nobody owes you anything right now.',
-        // I Gave - I Got = what they still owe, so each line explains itself.
-        head: ['Party', 'I Gave', 'I Got', 'Will Pay You'],
-        numericCols: [1, 2, 3],
-        rows: rows.map((x) => {
-          const d = deal.get(x.p.id);
-          return [x.p.name, m(d?.gave ?? 0), m(d?.got ?? 0), m(x.bal)];
-        }),
-        foot: ['Total', '', '', m(total)],
-      });
+    case 'receivable':
+      sections.push(...paymentSections(data, 'received', f));
       break;
-    }
 
-    case 'payable': {
-      const balances = partyBalances(data);
-      const deal = partyDealings(data);
-      const rows = data.parties
-        .map((p) => ({ p, bal: balances.get(p.id) ?? 0 }))
-        .filter((x) => x.bal < 0)
-        .sort((a, b) => a.bal - b.bal);
-      const total = rows.reduce((s, x) => s - x.bal, 0);
-      kpis = [
-        { label: 'Total Payable', value: m(total), tone: 'red' },
-        { label: 'Parties Owed', value: String(rows.length), tone: 'slate' },
-        {
-          label: 'Largest Balance',
-          value: rows.length ? m(-rows[0].bal) : m(0),
-          hint: rows.length ? rows[0].p.name : undefined,
-          tone: 'orange',
-        },
-      ];
-      charts = [{
-        kind: 'bar',
-        title: 'Who you owe most',
-        formatValue: (n) => money(n, data.settings.currency),
-        data: rows.slice(0, 6).map((x) => ({ label: x.p.name, value: -x.bal, color: T.red })),
-      }];
-      sections.push({
-        title: `I must pay ${m(total)} to ${rows.length} part${rows.length === 1 ? 'y' : 'ies'}`,
-        subtitle: 'Largest balances first',
-        emptyText: 'You do not owe anybody right now.',
-        // I Got - I Gave = what I still owe them.
-        head: ['Party', 'I Got', 'I Gave', 'You Will Pay'],
-        numericCols: [1, 2, 3],
-        rows: rows.map((x) => {
-          const d = deal.get(x.p.id);
-          return [x.p.name, m(d?.got ?? 0), m(d?.gave ?? 0), m(-x.bal)];
-        }),
-        foot: ['Total', '', '', m(total)],
-      });
+    case 'payable':
+      sections.push(...paymentSections(data, 'paid', f));
       break;
-    }
 
     case 'due-today':
     case 'upcoming':

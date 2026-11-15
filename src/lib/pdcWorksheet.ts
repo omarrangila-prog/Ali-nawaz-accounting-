@@ -18,7 +18,8 @@ import type { PdcDataSet } from '@/types/pdc';
 import { buildReportPdf, type PdfSection } from './exportPdf';
 import { bankAccountLabel, partyName } from './pdcEngine';
 import {
-  buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, partyDealings, paymentMethodOf, whoPays,
+  buildBankLedger, buildCashLedger, buildPartyLedger, buildRegister, paidAndReceived, paymentMethodOf,
+  paymentsByParty, paymentsSentence,
   type PartyLedgerRow,
 } from './pdcRegister';
 import { formatDate, formatNumber, todayISO } from './utils';
@@ -153,10 +154,10 @@ export function ledgerTable(
 export const sayMoney = (data: PdcDataSet) => (n: number): string =>
   `${data.settings.currency || 'Rs'} ${formatNumber(Math.round(n))}`;
 
-/** One sentence that says where an account stands, for the top of its page. */
+/** One sentence for the top of a party's page: what was received and paid. */
 export function partySentence(data: PdcDataSet, partyId: string): string {
   const name = data.parties.find((p) => p.id === partyId)?.name ?? 'Party';
-  return whoPays(name, partyDealings(data).get(partyId)?.balance ?? 0, sayMoney(data));
+  return paymentsSentence(name, paymentsByParty(data).get(partyId), sayMoney(data));
 }
 export function bankSentence(data: PdcDataSet, label: string, balance: number): string {
   const say = sayMoney(data);
@@ -168,36 +169,29 @@ export function cashSentence(data: PdcDataSet, balance: number): string {
 }
 
 /**
- * "In plain words" — what I gave the party, what I got from them, and what is
- * left, laid out as a sum the reader can check: Gave − Got = still to receive
- * or pay.
+ * PAID & RECEIVED with one party — every completed payment between us, in
+ * date order, so the printout can be checked entry by entry.
  */
 export function partyPlainSection(data: PdcDataSet, partyId: string): PdfSection {
   const name = data.parties.find((p) => p.id === partyId)?.name ?? 'Party';
-  const d = partyDealings(data).get(partyId);
-  const z = (n?: number) => formatNumber(n ?? 0);
-  const rows: string[][] = [
-    [`I GAVE ${name}`, z(d?.gave)],
-    ['  - goods sold to them', z(d?.goodsSold)],
-    ['  - money & cheques paid to them', z(d?.moneyGiven)],
-    [`I GOT from ${name}`, z(d?.got)],
-    ['  - money & cheques received from them', z(d?.moneyGot)],
-  ];
-  if (d?.chequesPending) rows.push(['      (of which cheques not cleared yet)', z(d.chequesPending)]);
-  rows.push(['  - goods bought from them', z(d?.goodsBought)]);
-  const bal = d?.balance ?? 0;
+  const { received, paid } = paidAndReceived(data);
+  const mine = [
+    ...received.filter((p) => p.partyId === partyId).map((p) => ({ ...p, dir: 'Received' })),
+    ...paid.filter((p) => p.partyId === partyId).map((p) => ({ ...p, dir: 'Paid' })),
+  ].sort((a, b) => a.date.localeCompare(b.date) || a.reference.localeCompare(b.reference));
+  const inTotal = mine.filter((p) => p.dir === 'Received').reduce((s, p) => s + p.amount, 0);
+  const outTotal = mine.filter((p) => p.dir === 'Paid').reduce((s, p) => s + p.amount, 0);
   return {
-    title: `In plain words — ${partySentence(data, partyId)}`,
-    head: ['', 'Amount'],
-    rows,
-    foot: [
-      bal > 0 ? `STILL TO RECEIVE from ${name} (I gave - I got)`
-        : bal < 0 ? `STILL TO PAY ${name} (I got - I gave)`
-        : 'SETTLED — nothing to receive or pay',
-      z(Math.abs(bal)),
-    ],
-    numericCols: [1],
-    colWeights: [3, 1],
+    title: `Paid & Received — ${partySentence(data, partyId)}`,
+    head: ['Date', 'Reference', 'Method', 'Cheque #', 'Description', `Received from ${name}`, `Paid to ${name}`],
+    rows: mine.map((p) => [
+      formatDate(p.date), p.reference, p.method, p.chequeNumber || '-', p.description || '-',
+      p.dir === 'Received' ? formatNumber(p.amount) : '-',
+      p.dir === 'Paid' ? formatNumber(p.amount) : '-',
+    ]),
+    foot: ['', '', '', '', 'Total', formatNumber(inTotal), formatNumber(outTotal)],
+    numericCols: [5, 6],
+    colWeights: [1, 1, 0.8, 1, 2.2, 1.3, 1.3],
   };
 }
 

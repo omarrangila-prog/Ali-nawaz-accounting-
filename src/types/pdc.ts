@@ -289,6 +289,12 @@ export interface PdcTransaction {
   partyId?: string;
   /** Counterparty for party-to-party transfers. */
   toPartyId?: string;
+  /**
+   * The SECOND party on a cash entry that passed between two parties: on a Pay,
+   * who the money came from; on a Receive, who it was handed straight to. The
+   * entry then shows in both parties' ledgers and as cash in and out.
+   */
+  otherPartyId?: string;
   /** Bank account moved FROM (bank transfers, deposits, issued cheques). */
   fromBankAccountId?: string;
   /** Bank account moved TO (bank transfers, deposits). */
@@ -574,6 +580,8 @@ export type SummaryFilter =
   | 'all'
   | 'receivable'
   | 'payable'
+  | 'received'
+  | 'paid'
   | 'pending-received'
   | 'pending-issued'
   | 'due-today'

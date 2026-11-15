@@ -21,8 +21,8 @@ export function CommandPalette({
       { id: 'pur', label: 'New Purchase', sub: 'F2', icon: 'purchase', run: go('/purchase') },
       { id: 'sal', label: 'New Sale', sub: 'F3', icon: 'sale', run: go('/sale') },
       { id: 'stk', label: 'Stock', icon: 'stock', run: go('/stock') },
-      { id: 'rec', label: 'Receivable', icon: 'receivable', run: go('/receivable') },
-      { id: 'pay', label: 'Payable', icon: 'payable', run: go('/payable') },
+      { id: 'rec', label: 'Received', icon: 'receivable', run: go('/ledger?side=received') },
+      { id: 'pay', label: 'Paid', icon: 'payable', run: go('/ledger?side=paid') },
       { id: 'tb', label: 'Trial Balance', icon: 'trial', run: go('/trial-balance') },
     ];
     return pages;
